@@ -1,103 +1,216 @@
-import Image from "next/image";
+"use client";
+import { StorageManager } from "../components/StorageManager";
+import { useAccount } from "wagmi";
+import { useState } from "react";
+import { FileUploader } from "../components/FileUploader";
+import { motion, AnimatePresence } from "framer-motion";
+import { ViewProofSets } from "@/components/ViewProofSets";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useBalances } from "@/hooks/useBalances";
+import Filecoin from "@/components/icons/Filecoin";
+import Github from "@/components/icons/Github";
+
+type Tab = "manage-storage" | "upload" | "proof-set";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { isConnected, chainId } = useAccount();
+  const [activeTab, setActiveTab] = useState<Tab>("manage-storage");
+  const { data: balances, isLoading: isLoadingBalances } = useBalances();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+  return (
+    <div className="w-full flex flex-col justify-center min-h-fit">
+      <motion.main
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex flex-col items-center my-10  w-full mx-auto"
+      >
+        <motion.div
+
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.3 }}
+          className="text-3xl font-bold uppercase tracking-tighter text-foreground flex items-center gap-2"
+        >
+          <Filecoin />
+          Fil services demo
+          <motion.a
+            whileHover={{ scale: 1.3 }}
+            href="https://github.com/FIL-Builders/fs-upload-dapp"
+            className="text-primary transition-colors duration-200 hover:underline cursor-pointer rounded-md hover:text-[#008cf6]"
             target="_blank"
-            rel="noopener noreferrer"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            <Github />
+          </motion.a>
+          <motion.p
+
+            className="text-xl font-semibold lowercase transition-colors duration-50 hover:text-foreground flex items-center gap-2"
+          >
+            powered by
+            <motion.a
+              href="https://github.com/FilOzone/synapse-sdk"
+              className="text-primary transition-colors duration-200 hover:underline cursor-pointer hover:text-[#008cf6] rounded-md p-1"
+              target="_blank"
+            >
+              synapse-sdk
+            </motion.a>
+          </motion.p>
+        </motion.div>
+
+        <motion.p
+
+          className="text-lg font-semibold capitalize-none transition-colors duration-50 mb-2  mt-1 hover:text-foreground flex items-center gap-2 text-center"
+        >
+          upload files to filecoin with{" "}
+          <motion.a
+            href="https://docs.secured.finance/usdfc-stablecoin/getting-started"
+            className="text-[#e9ac00] hover:underline cursor-pointer"
             target="_blank"
-            rel="noopener noreferrer"
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            USDFC
+          </motion.a>
+          your balance:
+          {isLoadingBalances || !isConnected
+            ? "..."
+            : balances?.usdfcBalanceFormatted.toFixed(1) + " $"}
+        </motion.p>
+        {chainId !== 314159 && (
+          <motion.p
+
+            className="text-lg font-semibold capitalize-none transition-colors duration-50 mb-2  mt-1 hover:text-foreground flex items-center gap-2 text-center"
+          >
+            <span className="max-w-xl text-center bg-red-600/70  p-2 rounded-md">
+              ⚠️ Filecoin mainnet is not supported yet. Please use Filecoin
+              Calibration network.
+            </span>
+          </motion.p>
+        )}
+        <AnimatePresence mode="wait">
+          {!isConnected ? (
+            <motion.div
+              key="connect"
+
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{
+                type: "spring",
+                stiffness: 200,
+                damping: 20,
+              }}
+              className="flex flex-col items-center"
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ConnectButton />
+              </motion.div>
+              <motion.p className="mt-3 text-secondary">
+                Please connect your wallet to upload dApp
+              </motion.p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="content"
+
+              className="mt-3 max-w-5xl w-full border-1 rounded-lg p-8"
+            >
+              <motion.div className="flex mb-6">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setActiveTab("manage-storage")}
+                  className={`flex-1 py-2 px-4 text-center border-b-2 transition-colors ${activeTab === "manage-storage"
+                      ? "border-primary text-primary-foreground bg-primary"
+                      : "border-transparent text-secondary hover:text-primary hover:bg-secondary/10"
+                    }`}
+                >
+                  Manage Storage
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setActiveTab("upload")}
+                  className={`flex-1 py-2 px-4 text-center border-b-2 transition-colors ${activeTab === "upload"
+                      ? "border-primary text-primary-foreground bg-primary"
+                      : "border-transparent text-secondary hover:text-primary hover:bg-secondary/10"
+                    }`}
+                >
+                  Upload File
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setActiveTab("proof-set")}
+                  className={`flex-1 py-2 px-4 text-center border-b-2 transition-colors ${activeTab === "proof-set"
+                      ? "border-primary text-primary-foreground bg-primary"
+                      : "border-transparent text-secondary hover:text-primary hover:bg-secondary/10"
+                    }`}
+                >
+                  View Proof Sets
+                </motion.button>
+              </motion.div>
+
+              <AnimatePresence mode="wait">
+                {activeTab === "manage-storage" ? (
+                  <motion.div
+                    key="deposit"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 20,
+                    }}
+                  >
+                    <StorageManager />
+                  </motion.div>
+                ) : activeTab === "upload" ? (
+                  <motion.div
+                    key="upload"
+                    // top to bottom
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: +20 }}
+                  >
+                    <FileUploader />
+                  </motion.div>
+                ) : (
+                  activeTab === "proof-set" && (
+                    <motion.div
+                      key="proof-set"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 200,
+                        damping: 20,
+                      }}
+                    >
+                      <ViewProofSets />
+                    </motion.div>
+                  )
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.main>
     </div>
   );
 }
