@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 import { useProofsets } from "@/hooks/useProofsets";
 import { useDownloadRoot } from "@/hooks/useDownloadRoot";
 import { ProofSet, Root } from "@/types";
+import Link from "next/link";
 
 export const ViewProofSets = () => {
   const { isConnected } = useAccount();
@@ -137,6 +138,7 @@ export const ViewProofSets = () => {
  */
 const RootDetails = ({ root }: { root: Root }) => {
   const filename = `root-${root.rootId}.png`;
+  const { address } = useAccount();
   const { downloadMutation } = useDownloadRoot(root.rootCid, filename);
 
   return (
@@ -147,6 +149,9 @@ const RootDetails = ({ root }: { root: Root }) => {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900">Root #{root.rootId}</p>
         <p className="text-xs text-gray-500 truncate">{root.rootCid}</p>
+        <Link href={`https://${address}.calibration.filcdn.io/${root.rootCid}`} className="text-xs text-blue-600 hover:underline" target="_blank">
+          View on CDN
+        </Link>
       </div>
       <button
         onClick={() => downloadMutation.mutate()}

@@ -7,7 +7,6 @@ import { http, createConfig } from "@wagmi/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css"
-import { Navbar } from "@/components/Navbar";
 
 const queryClient = new QueryClient();
 
@@ -37,7 +36,6 @@ export default function RootLayout({
               initialChain={filecoinCalibration.id}
             >
               <main className="flex flex-col min-h-screen">
-                <Navbar />
                 {children}
               </main>
             </RainbowKitProvider>

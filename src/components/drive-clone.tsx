@@ -99,10 +99,9 @@ export default function DriveClone() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-white">
-      <Header viewMode={viewMode} setViewMode={setViewMode} />
+    <div className="">
+      <Header isFilePage={true} viewMode={viewMode} setViewMode={setViewMode} />
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
         <main className="flex-1 flex flex-col overflow-hidden">
           {viewMode === "grid" ? (
             <FileGrid 

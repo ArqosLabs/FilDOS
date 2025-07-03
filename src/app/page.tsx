@@ -6,9 +6,7 @@ import { FileUploader } from "../components/FileUploader";
 import { motion, AnimatePresence } from "framer-motion";
 import { ViewProofSets } from "@/components/ViewProofSets";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useBalances } from "@/hooks/useBalances";
-import Filecoin from "@/components/icons/Filecoin";
-import Github from "@/components/icons/Github";
+import { Navbar } from "@/components/Navbar";
 
 type Tab = "manage-storage" | "upload" | "proof-set";
 
@@ -28,64 +26,16 @@ const containerVariants = {
 export default function Home() {
   const { isConnected, chainId } = useAccount();
   const [activeTab, setActiveTab] = useState<Tab>("manage-storage");
-  const { data: balances, isLoading: isLoadingBalances } = useBalances();
 
   return (
     <div className="w-full flex flex-col justify-center min-h-fit">
+      <Navbar />
       <motion.main
         variants={containerVariants}
         initial="hidden"
         animate="visible"
         className="flex flex-col items-center my-10  w-full mx-auto"
       >
-        <motion.div
-
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.3 }}
-          className="text-3xl font-bold uppercase tracking-tighter text-foreground flex items-center gap-2"
-        >
-          <Filecoin />
-          Fil services demo
-          <motion.a
-            whileHover={{ scale: 1.3 }}
-            href="https://github.com/FIL-Builders/fs-upload-dapp"
-            className="text-primary transition-colors duration-200 hover:underline cursor-pointer rounded-md hover:text-[#008cf6]"
-            target="_blank"
-          >
-            <Github />
-          </motion.a>
-          <motion.p
-
-            className="text-xl font-semibold lowercase transition-colors duration-50 hover:text-foreground flex items-center gap-2"
-          >
-            powered by
-            <motion.a
-              href="https://github.com/FilOzone/synapse-sdk"
-              className="text-primary transition-colors duration-200 hover:underline cursor-pointer hover:text-[#008cf6] rounded-md p-1"
-              target="_blank"
-            >
-              synapse-sdk
-            </motion.a>
-          </motion.p>
-        </motion.div>
-
-        <motion.p
-
-          className="text-lg font-semibold capitalize-none transition-colors duration-50 mb-2  mt-1 hover:text-foreground flex items-center gap-2 text-center"
-        >
-          upload files to filecoin with{" "}
-          <motion.a
-            href="https://docs.secured.finance/usdfc-stablecoin/getting-started"
-            className="text-[#e9ac00] hover:underline cursor-pointer"
-            target="_blank"
-          >
-            USDFC
-          </motion.a>
-          your balance:
-          {isLoadingBalances || !isConnected
-            ? "..."
-            : balances?.usdfcBalanceFormatted.toFixed(1) + " $"}
-        </motion.p>
         {chainId !== 314159 && (
           <motion.p
 

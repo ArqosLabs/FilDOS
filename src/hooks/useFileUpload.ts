@@ -123,7 +123,7 @@ export const useFileUpload = () => {
         onRootAdded: async (transactionResponse) => {
           setStatus(
             `🔄 Waiting for transaction to be confirmed on chain${
-              transactionResponse ? `(txHash: ${transactionResponse.hash})` : ""
+              transactionResponse ? `(txHash: ${transactionResponse.hash.slice(0, 10)}...)` : ""
             }`
           );
           if (transactionResponse) {

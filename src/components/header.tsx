@@ -13,23 +13,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import UploadDialog from "./upload-dialog";
+import Image from "next/image";
 
 interface HeaderProps {
-  viewMode: "grid" | "list";
-  setViewMode: (mode: "grid" | "list") => void;
+  isFilePage: boolean;
+  viewMode?: "grid" | "list";
+  setViewMode?: (mode: "grid" | "list") => void;
 }
 
-export default function Header({ viewMode, setViewMode }: HeaderProps) {
+export default function Header({ isFilePage, viewMode, setViewMode }: HeaderProps) {
   return (
     <TooltipProvider>
       <header className="border-b border-gray-200 bg-white">
         <div className="flex items-center px-4 py-3 gap-4">
           {/* Logo and Title */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-sm font-bold">D</span>
-            </div>
-            <h1 className="text-xl font-medium text-gray-700">Drive</h1>
+            <Image src="/FILDOS.png" alt="FILDOS" width={30} height={30} className="rounded-full" />
+            <h1 className="text-xl font-medium text-gray-700">FILDOS</h1>
           </div>
 
           {/* Search Bar */}
@@ -38,7 +38,7 @@ export default function Header({ viewMode, setViewMode }: HeaderProps) {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search in Drive"
-                className="pl-10 bg-gray-50 border-0 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                className="pl-10 bg-gray-50 border-0 focus:bg-white focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
@@ -47,13 +47,14 @@ export default function Header({ viewMode, setViewMode }: HeaderProps) {
           <div className="flex items-center gap-2">
             {/* Upload Button */}
             <UploadDialog>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button className="bg-primary hover:bg-secondary text-white">
                 <Upload className="w-4 h-4 mr-2" />
                 New
               </Button>
             </UploadDialog>
 
             {/* View Mode Toggle */}
+            {isFilePage && setViewMode && (
             <div className="flex border border-gray-200 rounded-lg overflow-hidden">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -82,6 +83,7 @@ export default function Header({ viewMode, setViewMode }: HeaderProps) {
                 <TooltipContent>List view</TooltipContent>
               </Tooltip>
             </div>
+            )}
 
             {/* Settings */}
             <Tooltip>

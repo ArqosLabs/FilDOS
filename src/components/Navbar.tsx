@@ -22,7 +22,7 @@ export function Navbar() {
           whileHover={{ scale: 1.05 }}
           className="flex items-center gap-2"
         >
-          <Image src="/filecoin.svg" alt="Filecoin" width={30} height={30} />
+          <Image src="/FILDOS.png" alt="Filecoin" width={30} height={30} />
           <h1 className="text-xl font-bold">Filecoin Services Uploader</h1>
         </motion.div>
       </motion.div>
