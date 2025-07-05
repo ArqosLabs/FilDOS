@@ -4,11 +4,9 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 const FILDOSModule = buildModule("FILDOSModule", (m) => {
-  // Base URI for the NFT metadata
-  const baseURI = m.getParameter("baseURI", "https://api.fildos.io/metadata/");
 
   // Deploy the FILDOS contract
-  const fildos = m.contract("FolderNFT", [baseURI]);
+  const fildos = m.contract("FolderNFT");
 
   return { fildos };
 });
