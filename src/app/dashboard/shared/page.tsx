@@ -45,6 +45,7 @@ export default function SharedFolders() {
       starred: false,
       shared: true, // All folders in this view are shared
       tokenId,
+      tags: [], // Add empty tags array
     };
   });
 

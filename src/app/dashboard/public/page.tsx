@@ -45,6 +45,7 @@ export default function PublicFolders() {
       starred: false,
       shared: true, // All public folders are considered "shared" for display purposes
       tokenId,
+      tags: [], // Add empty tags array
     };
   });
 

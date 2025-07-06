@@ -24,6 +24,7 @@ export interface FileItem {
   shared: boolean;
   tokenId?: string;
   cid?: string;
+  tags?: string[];
 }
 
 const formatDate = (timestamp: bigint) => {
@@ -62,6 +63,7 @@ export default function MyDrive() {
       starred: false,
       shared: folderData?.isPublic || false,
       tokenId,
+      tags: [], // Add empty tags array
     };
   });
 

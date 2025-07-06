@@ -187,7 +187,7 @@ export const useContract = () => {
         tokenId,
         cid,
         filename,
-        tags = [],
+        tags,
       }: {
         tokenId: string | number;
         cid: string;

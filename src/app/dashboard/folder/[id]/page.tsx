@@ -70,6 +70,7 @@ export default function FolderPage() {
     starred: false,
     shared: false,
     cid: file.cid,
+    tags: [], // Add empty tags array
   })) : [];
 
   const toggleFileSelection = (fileId: string) => {

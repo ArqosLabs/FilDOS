@@ -8,7 +8,8 @@ import {
   FileType,
   MoreVertical,
   Share,
-  Globe
+  Globe,
+  Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileItem } from "@/app/dashboard/page";
 import ShareFolderDialog from "@/components/share-folder-dialog";
 import MakePublicDialog from "@/components/make-public-dialog";
+import DetailsModal from "@/components/details-modal";
 
 
 interface FileGridProps {
@@ -45,6 +47,23 @@ const getFileIcon = (type: FileItem["type"]) => {
       return FileType;
     default:
       return FileType;
+  }
+};
+
+const getFileColor = (type: FileItem["type"]) => {
+  switch (type) {
+    case "folder":
+      return "text-blue-600";
+    case "document":
+      return "text-blue-500";
+    case "image":
+      return "text-green-500";
+    case "video":
+      return "text-red-500";
+    case "pdf":
+      return "text-red-600";
+    default:
+      return "text-gray-500";
   }
 };
 
@@ -74,7 +93,7 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
               >
                 {/* File Icon */}
                 <div className="flex flex-col items-center text-center">
-                  <Icon className={`w-12 h-12 mb-3 text-primary`} />
+                  <Icon className={`w-12 h-12 mb-3 ${getFileColor(file.type)}`} />
 
                   {/* File Name */}
                   <h3 className="text-sm font-medium text-gray-900 truncate w-full mb-1">
@@ -99,49 +118,59 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                 </div>
 
                 {/* Action Buttons */}
-                {file.type === "folder" && (
-                  <div className="absolute top-2 right-2 flex gap-1 group-hover:opacity-100 transition-opacity">
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-white/80 backdrop-blur-sm"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <ShareFolderDialog
-                            folderId={file.tokenId || file.id}
-                            folderName={file.name}
-                          >
-                            <div className="flex items-center cursor-pointer font-light p-1">
-                              <Share className="w-4 h-4 mr-2" />
-                              Share
-                            </div>
-                          </ShareFolderDialog>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <MakePublicDialog
-                            folderId={file.tokenId || file.id}
-                            folderName={file.name}
-                            isCurrentlyPublic={file.shared}
-                          >
-                            <div className="flex items-center cursor-pointer font-light p-1">
-                              <Globe className="w-4 h-4 mr-2" />
-                              {file.shared ? "Make Private" : "Make Public"}
-                            </div>
-                          </MakePublicDialog>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                )}
+                <div className="absolute top-2 right-2 flex gap-1 group-hover:opacity-100 transition-opacity">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 bg-white/80 backdrop-blur-sm"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <DetailsModal file={file}>
+                          <div className="flex items-center cursor-pointer font-light p-1">
+                            <Info className="w-4 h-4 mr-2" />
+                            Details
+                          </div>
+                        </DetailsModal>
+                      </DropdownMenuItem>
+                      {file.type === "folder" && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <ShareFolderDialog
+                              folderId={file.tokenId || file.id}
+                              folderName={file.name}
+                            >
+                              <div className="flex items-center cursor-pointer font-light p-1">
+                                <Share className="w-4 h-4 mr-2" />
+                                Share
+                              </div>
+                            </ShareFolderDialog>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <MakePublicDialog
+                              folderId={file.tokenId || file.id}
+                              folderName={file.name}
+                              isCurrentlyPublic={file.shared}
+                            >
+                              <div className="flex items-center cursor-pointer font-light p-1">
+                                <Globe className="w-4 h-4 mr-2" />
+                                {file.shared ? "Make Private" : "Make Public"}
+                              </div>
+                            </MakePublicDialog>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
                 {/* Selection Indicator */}
                 {isSelected && (

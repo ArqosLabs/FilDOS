@@ -8,7 +8,8 @@ import {
   FileType,
   MoreVertical,
   Share,
-  Globe
+  Globe,
+  Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileItem } from "@/app/dashboard/page";
 import ShareFolderDialog from "@/components/share-folder-dialog";
 import MakePublicDialog from "@/components/make-public-dialog";
+import DetailsModal from "@/components/details-modal";
 
 interface FileListProps {
   files: FileItem[];
@@ -160,46 +162,57 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                       {file.modified}
                     </TableCell>
                     <TableCell>
-                      {file.type === "folder" && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <ShareFolderDialog
-                                folderId={file.tokenId || file.id}
-                                folderName={file.name}
-                              >
-                                <div className="flex items-center cursor-pointer p-1 font-light">
-                                  <Share className="w-4 h-4 mr-2" />
-                                  Share
-                                </div>
-                              </ShareFolderDialog>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                              <MakePublicDialog
-                                folderId={file.tokenId || file.id}
-                                folderName={file.name}
-                                isCurrentlyPublic={file.shared}
-                              >
-                                <div className="flex items-center cursor-pointer p-1 font-light">
-                                  <Globe className="w-4 h-4 mr-2" />
-                                  {file.shared ? "Make Private" : "Make Public"}
-                                </div>
-                              </MakePublicDialog>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <DetailsModal file={file}>
+                              <div className="flex items-center cursor-pointer p-1 font-light">
+                                <Info className="w-4 h-4 mr-2" />
+                                Details
+                              </div>
+                            </DetailsModal>
+                          </DropdownMenuItem>
+                          {file.type === "folder" && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild>
+                                <ShareFolderDialog
+                                  folderId={file.tokenId || file.id}
+                                  folderName={file.name}
+                                >
+                                  <div className="flex items-center cursor-pointer p-1 font-light">
+                                    <Share className="w-4 h-4 mr-2" />
+                                    Share
+                                  </div>
+                                </ShareFolderDialog>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild>
+                                <MakePublicDialog
+                                  folderId={file.tokenId || file.id}
+                                  folderName={file.name}
+                                  isCurrentlyPublic={file.shared}
+                                >
+                                  <div className="flex items-center cursor-pointer p-1 font-light">
+                                    <Globe className="w-4 h-4 mr-2" />
+                                    {file.shared ? "Make Private" : "Make Public"}
+                                  </div>
+                                </MakePublicDialog>
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
