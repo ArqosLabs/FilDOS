@@ -13,7 +13,6 @@ import {
   Edit3,
   Copy,
   Trash2,
-  Star,
   FolderOpen,
   Eye,
 } from "lucide-react";
@@ -26,10 +25,9 @@ interface FileContextMenuProps {
     type: string;
     starred: boolean;
   };
-  onToggleStar: (fileId: string) => void;
 }
 
-export default function FileContextMenu({ children, file, onToggleStar }: FileContextMenuProps) {
+export default function FileContextMenu({ children, file }: FileContextMenuProps) {
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -63,14 +61,6 @@ export default function FileContextMenu({ children, file, onToggleStar }: FileCo
         <ContextMenuItem>
           <Copy className="w-4 h-4 mr-2" />
           Make a copy
-        </ContextMenuItem>
-        <ContextMenuItem onClick={() => onToggleStar(file.id)}>
-          <Star 
-            className={`w-4 h-4 mr-2 ${
-              file.starred ? "text-yellow-500 fill-yellow-500" : ""
-            }`} 
-          />
-          {file.starred ? "Remove from starred" : "Add to starred"}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem className="text-red-600">

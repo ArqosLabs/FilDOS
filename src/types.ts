@@ -23,7 +23,7 @@ export interface ProofSet {
   payee: string;
   commissionBps: number;
   metadata: string;
-  rootMetadata: any[];
+  rootMetadata: unknown[];
   clientDataSetId: number;
   withCDN: boolean;
   pdpVerifierProofSetId: number;
@@ -153,4 +153,34 @@ export interface AllowanceItemProps {
   label: string;
   isSufficient?: boolean;
   isLoading?: boolean;
+}
+
+// Contract-related types
+export interface FileEntry {
+  cid: string;
+  filename: string;
+  timestamp: bigint;
+  owner: string;
+  tags: string[];
+}
+
+export interface FolderInfo {
+  name: string;
+  folderType: string;
+  isPublic: boolean;
+  owner: string;
+  createdAt: bigint;
+}
+
+export interface FolderAccess {
+  canRead: boolean;
+  canWrite: boolean;
+  isOwner: boolean;
+}
+
+export interface Share {
+  folderId: bigint;
+  grantee: string;
+  canRead: boolean;
+  canWrite: boolean;
 }

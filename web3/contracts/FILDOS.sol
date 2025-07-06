@@ -81,7 +81,7 @@ contract FolderNFT is ERC721Enumerable, Ownable {
     }
 
     /* ────────────── MINTING ────────────── */
-    function mintFolder(string calldata name, string calldata folderType) external onlyOwner returns (uint256) {
+    function mintFolder(string calldata name, string calldata folderType) external returns (uint256) {
         address to = msg.sender;
         uint256 newId = totalSupply() + 1;
         _safeMint(to, newId);
@@ -251,6 +251,12 @@ contract FolderNFT is ERC721Enumerable, Ownable {
             }
         }
         return false;
+    }
+
+    /// @notice Retrieve folder info
+    function getFolderData(uint256 tokenId) external view returns (FolderInfo memory data_) {
+        if (!_tokenExists(tokenId)) revert FolderDoesNotExist(tokenId);
+        else data_ = _folderInfo[tokenId];
     }
 
     /// @notice Retrieve all files if caller can read

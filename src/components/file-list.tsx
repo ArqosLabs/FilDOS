@@ -6,7 +6,6 @@ import {
   Image, 
   Video, 
   FileType,
-  Star,
   MoreVertical,
   Share,
   Download,
@@ -36,8 +35,8 @@ import { FileItem } from "./my-drive";
 interface FileListProps {
   files: FileItem[];
   selectedFiles: string[];
-  onToggleStar: (fileId: string) => void;
   onToggleSelection: (fileId: string) => void;
+  onFolderClick?: (folderId: string) => void;
 }
 
 const getFileIcon = (type: FileItem["type"]) => {
@@ -74,7 +73,7 @@ const getFileColor = (type: FileItem["type"]) => {
   }
 };
 
-export default function FileList({ files, selectedFiles, onToggleStar, onToggleSelection }: FileListProps) {
+export default function FileList({ files, selectedFiles, onToggleSelection, onFolderClick }: FileListProps) {
   const allSelected = files.length > 0 && selectedFiles.length === files.length;
 
   const handleSelectAll = () => {
@@ -96,7 +95,6 @@ export default function FileList({ files, selectedFiles, onToggleStar, onToggleS
   return (
     <div className="flex-1 overflow-auto">
       <div className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">My Drive</h2>
         
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <Table>
@@ -112,8 +110,7 @@ export default function FileList({ files, selectedFiles, onToggleStar, onToggleS
                 <TableHead>Name</TableHead>
                 <TableHead className="w-32">Owner</TableHead>
                 <TableHead className="w-32">Last modified</TableHead>
-                <TableHead className="w-24">Size</TableHead>
-                <TableHead className="w-12"></TableHead>
+                <TableHead className="w-24">Folder Type</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -129,6 +126,11 @@ export default function FileList({ files, selectedFiles, onToggleStar, onToggleS
                       isSelected ? "bg-blue-50" : ""
                     }`}
                     onClick={() => onToggleSelection(file.id)}
+                    onDoubleClick={() => {
+                      if (file.type === "folder" && onFolderClick && file.tokenId) {
+                        onFolderClick(file.tokenId);
+                      }
+                    }}
                   >
                     <TableCell>
                       <Checkbox
@@ -152,30 +154,13 @@ export default function FileList({ files, selectedFiles, onToggleStar, onToggleS
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">
-                      {file.owner === "me" ? "me" : file.owner}
+                      {file.owner.slice(0, 6) + "..." + file.owner.slice(-4)}
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">
                       {file.modified}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
-                      {file.size || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleStar(file.id);
-                        }}
-                      >
-                        <Star
-                          className={`w-4 h-4 ${
-                            file.starred ? "text-yellow-500 fill-yellow-500" : "text-gray-400"
-                          }`}
-                        />
-                      </Button>
+                    <TableCell className="text-sm text-gray-600 capitalize">
+                      {file.folderType}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
