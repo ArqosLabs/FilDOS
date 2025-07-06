@@ -1,5 +1,6 @@
-import DriveClone from "@/components/drive-clone";
+import MyDrive from "@/components/my-drive";
 
-export default function Home() {
-  return <DriveClone />;
+
+export default function Dashboard() {
+  return <MyDrive />;
 }

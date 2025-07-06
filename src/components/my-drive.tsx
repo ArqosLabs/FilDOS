@@ -3,7 +3,6 @@
 import { useState } from "react";
 import FloatingActionButton from "./floating-action-button";
 import Header from "./header";
-import Sidebar from "./Sidebar";
 import FileGrid from "./file-grid";
 import FileList from "./file-list";
 
@@ -79,7 +78,7 @@ const mockFiles: FileItem[] = [
   },
 ];
 
-export default function DriveClone() {
+export default function MyDrive() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [files, setFiles] = useState<FileItem[]>(mockFiles);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);

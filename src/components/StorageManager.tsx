@@ -22,7 +22,6 @@ import {
   Database,
   Shield
 } from "lucide-react";
-import Header from "./header";
 
 /**
  * Component to display and manage token payments for storage
@@ -49,9 +48,8 @@ export const StorageManager = () => {
   }
 
   return (
-    <div className="flex-1 p-6 overflow-auto">
-      <Header isFilePage={false} />
-      <div className="max-w-7xl space-y-6">
+    <div className="flex-1 overflow-auto">
+      <div className="max-w-7xl space-y-6 p-6">
         <StorageBalanceHeader />
         
         <div className="grid gap-6 md:grid-cols-2">
@@ -471,7 +469,7 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
     </CardHeader>
     <CardContent className="space-y-4">
       <div className="grid gap-4">
-        <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+        <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/50">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500"></div>
             <span className="text-sm font-medium">FIL Balance</span>
@@ -480,7 +478,7 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
             {isLoading ? "..." : `${balances?.filBalanceFormatted?.toLocaleString()} FIL`}
           </span>
         </div>
-        <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+        <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/50">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500"></div>
             <span className="text-sm font-medium">USDFC Balance</span>
@@ -489,22 +487,13 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
             {isLoading ? "..." : `${balances?.usdfcBalanceFormatted?.toLocaleString()} USDFC`}
           </span>
         </div>
-        <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+        <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/50">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-purple-500"></div>
             <span className="text-sm font-medium">Pandora Balance</span>
           </div>
           <span className="font-mono text-sm">
             {isLoading ? "..." : `${balances?.pandoraBalanceFormatted?.toLocaleString()} USDFC`}
-          </span>
-        </div>
-        <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-            <span className="text-sm font-medium">Rate Allowance</span>
-          </div>
-          <span className="font-mono text-sm">
-            {isLoading ? "..." : `${balances?.currentRateAllowanceGB?.toLocaleString()} GB`}
           </span>
         </div>
       </div>
@@ -547,7 +536,7 @@ const StorageStatusSection = ({ balances, isLoading }: SectionProps) => {
         <Separator />
         
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+          <div className="flex items-center justify-between p-3 rounded-sm border bg-muted/30">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">Persistence (Max Usage)</span>
@@ -578,7 +567,7 @@ const AllowanceItem = ({
   isSufficient,
   isLoading,
 }: AllowanceItemProps) => (
-  <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+  <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/30">
     <span className="text-sm font-medium">{label}</span>
     <div className="flex items-center gap-2">
       {isLoading ? (

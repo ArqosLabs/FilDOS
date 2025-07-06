@@ -3,9 +3,9 @@
 
 import { useAccount } from "wagmi";
 import { useProofsets } from "@/hooks/useProofsets";
-import { useDownloadRoot } from "@/hooks/useDownloadRoot";
 import { ProofSet, Root } from "@/types";
 import Link from "next/link";
+import { Button } from "./ui/button";
 
 export const ViewProofSets = () => {
   const { isConnected } = useAccount();
@@ -16,7 +16,7 @@ export const ViewProofSets = () => {
   }
 
   return (
-    <div className="mt-4 p-6 border rounded-lg bg-white shadow-sm max-h-[900px] overflow-y-auto">
+    <div className="p-6 bg-white overflow-y-auto">
       <div className="flex justify-between items-center pb-4 border-b">
         <div className="sticky top-0 bg-white z-10">
           <h3 className="text-xl font-semibold text-gray-900">Proof Sets</h3>
@@ -137,9 +137,7 @@ export const ViewProofSets = () => {
  * Component to display a root and a download button
  */
 const RootDetails = ({ root }: { root: Root }) => {
-  const filename = `root-${root.rootId}.png`;
   const { address } = useAccount();
-  const { downloadMutation } = useDownloadRoot(root.rootCid, filename);
 
   return (
     <div
@@ -149,17 +147,12 @@ const RootDetails = ({ root }: { root: Root }) => {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900">Root #{root.rootId}</p>
         <p className="text-xs text-gray-500 truncate">{root.rootCid}</p>
-        <Link href={`https://${address}.calibration.filcdn.io/${root.rootCid}`} className="text-xs text-blue-600 hover:underline" target="_blank">
-          View on CDN
-        </Link>
       </div>
-      <button
-        onClick={() => downloadMutation.mutate()}
-        disabled={downloadMutation.isPending}
-        className="ml-4 px-3 py-1 text-sm rounded-lg border-2 border-black cursor-pointer transition-all bg-black text-white hover:bg-white hover:text-black disabled:bg-gray-200 disabled:border-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
-      >
-        {downloadMutation.isPending ? "Downloading..." : "Download"}
-      </button>
+      <Link href={`https://${address}.calibration.filcdn.io/${root.rootCid}`} target="_blank">
+          <Button className="ml-2">
+            View
+          </Button>
+      </Link>
     </div>
   );
 };

@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { FileItem } from "./drive-clone";
+import { FileItem } from "./my-drive";
 
 interface FileListProps {
   files: FileItem[];

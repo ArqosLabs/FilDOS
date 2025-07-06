@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { FileItem } from "./drive-clone";
+import { FileItem } from "./my-drive";
 import FileContextMenu from "./file-context-menu";
 import RecentFiles from "./recent-files";
 
