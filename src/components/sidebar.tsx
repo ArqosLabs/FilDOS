@@ -2,7 +2,6 @@
 
 import {
   HardDrive,
-  Clock,
   Users,
   Trash2,
   Cloud,
@@ -11,6 +10,7 @@ import {
   Video,
   FileArchive,
   Scale,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -22,7 +22,7 @@ import { useSelectedLayoutSegment } from "next/navigation";
 const sidebarItems = [
   { icon: HardDrive, label: "My Drive", route: null },
   { icon: Users, label: "Shared with me", route: "shared" },
-  { icon: Clock, label: "Recent", route: "recent" },
+  { icon: Globe, label: "Public Folders", route: "public" },
   { icon: Trash2, label: "Trash", route: "trash" },
   { icon: Scale, label: "Proof Sets", route: "proof-sets" }
 ];

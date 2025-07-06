@@ -239,9 +239,11 @@ export const useContract = () => {
         const tx = await contract.setFolderPublic(tokenId, isPublic);
         return await tx.wait();
       },
-      onSuccess: () => {
+      onSuccess: (_, variables) => {
         // Invalidate public folders query
         queryClient.invalidateQueries({ queryKey: ["public-folders"] });
+        // Invalidate folder data query to update the UI
+        queryClient.invalidateQueries({ queryKey: ["folder-data", variables.tokenId] });
       },
     }),
 

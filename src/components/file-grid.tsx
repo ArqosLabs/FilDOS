@@ -1,16 +1,14 @@
 "use client";
 
-import { 
-  Folder, 
-  FileText, 
-  Image, 
-  Video, 
+import {
+  Folder,
+  FileText,
+  Image,
+  Video,
   FileType,
   MoreVertical,
   Share,
-  Download,
-  Trash2,
-  Edit3
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,14 +19,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { FileItem } from "./my-drive";
-import FileContextMenu from "./file-context-menu";
+import { FileItem } from "@/app/dashboard/page";
+import ShareFolderDialog from "@/components/share-folder-dialog";
+import MakePublicDialog from "@/components/make-public-dialog";
+
 
 interface FileGridProps {
   files: FileItem[];
   selectedFiles: string[];
   onToggleSelection: (fileId: string) => void;
-  onFolderClick?: (folderId: string) => void;
+  onFolderClick?: (folderId?: string, url?: string) => void;
 }
 
 const getFileIcon = (type: FileItem["type"]) => {
@@ -57,32 +57,30 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
           {files.map((file) => {
             const Icon = getFileIcon(file.type);
             const isSelected = selectedFiles.includes(file.id);
-            
+
             return (
-              <FileContextMenu
+              <div
                 key={file.id}
-                file={file}
-              >
-                <div
-                  className={`group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer ${
-                    isSelected ? "ring-2 ring-primary bg-blue-50" : ""
+                className={`group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer ${isSelected ? "ring-2 ring-primary bg-blue-50" : ""
                   }`}
-                  onClick={() => onToggleSelection(file.id)}
-                  onDoubleClick={() => {
-                    if (file.type === "folder" && onFolderClick && file.tokenId) {
-                      onFolderClick(file.tokenId);
-                    }
-                  }}
-                >
+                onClick={() => onToggleSelection(file.id)}
+                onDoubleClick={() => {
+                  if (file.type === "folder" && onFolderClick && file.tokenId) {
+                    onFolderClick(file.tokenId);
+                  } else if (file.type !== "folder" && onFolderClick && file.cid) {
+                    onFolderClick(undefined, `https://${file.owner}.calibration.filcdn.io/${file.cid}`);
+                  }
+                }}
+              >
                 {/* File Icon */}
                 <div className="flex flex-col items-center text-center">
                   <Icon className={`w-12 h-12 mb-3 text-primary`} />
-                  
+
                   {/* File Name */}
                   <h3 className="text-sm font-medium text-gray-900 truncate w-full mb-1">
                     {file.name}
                   </h3>
-                  
+
                   {/* File Info */}
                   <div className="text-xs text-gray-500 space-y-1">
                     {file.size && <div>{file.size}</div>}
@@ -101,40 +99,49 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                 </div>
 
                 {/* Action Buttons */}
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 bg-white/80 backdrop-blur-sm"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Share className="w-4 h-4 mr-2" />
-                        Share
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Edit3 className="w-4 h-4 mr-2" />
-                        Rename
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Move to trash
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                {file.type === "folder" && (
+                  <div className="absolute top-2 right-2 flex gap-1 group-hover:opacity-100 transition-opacity">
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 bg-white/80 backdrop-blur-sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <ShareFolderDialog
+                            folderId={file.tokenId || file.id}
+                            folderName={file.name}
+                          >
+                            <div className="flex items-center cursor-pointer font-light p-1">
+                              <Share className="w-4 h-4 mr-2" />
+                              Share
+                            </div>
+                          </ShareFolderDialog>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <MakePublicDialog
+                            folderId={file.tokenId || file.id}
+                            folderName={file.name}
+                            isCurrentlyPublic={file.shared}
+                          >
+                            <div className="flex items-center cursor-pointer font-light p-1">
+                              <Globe className="w-4 h-4 mr-2" />
+                              {file.shared ? "Make Private" : "Make Public"}
+                            </div>
+                          </MakePublicDialog>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
 
                 {/* Selection Indicator */}
                 {isSelected && (
@@ -144,7 +151,6 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                 )}
 
               </div>
-              </FileContextMenu>
             );
           })}
         </div>

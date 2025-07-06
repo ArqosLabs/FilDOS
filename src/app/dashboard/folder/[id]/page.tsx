@@ -11,7 +11,7 @@ import Header from "@/components/header";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
 import { useFiles, useFolderData } from "@/hooks/useContract";
-import { FileItem } from "@/components/my-drive";
+import { FileItem } from "../../page";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -80,6 +80,12 @@ export default function FolderPage() {
     );
   };
 
+  const handleFileClick = (folderId?: string, url?: string) => {
+    if (url) {
+      window.open(url, '_blank');
+    }
+  };
+
   const handleBackToRoot = () => {
     router.push("/dashboard");
   };
@@ -107,7 +113,7 @@ export default function FolderPage() {
           <div className="p-4 border-b bg-gray-50">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Folder Contents</h2>
-              <UploadDialog>
+              <UploadDialog folderId={folderId}>
                 <Button 
                   className="bg-primary hover:bg-secondary text-white"
                 >
@@ -198,12 +204,14 @@ export default function FolderPage() {
                       files={files} 
                       selectedFiles={selectedFiles}
                       onToggleSelection={toggleFileSelection}
+                      onFolderClick={handleFileClick}
                     />
                   ) : (
                     <FileList
                       files={files} 
                       selectedFiles={selectedFiles}
                       onToggleSelection={toggleFileSelection}
+                      onFolderClick={handleFileClick}
                     />
                   )}
                 </>

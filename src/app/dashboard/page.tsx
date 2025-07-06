@@ -100,8 +100,12 @@ export default function MyDrive() {
     }
   };
 
-  const handleFolderClick = (folderId: string) => {
-    router.push(`/dashboard/folder/${folderId}`);
+  const handleFolderClick = (folderId?: string, url?: string) => {
+    if (folderId) {
+      router.push(`/dashboard/folder/${folderId}`);
+    } else if (url) {
+      window.open(url, '_blank');
+    }
   };
 
   // Get current folder data for breadcrumb

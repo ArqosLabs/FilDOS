@@ -1,16 +1,14 @@
 "use client";
 
-import { 
-  Folder, 
-  FileText, 
-  Image, 
-  Video, 
+import {
+  Folder,
+  FileText,
+  Image,
+  Video,
   FileType,
   MoreVertical,
   Share,
-  Download,
-  Trash2,
-  Edit3
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,13 +28,15 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { FileItem } from "./my-drive";
+import { FileItem } from "@/app/dashboard/page";
+import ShareFolderDialog from "@/components/share-folder-dialog";
+import MakePublicDialog from "@/components/make-public-dialog";
 
 interface FileListProps {
   files: FileItem[];
   selectedFiles: string[];
   onToggleSelection: (fileId: string) => void;
-  onFolderClick?: (folderId: string) => void;
+  onFolderClick?: (folderId?: string, url?: string) => void;
 }
 
 const getFileIcon = (type: FileItem["type"]) => {
@@ -95,7 +95,7 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
   return (
     <div className="flex-1 overflow-auto">
       <div className="p-6">
-        
+
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
@@ -110,7 +110,6 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                 <TableHead>Name</TableHead>
                 <TableHead className="w-32">Owner</TableHead>
                 <TableHead className="w-32">Last modified</TableHead>
-                <TableHead className="w-24">Folder Type</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -118,17 +117,18 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
               {files.map((file) => {
                 const Icon = getFileIcon(file.type);
                 const isSelected = selectedFiles.includes(file.id);
-                
+
                 return (
-                  <TableRow 
+                  <TableRow
                     key={file.id}
-                    className={`hover:bg-gray-50 cursor-pointer ${
-                      isSelected ? "bg-blue-50" : ""
-                    }`}
+                    className={`hover:bg-gray-50 cursor-pointer ${isSelected ? "bg-blue-50" : ""
+                      }`}
                     onClick={() => onToggleSelection(file.id)}
                     onDoubleClick={() => {
                       if (file.type === "folder" && onFolderClick && file.tokenId) {
                         onFolderClick(file.tokenId);
+                      } else if (file.type !== "folder" && onFolderClick && file.cid) {
+                        onFolderClick(undefined, `https://${file.owner}.calibration.filcdn.io/${file.cid}`);
                       }
                     }}
                   >
@@ -159,41 +159,47 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                     <TableCell className="text-sm text-gray-600">
                       {file.modified}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600 capitalize">
-                      {file.folderType}
-                    </TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Share className="w-4 h-4 mr-2" />
-                            Share
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className="w-4 h-4 mr-2" />
-                            Download
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit3 className="w-4 h-4 mr-2" />
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Move to trash
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {file.type === "folder" && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <ShareFolderDialog
+                                folderId={file.tokenId || file.id}
+                                folderName={file.name}
+                              >
+                                <div className="flex items-center cursor-pointer p-1 font-light">
+                                  <Share className="w-4 h-4 mr-2" />
+                                  Share
+                                </div>
+                              </ShareFolderDialog>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                              <MakePublicDialog
+                                folderId={file.tokenId || file.id}
+                                folderName={file.name}
+                                isCurrentlyPublic={file.shared}
+                              >
+                                <div className="flex items-center cursor-pointer p-1 font-light">
+                                  <Globe className="w-4 h-4 mr-2" />
+                                  {file.shared ? "Make Private" : "Make Public"}
+                                </div>
+                              </MakePublicDialog>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

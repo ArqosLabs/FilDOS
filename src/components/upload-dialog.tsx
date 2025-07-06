@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAccount } from "wagmi";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useAddFile } from "@/hooks/useContract";
 import { 
   Upload, 
   File, 
@@ -27,23 +28,68 @@ import {
 
 interface UploadDialogProps {
   children: React.ReactNode;
+  folderId: string;
 }
 
-export default function UploadDialog({ children }: UploadDialogProps) {
+export default function UploadDialog({ children, folderId }: UploadDialogProps) {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isAddingToContract, setIsAddingToContract] = useState(false);
+  const [contractAddError, setContractAddError] = useState<string | null>(null);
+  const [processedUploadId, setProcessedUploadId] = useState<string | null>(null);
   const { isConnected } = useAccount();
 
   const { uploadFileMutation, uploadedInfo, handleReset, status, progress } =
     useFileUpload();
+  const addFile = useAddFile();
 
   const { isPending: isLoading, mutateAsync: uploadFile } = uploadFileMutation;
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Add file to contract after upload is complete
+  useEffect(() => {
+    const addFileToContract = async () => {
+      // Create a unique identifier for this upload to prevent duplicate processing
+      const uploadId = uploadedInfo?.commp || '';
+      
+      if (uploadedInfo && uploadedInfo.commp && uploadedInfo.fileName && file && 
+          !isAddingToContract && uploadId !== processedUploadId) {
+        
+        setProcessedUploadId(uploadId);
+        setIsAddingToContract(true);
+        setContractAddError(null);
+        
+        try {
+          // Get file extension and type for tags
+          const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+          const fileType = file.type || 'unknown';
+          const tags = [fileExtension, fileType].filter(Boolean);
+
+          await addFile.mutateAsync({
+            tokenId: folderId,
+            cid: uploadedInfo.commp,
+            filename: uploadedInfo.fileName,
+            tags: tags,
+          });
+          
+          console.log("✅ File added to contract successfully!");
+        } catch (error) {
+          console.error("❌ Error adding file to contract:", error);
+          setContractAddError(error instanceof Error ? error.message : "Failed to add file to folder");
+          setProcessedUploadId(null); // Reset on error so user can retry
+        } finally {
+          setIsAddingToContract(false);
+        }
+      }
+    };
+
+    addFileToContract();
+  }, [uploadedInfo, file, folderId, isAddingToContract, processedUploadId, addFile]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -166,7 +212,7 @@ export default function UploadDialog({ children }: UploadDialogProps) {
                 if (!file) return;
                 await uploadFile(file);
               }}
-              disabled={!file || isLoading || !!uploadedInfo}
+              disabled={!file || isLoading || isAddingToContract || !!uploadedInfo}
               className="flex-1"
               size="lg"
             >
@@ -174,6 +220,11 @@ export default function UploadDialog({ children }: UploadDialogProps) {
                 <>
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                   Uploading...
+                </>
+              ) : isAddingToContract ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Adding to folder...
                 </>
               ) : !uploadedInfo ? (
                 <>
@@ -183,7 +234,7 @@ export default function UploadDialog({ children }: UploadDialogProps) {
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Uploaded
+                  Complete
                 </>
               )}
             </Button>
@@ -192,8 +243,11 @@ export default function UploadDialog({ children }: UploadDialogProps) {
               onClick={() => {
                 handleReset();
                 setFile(null);
+                setIsAddingToContract(false);
+                setContractAddError(null);
+                setProcessedUploadId(null);
               }}
-              disabled={!file || isLoading}
+              disabled={!file || isLoading || isAddingToContract}
               size="lg"
             >
               <XCircle className="h-4 w-4 mr-2" />
@@ -202,31 +256,36 @@ export default function UploadDialog({ children }: UploadDialogProps) {
           </div>
 
           {/* Status and Progress */}
-          {status && (
+          {(status || isAddingToContract || contractAddError) && (
             <Card className={
-              status.includes("❌")
+              status?.includes("❌") || contractAddError
                 ? "border-red-200 bg-red-50"
-                : status.includes("✅") || status.includes("🎉")
+                : status?.includes("✅") || status?.includes("🎉")
                   ? "border-green-200 bg-green-50"
                   : "border-blue-200 bg-blue-50"
             }>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2">
-                  {status.includes("❌") ? (
+                  {status?.includes("❌") || contractAddError ? (
                     <XCircle className="h-5 w-5 text-red-600" />
-                  ) : status.includes("✅") || status.includes("🎉") ? (
+                  ) : status?.includes("✅") || status?.includes("🎉") ? (
                     <CheckCircle className="h-5 w-5 text-green-600" />
                   ) : (
                     <RefreshCw className="h-5 w-5 text-blue-600 animate-spin" />
                   )}
                   <p className={`text-sm font-medium ${
-                    status.includes("❌")
+                    status?.includes("❌") || contractAddError
                       ? "text-red-700"
-                      : status.includes("✅") || status.includes("🎉")
+                      : status?.includes("✅") || status?.includes("🎉")
                         ? "text-green-700"
                         : "text-blue-700"
                   }`}>
-                    {status}
+                    {contractAddError 
+                      ? `Failed to add to folder: ${contractAddError}`
+                      : isAddingToContract 
+                        ? "Adding file to folder..." 
+                        : status
+                    }
                   </p>
                 </div>
                 {isLoading && (
@@ -242,55 +301,41 @@ export default function UploadDialog({ children }: UploadDialogProps) {
             </Card>
           )}
           {/* Upload Success Details */}
-          {uploadedInfo && !isLoading && (
-            <Card className="border-green-200 bg-green-50">
+          {uploadedInfo && !isLoading && !contractAddError && (
+            <Card className="">
               <CardContent className="pt-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <h4 className="text-lg font-semibold text-green-800">
-                    Upload Successful!
-                  </h4>
-                </div>
                 
-                <div className="space-y-4">
-                  <div className="grid gap-3">
-                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-green-700">
+                    {isAddingToContract ? "Uploading & Adding to Folder..." : "File Successfully Uploaded & Added to Folder"}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">File Name</p>
-                        <p className="text-sm text-muted-foreground break-all">
-                          {uploadedInfo.fileName}
-                        </p>
+                      <div>
+                        <p className="font-medium">File Name</p>
+                        <p className="text-muted-foreground truncate">{uploadedInfo.fileName}</p>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                    <div className="flex items-center gap-2">
                       <HardDrive className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">File Size</p>
-                        <p className="text-sm text-muted-foreground">
-                          {uploadedInfo.fileSize?.toLocaleString() || "N/A"} bytes
-                        </p>
+                      <div>
+                        <p className="font-medium">Size</p>
+                        <p className="text-muted-foreground">{uploadedInfo.fileSize?.toLocaleString() || "N/A"} bytes</p>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                    <div className="flex items-center gap-2">
                       <Hash className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">CommP</p>
-                        <p className="text-xs text-muted-foreground break-all font-mono">
-                          {uploadedInfo.commp}
-                        </p>
+                      <div>
+                        <p className="font-medium">CommP</p>
+                        <p className="text-muted-foreground font-mono truncate">{uploadedInfo.commp?.slice(0,10) + "..."}</p>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                    <div className="flex items-center gap-2">
                       <Hash className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Transaction Hash</p>
-                        <p className="text-xs text-muted-foreground break-all font-mono">
-                          {uploadedInfo.txHash?.slice(0, 10)}...
-                        </p>
+                      <div>
+                        <p className="font-medium">TX Hash</p>
+                        <p className="text-muted-foreground font-mono truncate">{uploadedInfo.txHash?.slice(0, 10)}...</p>
                       </div>
                     </div>
                   </div>
