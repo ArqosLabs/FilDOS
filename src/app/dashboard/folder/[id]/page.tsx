@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { Upload, ArrowLeft } from "lucide-react";
+import { Upload, ArrowLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import UploadDialog from "@/components/upload-dialog";
@@ -12,17 +12,24 @@ import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
 import { useFiles, useFolderData } from "@/hooks/useContract";
 import { FileItem } from "../../page";
+import EmbeddingDialog from "@/components/embedding-dialog";
+import SearchDialog from "@/components/search-dialog";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
   });
 };
 
-const getFileTypeFromExtension = (filename: string): FileItem['type'] => {
+const getFileTypeFromExtension = (filename: string, tags?: string[]): FileItem['type'] => {
+  // Check if it's an embed file based on tags or filename pattern
+  if (tags?.includes('embed') || filename.includes('embedding') || filename.endsWith('.pkl')) {
+    return 'embed';
+  }
+  
   const ext = filename.split('.').pop()?.toLowerCase();
   switch (ext) {
     case 'pdf':
@@ -51,7 +58,7 @@ export default function FolderPage() {
   const params = useParams();
   const router = useRouter();
   const folderId = params.id as string;
-  
+
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
 
@@ -63,19 +70,19 @@ export default function FolderPage() {
   const files: FileItem[] = folderFiles ? folderFiles.map(file => ({
     id: file.cid,
     name: file.filename,
-    type: getFileTypeFromExtension(file.filename),
+    type: getFileTypeFromExtension(file.filename, file.tags),
     folderType: "",
     modified: formatDate(file.timestamp),
     owner: file.owner,
     starred: false,
     shared: false,
     cid: file.cid,
-    tags: [], // Add empty tags array
+    tags: file.tags,
   })) : [];
 
   const toggleFileSelection = (fileId: string) => {
-    setSelectedFiles(prev => 
-      prev.includes(fileId) 
+    setSelectedFiles(prev =>
+      prev.includes(fileId)
         ? prev.filter(id => id !== fileId)
         : [...prev, fileId]
     );
@@ -114,14 +121,32 @@ export default function FolderPage() {
           <div className="p-4 border-b bg-gray-50">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Folder Contents</h2>
-              <UploadDialog folderId={folderId}>
-                <Button 
-                  className="bg-primary hover:bg-secondary text-white"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Files
-                </Button>
-              </UploadDialog>
+              <div className="flex items-center space-x-2">
+                <SearchDialog files={files}>
+                  <Button
+                    variant="outline"
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    Search
+                  </Button>
+                </SearchDialog>
+                <EmbeddingDialog folderId={folderId} files={files}>
+                  <Button
+                    variant="secondary"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Embed
+                  </Button>
+                </EmbeddingDialog>
+                <UploadDialog folderId={folderId}>
+                  <Button
+                    className="bg-primary hover:bg-secondary text-white"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Files
+                  </Button>
+                </UploadDialog>
+              </div>
             </div>
           </div>
 
@@ -135,8 +160,8 @@ export default function FolderPage() {
               Back to My Drive
             </button>
             <h2 className="text-lg font-semibold mt-2">
-              {folderDataLoading 
-                ? "Loading folder..." 
+              {folderDataLoading
+                ? "Loading folder..."
                 : folderData?.name || `Folder ${folderId}`
               }
             </h2>
@@ -152,7 +177,7 @@ export default function FolderPage() {
               </div>
             )}
           </div>
-          
+
           {/* Error state */}
           {hasError && (
             <div className="flex items-center justify-center p-8">
@@ -164,7 +189,7 @@ export default function FolderPage() {
               </div>
             </div>
           )}
-          
+
           {/* Loading state */}
           {isLoading && !hasError && (
             <div className="flex items-center justify-center p-8">
@@ -201,15 +226,15 @@ export default function FolderPage() {
               ) : (
                 <>
                   {viewMode === "grid" ? (
-                    <FileGrid 
-                      files={files} 
+                    <FileGrid
+                      files={files}
                       selectedFiles={selectedFiles}
                       onToggleSelection={toggleFileSelection}
                       onFolderClick={handleFileClick}
                     />
                   ) : (
                     <FileList
-                      files={files} 
+                      files={files}
                       selectedFiles={selectedFiles}
                       onToggleSelection={toggleFileSelection}
                       onFolderClick={handleFileClick}

@@ -9,7 +9,8 @@ import {
   MoreVertical,
   Share,
   Globe,
-  Info
+  Info,
+  Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +54,8 @@ const getFileIcon = (type: FileItem["type"]) => {
       return Video;
     case "pdf":
       return FileType;
+    case "embed":
+      return Brain;
     default:
       return FileType;
   }
@@ -70,6 +73,8 @@ const getFileColor = (type: FileItem["type"]) => {
       return "text-red-500";
     case "pdf":
       return "text-red-600";
+    case "embed":
+      return "text-purple-500";
     default:
       return "text-gray-500";
   }
@@ -123,8 +128,9 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                 return (
                   <TableRow
                     key={file.id}
-                    className={`hover:bg-gray-50 cursor-pointer ${isSelected ? "bg-blue-50" : ""
-                      }`}
+                    className={`hover:bg-gray-50 cursor-pointer ${
+                      isSelected ? "bg-blue-50" : ""
+                    } ${file.type === "embed" ? "opacity-40" : ""}`}
                     onClick={() => onToggleSelection(file.id)}
                     onDoubleClick={() => {
                       if (file.type === "folder" && onFolderClick && file.tokenId) {

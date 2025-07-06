@@ -9,7 +9,8 @@ import {
   MoreVertical,
   Share,
   Globe,
-  Info
+  Info,
+  Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +25,6 @@ import { FileItem } from "@/app/dashboard/page";
 import ShareFolderDialog from "@/components/share-folder-dialog";
 import MakePublicDialog from "@/components/make-public-dialog";
 import DetailsModal from "@/components/details-modal";
-
 
 interface FileGridProps {
   files: FileItem[];
@@ -45,6 +45,8 @@ const getFileIcon = (type: FileItem["type"]) => {
       return Video;
     case "pdf":
       return FileType;
+    case "embed":
+      return Brain;
     default:
       return FileType;
   }
@@ -62,6 +64,8 @@ const getFileColor = (type: FileItem["type"]) => {
       return "text-red-500";
     case "pdf":
       return "text-red-600";
+    case "embed":
+      return "text-purple-500";
     default:
       return "text-gray-500";
   }
@@ -80,8 +84,9 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
             return (
               <div
                 key={file.id}
-                className={`group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer ${isSelected ? "ring-2 ring-primary bg-blue-50" : ""
-                  }`}
+                className={`group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer ${
+                  isSelected ? "ring-2 ring-primary bg-blue-50" : ""
+                } ${file.type === "embed" ? "opacity-40" : ""}`}
                 onClick={() => onToggleSelection(file.id)}
                 onDoubleClick={() => {
                   if (file.type === "folder" && onFolderClick && file.tokenId) {
