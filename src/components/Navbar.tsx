@@ -1,43 +1,40 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { motion } from "framer-motion";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Bell, Settings } from "lucide-react";
 
 export function Navbar() {
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ type: "spring", stiffness: 100, damping: 20 }}
-      className="flex items-center justify-between p-4 border-b dark:border-gray-800"
-    >
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2 }}
-        className="flex items-center gap-4"
-      >
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-2"
-        >
-          <Image src="/FILDOS.png" alt="Filecoin" width={30} height={30} />
-          <h1 className="text-xl font-bold">Filecoin Services Uploader</h1>
-        </motion.div>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.3 }}
-        className="flex items-center gap-4"
-      >
-        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-        </motion.div>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <ConnectButton />
-        </motion.div>
-      </motion.div>
-    </motion.nav>
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-16 items-center justify-between px-6">
+        {/* Logo and Brand */}
+        <div className="flex items-center gap-3">
+          <Image 
+            src="/FILDOS.png" 
+            alt="FILDOS" 
+            width={48} 
+            height={48}
+          />
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">FILDOS</h1>
+            <p className="text-xs text-muted-foreground">Filecoin Drive OS</p>
+          </div>
+        </div>
+
+        {/* Right Side Actions */}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Bell className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Settings className="h-4 w-4" />
+          </Button>
+          <div className="h-6 w-px bg-border mx-1" />
+          <ConnectButton accountStatus="avatar" />
+        </div>
+      </div>
+    </nav>
   );
 }

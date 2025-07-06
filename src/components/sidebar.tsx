@@ -2,7 +2,6 @@
 
 import {
   HardDrive,
-  Star,
   Clock,
   Users,
   Trash2,
@@ -14,27 +13,27 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { useBalances } from "@/hooks/useBalances";
 import { Progress } from "./ui/progress";
 import Link from "next/link";
+import { useSelectedLayoutSegment } from "next/navigation";
 
 const sidebarItems = [
-  { icon: HardDrive, label: "My Drive", count: null, active: true },
-  { icon: Users, label: "Shared with me", count: 3, active: false },
-  { icon: Clock, label: "Recent", count: null, active: false },
-  { icon: Star, label: "Starred", count: 2, active: false },
-  { icon: Trash2, label: "Trash", count: null, active: false },
+  { icon: HardDrive, label: "My Drive", route: null },
+  { icon: Users, label: "Shared with me", route: "shared" },
+  { icon: Clock, label: "Recent", route: "recent" },
+  { icon: Trash2, label: "Trash", route: "trash" },
 ];
 
 const fileTypes = [
-  { icon: FileText, label: "Documents", count: 12, active: false },
-  { icon: Image, label: "Images", count: 45, active: false },
-  { icon: Video, label: "Videos", count: 8, active: false },
-  { icon: FileArchive, label: "Archives", count: 3, active: false },
+  { icon: FileText, label: "Documents", route: "documents" },
+  { icon: Image, label: "Images", route: "images" },
+  { icon: Video, label: "Videos", route: "videos" },
+  { icon: FileArchive, label: "Archives", route: "archives" },
 ];
 
 export default function Sidebar() {
+  const segment = useSelectedLayoutSegment();
 
   const {
     data,
@@ -51,21 +50,22 @@ export default function Sidebar() {
       <div className="p-4 flex-1">
         {/* Navigation Items */}
         <nav className="space-y-1">
-          {sidebarItems.map((item) => (
-            <Button
-              key={item.label}
-              variant={item.active ? "default" : "ghost"}
-              className="w-full justify-start h-10 px-3"
-            >
-              <item.icon className="w-4 h-4 mr-3" />
-              <span className="flex-1 text-left">{item.label}</span>
-              {item.count && (
-                <Badge variant="secondary" className="ml-auto">
-                  {item.count}
-                </Badge>
-              )}
-            </Button>
-          ))}
+          {sidebarItems.map((item) => {
+            const isActive = segment === item.route;
+            const href = item.route ? `/dashboard/${item.route}` : '/dashboard';
+            
+            return (
+              <Link key={item.label} href={href}>
+                <Button
+                  variant={isActive ? "default" : "ghost"}
+                  className="w-full justify-start h-10 px-3"
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                </Button>
+              </Link>
+            );
+          })}
         </nav>
 
         <Separator className="my-4" />
@@ -74,7 +74,7 @@ export default function Sidebar() {
         <div className="space-y-1">
             <Link href="/dashboard/storage">
               <Button
-                variant="ghost"
+                variant={segment === "storage" ? "default" : "ghost"}
                 className="w-full justify-start h-10 px-3"
               >
                 <Cloud className="w-4 h-4 mr-3" />
@@ -107,17 +107,22 @@ export default function Sidebar() {
           <div className="px-3 py-2">
             <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">File Types</h3>
           </div>
-          {fileTypes.map((item) => (
-            <Button
-              key={item.label}
-              variant="ghost"
-              className="w-full justify-start h-9 px-3 text-sm"
-            >
-              <item.icon className="w-4 h-4 mr-3" />
-              <span className="flex-1 text-left">{item.label}</span>
-              <span className="text-xs text-gray-400">{item.count}</span>
-            </Button>
-          ))}
+          {fileTypes.map((item) => {
+            const isActive = segment === item.route;
+            const href = `/dashboard/${item.route}`;
+            
+            return (
+              <Link key={item.label} href={href}>
+                <Button
+                  variant={isActive ? "default" : "ghost"}
+                  className="w-full justify-start h-9 px-3 text-sm"
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                </Button>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </aside>

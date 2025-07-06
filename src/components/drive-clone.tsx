@@ -3,7 +3,7 @@
 import { useState } from "react";
 import FloatingActionButton from "./floating-action-button";
 import Header from "./header";
-import Sidebar from "./sidebar";
+import Sidebar from "./Sidebar";
 import FileGrid from "./file-grid";
 import FileList from "./file-list";
 

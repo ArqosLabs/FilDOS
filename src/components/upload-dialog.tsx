@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,12 +33,17 @@ export default function UploadDialog({ children }: UploadDialogProps) {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { isConnected } = useAccount();
 
   const { uploadFileMutation, uploadedInfo, handleReset, status, progress } =
     useFileUpload();
 
   const { isPending: isLoading, mutateAsync: uploadFile } = uploadFileMutation;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -68,7 +73,7 @@ export default function UploadDialog({ children }: UploadDialogProps) {
     }
   }, []);
 
-  if (!isConnected) {
+  if (!mounted || !isConnected) {
     return null;
   }
 
