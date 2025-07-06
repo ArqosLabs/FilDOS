@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI models cache
+ai/models/
+ai/embeddings/
+ai/uploads/
+ai/temp_files/
