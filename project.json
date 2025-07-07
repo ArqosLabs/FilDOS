@@ -9,6 +9,6 @@
     }
   ],
   "demo_url": "https://fildos.vercel.app/",
-  "video_url": "https://youtube.com/watch?v=your-demo-video",
+  "video_url": "https://youtu.be/Qr5B9RzHYEs",
   "technologies": ["Next.js", "TypeScript", "Filecoin", "Flask", "CLIP", "SentenceTransformers", "ERC-721", "Tailwind CSS", "shadcn/ui", "FilCDN", "Synapse SDK", "RainbowKit", "Hardhat"]
 }
