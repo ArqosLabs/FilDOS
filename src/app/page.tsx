@@ -521,6 +521,7 @@ export default function LandingPage() {
               </Button>
             </Link>
           </div>
+          <iframe width="560" height="315" src="https://www.youtube.com/embed/Qr5B9RzHYEs?si=RUzJAYfpcBvDzMIa" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen className="flex justify-center m-6 mx-auto border border-white"></iframe>
         </div>
       </section>
 
