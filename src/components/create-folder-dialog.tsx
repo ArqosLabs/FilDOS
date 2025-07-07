@@ -84,8 +84,7 @@ export default function CreateFolderDialog({
               >
                 <option value="personal">Personal</option>
                 <option value="work">Work</option>
-                <option value="shared">Shared</option>
-                <option value="archive">Archive</option>
+                <option value="agent">For Agent</option>
               </select>
             </div>
           </div>

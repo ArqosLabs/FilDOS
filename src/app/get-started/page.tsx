@@ -13,9 +13,9 @@ export default function GetStarted() {
   const { isConnected, chainId } = useAccount();
 
   return (
-    <div className="w-full flex flex-col justify-center min-h-screen bg-gray-50">
+    <div className="w-full flex flex-col h-screen bg-gray-50">
       <Navbar />
-      <main className="flex flex-col items-center py-10 px-6 w-full mx-auto">
+      <main className="flex flex-col items-center justify-center flex-1 py-10 px-6 w-full mx-auto">
         <div className="max-w-2xl w-full space-y-6">
           {/* Header */}
           <div className="text-center space-y-4">
