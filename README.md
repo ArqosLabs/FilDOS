@@ -4,6 +4,8 @@
 
 FILDOS is a revolutionary decentralized storage platform built on Filecoin that enables users to store, search, and share files by meaning rather than cryptic identifiers like CIDs. It combines the power of blockchain technology with AI-driven semantic search to create a truly human-centric storage experience.
 
+<img width="1510" alt="Screenshot 2025-07-07 at 9 22 48 AM" src="https://github.com/user-attachments/assets/74708cef-349e-47cd-9464-f5d4c3b97782" />
+
 ## 🚀 Key Features
 
 - **🔍 Semantic Search**: Find files by meaning, not CIDs
@@ -64,7 +66,10 @@ FILDOS is a revolutionary decentralized storage platform built on Filecoin that 
    ```
 
 3. **Open your browser** to `http://localhost:3000`
+   
+<img width="1510" alt="Screenshot 2025-07-07 at 9 24 01 AM" src="https://github.com/user-attachments/assets/db3fc646-7567-47fb-859f-8ec4ba04a4b7" />
 
+<img width="1510" alt="Screenshot 2025-07-07 at 9 23 46 AM" src="https://github.com/user-attachments/assets/67bbc263-8a74-41e3-ab26-d0023b7230fc" />
 
 ## 📖 Usage
 
