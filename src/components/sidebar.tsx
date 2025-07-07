@@ -3,7 +3,6 @@
 import {
   HardDrive,
   Users,
-  Trash2,
   Cloud,
   FileText,
   Image,
@@ -24,7 +23,7 @@ const sidebarItems = [
   { icon: HardDrive, label: "My Drive", route: null },
   { icon: Users, label: "Shared with me", route: "shared" },
   { icon: Globe, label: "Public Folders", route: "public" },
-  { icon: Trash2, label: "Trash", route: "trash" },
+  // { icon: Trash2, label: "Trash", route: "trash" },
   { icon: Scale, label: "Proof Sets", route: "proof-sets" }
 ];
 
