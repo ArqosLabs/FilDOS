@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { AlertCircle, Search, Loader2, FileText, Image as ImageIcon, ExternalLink } from "lucide-react";
+import { AlertCircle, Search, Loader2, FileText, Image as ImageIcon } from "lucide-react";
 import { useAI, SearchResult } from "@/hooks/useAI";
 import { FileItem } from "@/app/dashboard/page";
 import { Card, CardContent } from "./ui/card";

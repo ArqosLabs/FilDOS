@@ -1,7 +1,7 @@
 "use client";
 
+import { FileItem } from "@/app/dashboard/page";
 import { useFolderData } from "@/hooks/useContract";
-import { FileItem } from "./my-drive";
 
 interface FolderItemProps {
   tokenId: string;
@@ -15,10 +15,6 @@ interface FolderItemProps {
 export function FolderItem({
   tokenId,
   isStarred,
-  onToggleStar,
-  onToggleSelection,
-  onFolderClick,
-  isSelected,
 }: FolderItemProps) {
   const { data: folderData, isLoading, error } = useFolderData(tokenId);
 
@@ -40,6 +36,7 @@ export function FolderItem({
     starred: isStarred,
     shared: folderData?.isPublic || false,
     tokenId,
+    folderType: folderData?.folderType || "default",
   };
 
   return {
