@@ -1,7 +1,7 @@
 import Web3Providers from "@/providers/web-providers";
 import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css"
-import { Databuddy } from '@databuddy/sdk';
+import { Analytics } from "@vercel/analytics/next"
 
 export default function RootLayout({
   children,
@@ -17,10 +17,7 @@ export default function RootLayout({
             {children}
           </main>
         </Web3Providers>
-        <Databuddy
-          clientId={process.env.NEXT_PUBLIC_ANALYTICS!}
-          enableBatching={true}
-        />
+        <Analytics />
       </body>
     </html>
   );
