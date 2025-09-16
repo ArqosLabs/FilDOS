@@ -2,6 +2,7 @@ import Web3Providers from "@/providers/web-providers";
 import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css"
 import { Analytics } from "@vercel/analytics/next"
+import { SynapseProvider } from "@/providers/SynapseProvider";
 
 export default function RootLayout({
   children,
@@ -13,9 +14,11 @@ export default function RootLayout({
       <body
       >
         <Web3Providers>
-          <main className="flex flex-col min-h-screen">
-            {children}
-          </main>
+          <SynapseProvider>
+            <main className="flex flex-col min-h-screen">
+              {children}
+            </main>
+          </SynapseProvider>
         </Web3Providers>
         <Analytics />
       </body>

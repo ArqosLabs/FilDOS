@@ -55,9 +55,9 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
   useEffect(() => {
     const addFileToContract = async () => {
       // Create a unique identifier for this upload to prevent duplicate processing
-      const uploadId = uploadedInfo?.commp || '';
+      const uploadId = uploadedInfo?.pieceCid || '';
       
-      if (uploadedInfo && uploadedInfo.commp && uploadedInfo.fileName && file && 
+      if (uploadedInfo && uploadedInfo.pieceCid && uploadedInfo.fileName && file && 
           !isAddingToContract && uploadId !== processedUploadId) {
         
         setProcessedUploadId(uploadId);
@@ -72,7 +72,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
 
           await addFile.mutateAsync({
             tokenId: folderId,
-            cid: uploadedInfo.commp,
+            cid: uploadedInfo.pieceCid,
             filename: uploadedInfo.fileName,
             tags: tags,
           });
@@ -328,7 +328,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                       <Hash className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="font-medium">CommP</p>
-                        <p className="text-muted-foreground font-mono truncate">{uploadedInfo.commp?.slice(0,10) + "..."}</p>
+                        <p className="text-muted-foreground font-mono truncate">{uploadedInfo.pieceCid?.slice(0,10) + "..."}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

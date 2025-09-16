@@ -1,10 +1,10 @@
-# FILDOS Smart Contracts
+# FilDOS Smart Contracts
 
-Smart contracts for the FILDOS decentralized storage platform, built on Filecoin FEVM (Filecoin Ethereum Virtual Machine).
+Smart contracts for the FilDOS decentralized storage platform, built on Filecoin FEVM (Filecoin Ethereum Virtual Machine).
 
 ## 🏗️ Overview
 
-FILDOS uses ERC-721 NFTs to represent folders in the decentralized storage system. Each folder NFT contains metadata, access controls, and embedding indexes, enabling true ownership and programmable access to decentralized storage.
+FilDOS uses ERC-721 NFTs to represent folders in the decentralized storage system. Each folder NFT contains metadata, access controls, and embedding indexes, enabling true ownership and programmable access to decentralized storage.
 
 ## 📄 Contracts
 

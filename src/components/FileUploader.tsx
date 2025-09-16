@@ -172,7 +172,7 @@ export const FileUploader = () => {
               {uploadedInfo.fileSize?.toLocaleString() || "N/A"} bytes
             </div>
             <div className="break-all">
-              <span className="font-medium">CommP:</span> {uploadedInfo.commp}
+              <span className="font-medium">CommP:</span> {uploadedInfo.pieceCid}
             </div>
             <div className="break-all">
               <span className="font-medium">Tx Hash:</span>{" "}

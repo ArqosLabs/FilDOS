@@ -1,4 +1,4 @@
-# FILDOS AI API - Stateless Document Embedding Service
+# FilDOS AI API - Stateless Document Embedding Service
 
 A Flask-based API service for creating and searching document embeddings using CLIP (for images) and SentenceTransformers (for text). This service is designed to be stateless, making it perfect for multi-user applications where each user manages their own embeddings.
 

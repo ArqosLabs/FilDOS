@@ -1,43 +1,16 @@
-export interface Root {
-  rootId: number;
-  rootCid: string;
-  subrootCid: string;
-  subrootOffset: number;
+import {
+  ProviderInfo,
+  DataSetData,
+  EnhancedDataSetInfo,
+} from "@filoz/synapse-sdk";
+
+export interface DataSet extends EnhancedDataSetInfo {
+  data: DataSetData | null;
+  provider: ProviderInfo | null;
 }
 
-export interface Provider {
-  owner: string;
-  pdpUrl: string;
-}
-
-export interface ProofSetDetails {
-  id: number;
-  roots: Root[];
-  nextChallengeEpoch: number;
-  pdpUrl: string;
-}
-
-export interface ProofSet {
-  railId: number;
-  payer: string;
-  payee: string;
-  commissionBps: number;
-  metadata: string;
-  rootMetadata: unknown[];
-  clientDataSetId: number;
-  withCDN: boolean;
-  pdpVerifierProofSetId: number;
-  nextRootId: number;
-  currentRootCount: number;
-  isLive: boolean;
-  isManaged: boolean;
-  details: ProofSetDetails | null;
-  pdpUrl: string | null;
-  provider: Provider | null;
-}
-
-export interface ProofSetsResponse {
-  proofsets: ProofSet[];
+export interface DatasetsResponse {
+  datasets: DataSet[];
 }
 
 /**
@@ -46,10 +19,10 @@ export interface ProofSetsResponse {
 export interface UseBalancesResponse {
   filBalance: bigint;
   usdfcBalance: bigint;
-  pandoraBalance: bigint;
+  warmStorageBalance: bigint;
   filBalanceFormatted: number;
   usdfcBalanceFormatted: number;
-  pandoraBalanceFormatted: number;
+  warmStorageBalanceFormatted: number;
   persistenceDaysLeft: number;
   persistenceDaysLeftAtCurrentRate: number;
   isSufficient: boolean;
@@ -66,10 +39,10 @@ export interface UseBalancesResponse {
 export const defaultBalances: UseBalancesResponse = {
   filBalance: BigInt(0),
   usdfcBalance: BigInt(0),
-  pandoraBalance: BigInt(0),
+  warmStorageBalance: BigInt(0),
   filBalanceFormatted: 0,
   usdfcBalanceFormatted: 0,
-  pandoraBalanceFormatted: 0,
+  warmStorageBalanceFormatted: 0,
   persistenceDaysLeft: 0,
   persistenceDaysLeftAtCurrentRate: 0,
   isSufficient: false,
@@ -86,12 +59,21 @@ export const defaultBalances: UseBalancesResponse = {
 /**
  * Interface representing the Pandora balance data returned from the SDK
  */
-export interface PandoraBalanceData {
+export interface WarmStorageBalance {
   rateAllowanceNeeded: bigint;
-  currentRateUsed: bigint;
+  lockupAllowanceNeeded: bigint;
   currentRateAllowance: bigint;
   currentLockupAllowance: bigint;
+  currentRateUsed: bigint;
   currentLockupUsed: bigint;
+  sufficient: boolean;
+  message?: string;
+  costs: {
+    perEpoch: bigint;
+    perDay: bigint;
+    perMonth: bigint;
+  };
+  depositAmountNeeded: bigint;
 }
 
 /**
@@ -153,6 +135,11 @@ export interface AllowanceItemProps {
   label: string;
   isSufficient?: boolean;
   isLoading?: boolean;
+}
+
+export interface StorageCosts {
+  pricePerTiBPerMonthNoCDN: bigint;
+  pricePerTiBPerMonthWithCDN: bigint;
 }
 
 // Contract-related types

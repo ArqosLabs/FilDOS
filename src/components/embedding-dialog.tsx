@@ -149,11 +149,11 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
 
   // Watch for upload completion and add file to contract
   useEffect(() => {
-    if (step === 'saving' && uploadedInfo && uploadedInfo.commp && uploadedInfo.fileName) {
+    if (step === 'saving' && uploadedInfo && uploadedInfo.pieceCid && uploadedInfo.fileName) {
       // Add the embedding file to the folder with the actual CID
       addFile({
         tokenId: folderId,
-        cid: uploadedInfo.commp,
+        cid: uploadedInfo.pieceCid,
         filename: uploadedInfo.fileName,
         tags: ['embed'],
       }, {

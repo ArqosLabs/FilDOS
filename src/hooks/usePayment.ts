@@ -1,15 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
-import { useEthersSigner } from "@/hooks/useEthers";
 import { useState } from "react";
-import { useNetwork } from "@/hooks/useNetwork";
-import { Synapse, TOKENS, CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
-import {
-  getPandoraAddress,
-  PROOF_SET_CREATION_FEE,
-  MAX_UINT256,
-  getProofset,
-} from "@/utils";
+import { TOKENS, TIME_CONSTANTS } from "@filoz/synapse-sdk";
+import { DATA_SET_CREATION_FEE, MAX_UINT256 } from "@/utils";
 import { useAccount } from "wagmi";
+import { config } from "@/config";
+import { useSynapse } from "@/providers/SynapseProvider";
 
 /**
  * Hook to handle payment for storage
@@ -21,10 +16,9 @@ import { useAccount } from "wagmi";
  * @returns Mutation and status
  */
 export const usePayment = () => {
-  const signer = useEthersSigner();
   const [status, setStatus] = useState<string>("");
-  const { data: network } = useNetwork();
   const { address } = useAccount();
+  const { synapse, warmStorageService } = useSynapse();
   const mutation = useMutation({
     mutationFn: async ({
       lockupAllowance,
@@ -35,28 +29,27 @@ export const usePayment = () => {
       epochRateAllowance: bigint;
       depositAmount: bigint;
     }) => {
-      if (!signer) throw new Error("Signer not found");
-      if (!network) throw new Error("Network not found");
       if (!address) throw new Error("Address not found");
-      const paymentsAddress = CONTRACT_ADDRESSES.PAYMENTS[network];
-
+      if (!synapse) throw new Error("Synapse not found");
+      if (!warmStorageService)
+        throw new Error("Warm storage service not found");
       setStatus("🔄 Preparing transaction...");
-      const synapse = await Synapse.create({
-        signer,
-        disableNonceManager: false,
-      });
 
-      const { proofset } = await getProofset(signer, network, address);
+      const paymentsAddress = synapse.getPaymentsAddress();
 
-      const hasProofSet = !!proofset;
+      const dataset = (
+        await warmStorageService.getClientDataSetsWithDetails(address)
+      ).filter((dataset) => dataset.withCDN === config.withCDN);
 
-      const fee = hasProofSet ? BigInt(0) : PROOF_SET_CREATION_FEE;
+      const hasDataset = dataset.length > 0;
+
+      const fee = hasDataset ? BigInt(0) : DATA_SET_CREATION_FEE;
 
       const amount = depositAmount + fee;
 
       const allowance = await synapse.payments.allowance(
-        TOKENS.USDFC,
-        paymentsAddress
+        paymentsAddress,
+        TOKENS.USDFC
       );
 
       const balance = await synapse.payments.walletBalance(TOKENS.USDFC);
@@ -65,12 +58,12 @@ export const usePayment = () => {
         throw new Error("Insufficient USDFC balance");
       }
 
-      if (allowance < MAX_UINT256) {
+      if (allowance < MAX_UINT256 / BigInt(2)) {
         setStatus("💰 Approving USDFC to cover storage costs...");
         const transaction = await synapse.payments.approve(
-          TOKENS.USDFC,
           paymentsAddress,
-          MAX_UINT256
+          MAX_UINT256,
+          TOKENS.USDFC
         );
         await transaction.wait();
         setStatus("💰 Successfully approved USDFC to cover storage costs");
@@ -82,14 +75,19 @@ export const usePayment = () => {
         setStatus("💰 Successfully deposited USDFC to cover storage costs");
       }
 
-      setStatus("💰 Approving Pandora service USDFC spending rates...");
+      setStatus(
+        "💰 Approving Filecoin Warm Storage service USDFC spending rates..."
+      );
       const transaction = await synapse.payments.approveService(
-        getPandoraAddress(network),
+        synapse.getWarmStorageAddress(),
         epochRateAllowance,
-        lockupAllowance + fee
+        lockupAllowance + fee,
+        TIME_CONSTANTS.EPOCHS_PER_DAY * BigInt(config.persistencePeriod)
       );
       await transaction.wait();
-      setStatus("💰 Successfully approved Pandora spending rates");
+      setStatus(
+        "💰 Successfully approved Filecoin Warm Storage spending rates"
+      );
     },
     onSuccess: () => {
       setStatus("✅ Payment was successful!");

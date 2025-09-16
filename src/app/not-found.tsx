@@ -12,9 +12,9 @@ export default function NotFound() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-2">
-              <Image src="/FILDOS.png" alt="FILDOS Logo" width={32} height={32} className="w-8 h-8" />
+              <Image src="/FILDOS.png" alt="FilDOS Logo" width={32} height={32} className="w-8 h-8" />
               <h1 className="text-2xl font-bold text-primary tracking-tight">
-                FILDOS
+                FilDOS
               </h1>
             </Link>
             <Link href="/">
@@ -86,13 +86,13 @@ export default function NotFound() {
           {/* Help Text */}
           <div className="pt-8 border-t border-gray-200">
             <p className="text-sm text-gray-500">
-              Looking for something specific? Try our{" "}
+              Looking for something specific? Check our{" "}
               <Link href="/" className="text-primary hover:underline font-medium">
-                semantic search
+                about page
               </Link>{" "}
               or explore our{" "}
               <Link href="/dashboard" className="text-primary hover:underline font-medium">
-                dashboard
+                app
               </Link>
             </p>
           </div>

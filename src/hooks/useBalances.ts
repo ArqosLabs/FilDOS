@@ -1,28 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
-import { Synapse, TOKENS } from "@filoz/synapse-sdk";
-import { useEthersProvider } from "@/hooks/useEthers";
+import { TOKENS } from "@filoz/synapse-sdk";
 import { useAccount } from "wagmi";
 import { calculateStorageMetrics } from "@/utils/calculateStorageMetrics";
-import { useNetwork } from "@/hooks/useNetwork";
 import { formatUnits } from "viem";
 import { defaultBalances, UseBalancesResponse } from "@/types";
+import { useSynapse } from "@/providers/SynapseProvider";
 
 /**
  * Hook to fetch and format wallet balances and storage metrics
  */
 export const useBalances = () => {
-  const provider = useEthersProvider();
+  const { synapse } = useSynapse();
   const { address } = useAccount();
-  const { data: network } = useNetwork();
 
   const query = useQuery({
-    enabled: !!address && !!provider && !!network,
-    queryKey: ["balances", address, network],
+    queryKey: ["balances", address],
     queryFn: async (): Promise<UseBalancesResponse> => {
-      if (!provider) throw new Error("Provider not found");
-      if (!network) throw new Error("Network not found");
-
-      const synapse = await Synapse.create({ provider });
+      if (!synapse) throw new Error("Synapse not found");
 
       // Fetch raw balances
       const [filRaw, usdfcRaw, paymentsRaw] = await Promise.all([
@@ -39,10 +33,10 @@ export const useBalances = () => {
       return {
         filBalance: filRaw,
         usdfcBalance: usdfcRaw,
-        pandoraBalance: paymentsRaw,
+        warmStorageBalance: paymentsRaw,
         filBalanceFormatted: formatBalance(filRaw, 18),
         usdfcBalanceFormatted: formatBalance(usdfcRaw, usdfcDecimals),
-        pandoraBalanceFormatted: formatBalance(paymentsRaw, usdfcDecimals),
+        warmStorageBalanceFormatted: formatBalance(paymentsRaw, usdfcDecimals),
         ...storageMetrics,
       };
     },

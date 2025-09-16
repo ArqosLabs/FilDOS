@@ -90,7 +90,7 @@ def check_models_exist():
 def main():
     """Main function"""
     print("=" * 50)
-    print("FILDOS AI API - Model Downloader")
+    print("FilDOS AI API - Model Downloader")
     print("=" * 50)
     
     if check_models_exist():

@@ -24,7 +24,7 @@ const sidebarItems = [
   { icon: Users, label: "Shared with me", route: "shared" },
   { icon: Globe, label: "Public Folders", route: "public" },
   // { icon: Trash2, label: "Trash", route: "trash" },
-  { icon: Scale, label: "Proof Sets", route: "proof-sets" }
+  { icon: Scale, label: "Data Sets", route: "data-sets" }
 ];
 
 const fileTypes = [

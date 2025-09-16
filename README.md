@@ -1,8 +1,8 @@
-# FILDOS - AI-Native Decentralized Storage
+# FilDOS - AI-Native Decentralized Storage
 
 **A Secure, AI-Native, Meaning-First Decentralized Drive**
 
-FILDOS is a revolutionary decentralized storage platform built on Filecoin that enables users to store, search, and share files by meaning rather than cryptic identifiers like CIDs. It combines the power of blockchain technology with AI-driven semantic search to create a truly human-centric storage experience.
+FilDOS is a revolutionary decentralized storage platform built on Filecoin that enables users to store, search, and share files by meaning rather than cryptic identifiers like CIDs. It combines the power of blockchain technology with AI-driven semantic search to create a truly human-centric storage experience.
 
 <img width="1503" height="766" alt="Screenshot 2025-08-23 at 11 21 14 AM" src="https://github.com/user-attachments/assets/cf8ab812-7556-4e71-9d02-33e9254c991d" />
 
@@ -39,7 +39,7 @@ FILDOS is a revolutionary decentralized storage platform built on Filecoin that 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd FILDOS
+   cd FilDOS
    ```
 
 2. **Install frontend dependencies**
@@ -100,7 +100,7 @@ See `ai/README.md` for detailed AI service documentation.
 
 ## 🔐 Smart Contracts
 
-FILDOS uses ERC-721 NFTs for folder management:
+FilDOS uses ERC-721 NFTs for folder management:
 - **Ownership**: NFT defines folder control
 - **Access Control**: View/edit permissions based on ownership
 - **Programmability**: Smart contract logic for sharing and delegation

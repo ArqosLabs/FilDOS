@@ -1,7 +1,7 @@
 {
   "name": "fildos-contracts",
   "version": "1.0.0",
-  "description": "Smart contracts for FILDOS - Filecoin Decentralized Storage",
+  "description": "Smart contracts for FilDOS - Filecoin Decentralized Storage",
   "scripts": {
     "compile": "hardhat compile",
     "deploy:calibration": "hardhat ignition deploy ignition/modules/FILDOS.ts --network calibrationnet",

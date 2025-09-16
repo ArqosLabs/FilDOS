@@ -1,7 +1,7 @@
 "use client";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Navbar } from "@/components/Navbar";
+import  Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,17 +21,17 @@ export default function GetStarted() {
           <div className="text-center space-y-4">
             <Badge className="bg-primary text-white">Get Started</Badge>
             <h1 className="text-4xl font-bold text-gray-900">
-              Welcome to FILDOS
+              Welcome to FilDOS
             </h1>
           </div>
 
           {/* Network Notice */}
           {chainId !== 314159 && (
             <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertTriangle className="h-4 w-4 text-red" />
               <AlertDescription className="text-red-800">
-                <strong>⚠️ Network Notice:</strong> Filecoin mainnet is not supported yet. 
-                Please switch to Filecoin Calibration network (Chain ID: 314159).
+                <strong>Network Notice:</strong> Filecoin mainnet is not supported yet. 
+                Please switch to Filecoin Calibration network.
               </AlertDescription>
             </Alert>
           )}
@@ -45,7 +45,7 @@ export default function GetStarted() {
                   Connect Your Wallet
                 </CardTitle>
                 <CardDescription>
-                  Connect your wallet to start using FILDOS decentralized storage
+                  Connect your wallet to start using FilDOS decentralized storage
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
@@ -57,35 +57,36 @@ export default function GetStarted() {
             </Card>
           ) : (
             <div className="space-y-6">
-              {/* Success Message */}
-              <Alert className="border-green-200 bg-green-50">
-                <Info className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  <strong>✅ Wallet Connected!</strong> You&apos;re ready to use FILDOS.
-                </AlertDescription>
-              </Alert>
 
               {/* Quick Start Card */}
-              <Card className="border-2 border-primary/20">
+              <Card className="border-2 border-secondary/20">
                 <CardHeader>
                   <CardTitle>Ready to Get Started?</CardTitle>
                   <CardDescription>
-                    Access your decentralized storage dashboard and start uploading files
+                    Access your decentralized storage dashboard and start storing files
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-3">
                     <div className="flex items-center space-x-3 text-sm">
                       <div className="w-2 h-2 bg-primary rounded-full"></div>
+                      <span>Buy Storage and set up your account</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-sm">
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
                       <span>Create NFT-based folders</span>
                     </div>
                     <div className="flex items-center space-x-3 text-sm">
                       <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <span>Upload files with semantic search</span>
+                      <span>Upload files</span>
                     </div>
                     <div className="flex items-center space-x-3 text-sm">
                       <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <span>Access files by meaning, not CIDs</span>
+                      <span>Access files semantically</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-sm">
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
+                      <span>Share folders with others</span>
                     </div>
                   </div>
                   
@@ -102,21 +103,6 @@ export default function GetStarted() {
                       </Button>
                     </Link>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Additional Info */}
-              <Card className="bg-blue-50 border-blue-200">
-                <CardHeader>
-                  <CardTitle className="text-blue-900">What&apos;s Next?</CardTitle>
-                </CardHeader>
-                <CardContent className="text-blue-800">
-                  <ul className="space-y-2 text-sm">
-                    <li>• Purchase storage to create your first folder NFT</li>
-                    <li>• Upload your first file and experience semantic search</li>
-                    <li>• Share folders with others using blockchain-based permissions</li>
-                    <li>• Explore AI-powered file organization and search</li>
-                  </ul>
                 </CardContent>
               </Card>
             </div>

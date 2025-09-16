@@ -15,7 +15,7 @@ def check_models_exist():
 
 def main():
     """Main startup function"""
-    print("Starting FILDOS AI API...")
+    print("Starting FilDOS AI API...")
     
     # Check if models exist
     if not check_models_exist():

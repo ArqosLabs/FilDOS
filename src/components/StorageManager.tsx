@@ -11,12 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Wallet, 
-  HardDrive, 
-  Clock, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  Wallet,
+  HardDrive,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
   TrendingUp,
   Coins,
   Database,
@@ -51,7 +51,7 @@ export const StorageManager = () => {
     <div className="flex-1 overflow-auto">
       <div className="max-w-7xl space-y-6 p-6">
         <StorageBalanceHeader />
-        
+
         <div className="grid gap-6 md:grid-cols-2">
           <WalletBalancesSection
             balances={balances}
@@ -62,12 +62,12 @@ export const StorageManager = () => {
             isLoading={isBalanceLoading}
           />
         </div>
-        
+
         <AllowanceStatusSection
           balances={balances}
           isLoading={isBalanceLoading}
         />
-        
+
         <ActionSection
           balances={balances}
           isLoading={isBalanceLoading}
@@ -75,23 +75,21 @@ export const StorageManager = () => {
           onPayment={handlePayment}
           handleRefetchBalances={handleRefetchBalances}
         />
-        
+
         {status && (
-          <Card className={`${
-            status.includes("❌")
+          <Card className={`${status.includes("❌")
               ? "border-red-200 bg-red-50"
               : status.includes("✅")
                 ? "border-green-200 bg-green-50"
                 : "border-blue-200 bg-blue-50"
-          }`}>
+            }`}>
             <CardContent className="pt-6">
-              <p className={`text-sm ${
-                status.includes("❌")
+              <p className={`text-sm ${status.includes("❌")
                   ? "text-red-700"
                   : status.includes("✅")
                     ? "text-green-700"
                     : "text-blue-700"
-              }`}>
+                }`}>
                 {status}
               </p>
             </CardContent>
@@ -131,7 +129,7 @@ const AllowanceStatusSection = ({ balances, isLoading }: SectionProps) => {
             isLoading={isLoading}
           />
         </div>
-        
+
         {!isLoading && !balances?.isRateSufficient && (
           <Card className="border-amber-200 bg-amber-50">
             <CardContent className="pt-6">
@@ -153,7 +151,7 @@ const AllowanceStatusSection = ({ balances, isLoading }: SectionProps) => {
             </CardContent>
           </Card>
         )}
-        
+
         {!isLoading && !balances?.isLockupSufficient && (
           <Card className="border-amber-200 bg-amber-50">
             <CardContent className="pt-6">
@@ -168,7 +166,7 @@ const AllowanceStatusSection = ({ balances, isLoading }: SectionProps) => {
                     {balances?.persistenceDaysLeft.toFixed(1)} days, which is less than the notice period of {config.minDaysThreshold} days.
                   </p>
                   <p className="text-xs text-amber-600">
-                    Currently using {balances?.currentStorageGB?.toLocaleString()} GB. 
+                    Currently using {balances?.currentStorageGB?.toLocaleString()} GB.
                     Deposit {depositNeededFormatted} USDFC to extend lockup for{" "}
                     {(config.persistencePeriod - (balances?.persistenceDaysLeft ?? 0)).toFixed(1)} more days.
                   </p>
@@ -471,7 +469,6 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
       <div className="grid gap-4">
         <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/50">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
             <span className="text-sm font-medium">FIL Balance</span>
           </div>
           <span className="font-mono text-sm">
@@ -480,7 +477,6 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
         </div>
         <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/50">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500"></div>
             <span className="text-sm font-medium">USDFC Balance</span>
           </div>
           <span className="font-mono text-sm">
@@ -489,11 +485,10 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
         </div>
         <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/50">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-            <span className="text-sm font-medium">Pandora Balance</span>
+            <span className="text-sm font-medium">Warm Storage Balance</span>
           </div>
           <span className="font-mono text-sm">
-            {isLoading ? "..." : `${balances?.pandoraBalanceFormatted?.toLocaleString()} USDFC`}
+            {isLoading ? "..." : `${balances?.warmStorageBalanceFormatted?.toLocaleString()} USDFC`}
           </span>
         </div>
       </div>
@@ -505,8 +500,8 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
  * Section displaying storage status
  */
 const StorageStatusSection = ({ balances, isLoading }: SectionProps) => {
-  const storageUsagePercent = balances?.currentRateAllowanceGB 
-    ? (balances.currentStorageGB / balances.currentRateAllowanceGB) * 100 
+  const storageUsagePercent = balances?.currentRateAllowanceGB
+    ? (balances.currentStorageGB / balances.currentRateAllowanceGB) * 100
     : 0;
 
   return (
@@ -532,9 +527,9 @@ const StorageStatusSection = ({ balances, isLoading }: SectionProps) => {
             {isLoading ? "..." : `${storageUsagePercent.toFixed(1)}% of allocated storage used`}
           </p>
         </div>
-        
+
         <Separator />
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 rounded-sm border bg-muted/30">
             <div className="flex items-center gap-2">
@@ -575,7 +570,7 @@ const AllowanceItem = ({
       ) : isSufficient ? (
         <>
           <CheckCircle className="h-4 w-4 text-green-600" />
-          <Badge variant="default" className="bg-green-100 text-green-800">
+          <Badge variant="outline">
             Sufficient
           </Badge>
         </>

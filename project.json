@@ -1,7 +1,7 @@
 {
-  "name": "FILDOS",
+  "name": "FilDOS",
   "tagline": "A Secure, AI-Native, Meaning-First Decentralized Drive",
-  "description": "FILDOS is a revolutionary decentralized storage platform built on Filecoin that enables users to store, search, and share files by meaning rather than cryptic identifiers like CIDs. It combines the power of blockchain technology with AI-driven semantic search to create a truly human-centric storage experience.",
+  "description": "FilDOS is a revolutionary decentralized storage platform built on Filecoin that enables users to store, search, and share files by meaning rather than cryptic identifiers like CIDs. It combines the power of blockchain technology with AI-driven semantic search to create a truly human-centric storage experience.",
   "team": [
     {
       "name": "Fahim Ahmed",
