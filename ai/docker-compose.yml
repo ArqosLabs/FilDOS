@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  fildos-ai:
+    build: .
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - WORKERS=1
+      - HOST=0.0.0.0
+      - FLASK_ENV=production
+    volumes:
+      # Persist model cache to avoid re-downloading on container restart
+      - ./models:/app/models
+      - ./temp_files:/app/temp_files
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 4G  # Adjust based on your models
+        reservations:
+          memory: 2G
+
+networks:
+  default:
+    name: fildos-network

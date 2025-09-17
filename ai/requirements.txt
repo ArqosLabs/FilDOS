@@ -10,3 +10,4 @@ python-docx
 matplotlib
 pillow
 requests
+gunicorn
