@@ -23,7 +23,7 @@ FilDOS is a revolutionary decentralized storage platform built on Filecoin that 
 - **AI Service**: Flask-based API with CLIP and SentenceTransformers
 - **Smart Contracts**: ERC-721 NFTs for folder ownership and access control
 
-<img src="./public/Archi.jpeg">
+<img src="./public/Archi.png">
 
 ## 🛠️ Getting Started
 

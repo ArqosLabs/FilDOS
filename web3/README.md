@@ -34,19 +34,7 @@ npm install
 # Compile contracts
 npx hardhat compile
 
-# Run tests
-npx hardhat test
-```
 
-### Local Development
-
-```bash
-# Start local Hardhat node
-npx hardhat node
-
-# Deploy to local network
-npx hardhat run scripts/deploy.js --network localhost
-```
 
 ## 🌐 Network Configuration
 
@@ -163,129 +151,7 @@ function hasAccess(uint256 tokenId, address user) public view returns (bool) {
 }
 ```
 
-## 🧪 Testing
 
-### Test Structure
-
-```
-test/
-├── FILDOS.test.ts       # Main contract tests
-├── access-control.test.ts # Permission testing
-├── metadata.test.ts     # Metadata handling
-└── integration.test.ts  # Full workflow tests
-```
-
-### Running Tests
-
-```bash
-# Run all tests
-npx hardhat test
-
-# Run specific test file
-npx hardhat test test/FILDOS.test.ts
-
-# Run tests with coverage
-npx hardhat coverage
-```
-
-## 📊 Gas Optimization
-
-### Efficient Operations
-
-- **Batch Operations**: Multiple actions in single transaction
-- **Packed Storage**: Efficient storage layout
-- **Event Logging**: Minimal on-chain data with events
-
-### Gas Costs (Estimated)
-
-- Create Folder: ~200,000 gas
-- Grant Access: ~50,000 gas
-- Update Metadata: ~80,000 gas
-- Transfer Ownership: ~100,000 gas
-
-## 🔧 Integration
-
-### Frontend Integration
-
-```typescript
-// Using wagmi/viem
-import { useContract, useContractWrite } from 'wagmi'
-
-const contract = useContract({
-  address: '0x...',
-  abi: FILDOS_ABI,
-})
-
-const { write: createFolder } = useContractWrite({
-  ...contract,
-  functionName: 'createFolder',
-})
-```
-
-### Backend Integration
-
-```javascript
-// Using ethers.js
-const contract = new ethers.Contract(
-  CONTRACT_ADDRESS,
-  FILDOS_ABI,
-  signer
-)
-
-const tx = await contract.createFolder("My Folder", "Description")
-await tx.wait()
-```
-
-## 🌟 Advanced Features
-
-### Programmable Sharing
-
-```solidity
-// Time-limited access
-function grantTemporaryAccess(
-    uint256 tokenId, 
-    address user, 
-    uint256 duration
-) external onlyOwner {
-    // Implementation
-}
-
-// Conditional access
-function grantConditionalAccess(
-    uint256 tokenId, 
-    address user, 
-    bytes32 condition
-) external onlyOwner {
-    // Implementation
-}
-```
-
-### Delegation & Proxy Access
-
-```solidity
-// Delegate folder management
-function delegateFolder(uint256 tokenId, address delegate) external onlyOwner {
-    // Allow delegate to manage folder on behalf of owner
-}
-```
-
-## 🔄 Upgrade Path
-
-### Contract Upgrades
-
-- Proxy pattern for upgradeable contracts
-- Migration scripts for data transfer
-- Backward compatibility maintenance
-
-### Version Management
-
-```bash
-# Deploy new version
-npx hardhat run scripts/deploy-v2.js --network calibration
-
-# Migrate data
-npx hardhat run scripts/migrate-data.js --network calibration
-```
 
 ## 📈 Monitoring
 
@@ -309,44 +175,6 @@ contract.on('FolderCreated', (tokenId, owner, name) => {
 const events = await contract.queryFilter('FolderCreated', fromBlock, toBlock)
 ```
 
-## 🛡️ Security
-
-### Security Considerations
-
-- **Access Control**: Proper permission checking
-- **Reentrancy Protection**: SafeMath and checks-effects-interactions
-- **Input Validation**: Comprehensive input sanitization
-- **Gas Limits**: Protection against gas limit attacks
-
-### Audit Checklist
-
-- [ ] Access control implemented correctly
-- [ ] No reentrancy vulnerabilities
-- [ ] Proper event emission
-- [ ] Gas optimization
-- [ ] Error handling
-- [ ] Upgrade safety
-
-## 🚀 Production Deployment
-
-### Deployment Checklist
-
-- [ ] Contracts compiled and tested
-- [ ] Environment variables configured
-- [ ] Network configuration verified
-- [ ] Gas price settings optimized
-- [ ] Deployment scripts tested
-- [ ] Verification scripts prepared
-
-### Post-Deployment
-
-```bash
-# Verify contracts on block explorer
-npx hardhat verify --network calibration DEPLOYED_ADDRESS
-
-# Set up monitoring
-npx hardhat run scripts/setup-monitoring.js --network calibration
-```
 
 ## 📚 References
 
@@ -354,19 +182,3 @@ npx hardhat run scripts/setup-monitoring.js --network calibration
 - [Filecoin FEVM Documentation](https://docs.filecoin.io/smart-contracts/fundamentals/the-fevm)
 - [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts)
 - [ERC-721 Standard](https://eips.ethereum.org/EIPS/eip-721)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Write tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-**Building the future of decentralized storage with smart contracts! 🚀**
