@@ -5,6 +5,7 @@ import { EnhancedDataSetInfo, PDPServer } from "@filoz/synapse-sdk";
 import { useAccount } from "wagmi";
 import { DataSet } from "@/types";
 import { useSynapse } from "@/providers/SynapseProvider";
+import { getDatasetsSizeInfo } from "@/utils";
 
 /**
  * Hook to fetch and manage user datasets from Filecoin storage
