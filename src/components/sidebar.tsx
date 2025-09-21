@@ -55,7 +55,7 @@ export default function Sidebar() {
         <nav className="space-y-1">
           {sidebarItems.map((item) => {
             const isActive = segment === item.route;
-            const href = item.route ? `/dashboard/${item.route}` : '/dashboard';
+            const href = item.route ? `/${item.route}` : '/';
             
             return (
               <Link key={item.label} href={href}>
@@ -75,7 +75,7 @@ export default function Sidebar() {
 
         {/* Storage Section */}
         <div className="space-y-1">
-            <Link href="/dashboard/storage">
+            <Link href="/storage">
               <Button
                 variant={segment === "storage" ? "default" : "ghost"}
                 className="w-full justify-start h-10 px-3"
@@ -112,7 +112,7 @@ export default function Sidebar() {
           </div>
           {fileTypes.map((item) => {
             const isActive = segment === item.route;
-            const href = `/dashboard/${item.route}`;
+            const href = `/${item.route}`;
             
             return (
               <Link key={item.label} href={href}>

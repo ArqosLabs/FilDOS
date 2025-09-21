@@ -9,7 +9,7 @@ import { AlertCircle, CheckCircle, Upload, Loader2 } from "lucide-react";
 import { useAI } from "@/hooks/useAI";
 import { useAddFile } from "@/hooks/useContract";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { FileItem } from "@/app/dashboard/page";
+import { FileItem } from "@/app/(dashboard)/page";
 
 interface EmbeddingDialogProps {
   children: React.ReactNode;

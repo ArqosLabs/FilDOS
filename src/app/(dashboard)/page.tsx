@@ -104,7 +104,7 @@ export default function MyDrive() {
 
   const handleFolderClick = (folderId?: string, url?: string) => {
     if (folderId) {
-      router.push(`/dashboard/folder/${folderId}`);
+      router.push(`/folder/${folderId}`);
     } else if (url) {
       window.open(url, '_blank');
     }

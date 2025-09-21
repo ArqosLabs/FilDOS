@@ -95,7 +95,7 @@ export default function FolderPage() {
   };
 
   const handleBackToRoot = () => {
-    router.push("/dashboard");
+    router.push("/");
   };
 
   const isLoading = filesLoading || folderDataLoading;

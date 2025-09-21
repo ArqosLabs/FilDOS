@@ -91,7 +91,7 @@ export default function NotFound() {
                 about page
               </Link>{" "}
               or explore our{" "}
-              <Link href="/dashboard" className="text-primary hover:underline font-medium">
+              <Link href="/" className="text-primary hover:underline font-medium">
                 app
               </Link>
             </p>

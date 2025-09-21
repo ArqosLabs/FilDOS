@@ -25,7 +25,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
-import { FileItem } from "@/app/dashboard/page";
+import { FileItem } from "@/app/(dashboard)/page";
 
 interface DetailsModalProps {
   file: FileItem;

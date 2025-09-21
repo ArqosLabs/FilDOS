@@ -91,13 +91,13 @@ export default function GetStarted() {
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    <Link href="/dashboard/storage" className="flex-1">
+                    <Link href="/storage" className="flex-1">
                       <Button className="w-full bg-primary hover:bg-primary/90">
                         Go to Storage Dashboard
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </Link>
-                    <Link href="/dashboard" className="flex-1">
+                    <Link href="/" className="flex-1">
                       <Button variant="outline" className="w-full">
                         View Dashboard
                       </Button>
