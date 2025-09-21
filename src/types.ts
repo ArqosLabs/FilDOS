@@ -9,6 +9,17 @@ export interface DataSet extends EnhancedDataSetInfo {
   provider: ProviderInfo | null;
 }
 
+export interface DatasetsSizeInfo {
+  leafCount: number;
+  pieceCount: number;
+  withCDN: boolean;
+  sizeInBytes: number;
+  sizeInKiB: number;
+  sizeInMiB: number;
+  sizeInGB: number;
+  message: string;
+}
+
 export interface DatasetsResponse {
   datasets: DataSet[];
 }

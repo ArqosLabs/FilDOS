@@ -47,6 +47,96 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
 
   const { isPending: isLoading, mutateAsync: uploadFile } = uploadFileMutation;
 
+  const classifyFile = (file: File): string[] => {
+    const fileName = file.name.toLowerCase();
+    const fileExtension = fileName.split('.').pop() || '';
+    const fileType = file.type.toLowerCase();
+    
+    const tags: string[] = [];
+    
+    // Add file extension as a tag
+    if (fileExtension) {
+      tags.push(fileExtension);
+    }
+    
+    // Classify by category and add category tag
+    if (fileType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'svg', 'bmp', 'webp', 'ico', 'tiff', 'tif'].includes(fileExtension)) {
+      tags.push('images');
+    } else if (fileType.startsWith('video/') || ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v', '3gp', 'ogv'].includes(fileExtension)) {
+      tags.push('videos');
+    } else if (fileType.startsWith('audio/') || ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a'].includes(fileExtension)) {
+      tags.push('audio');
+    } else if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'cab', 'ace'].includes(fileExtension)) {
+      tags.push('archives');
+    } else if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'pages'].includes(fileExtension)) {
+      tags.push('documents');
+    } else if (['xls', 'xlsx', 'csv', 'ods', 'numbers'].includes(fileExtension)) {
+      tags.push('spreadsheets');
+      tags.push('documents');
+    } else if (['ppt', 'pptx', 'odp', 'key'].includes(fileExtension)) {
+      tags.push('presentations');
+      tags.push('documents');
+    } else if (['html', 'htm', 'js', 'css', 'json', 'xml', 'yaml', 'yml'].includes(fileExtension)) {
+      tags.push('web');
+      tags.push('code');
+    } else if (['swf', 'fla', 'flv'].includes(fileExtension)) {
+      tags.push('embeds');
+    } else if (['pkl'].includes(fileExtension)) {
+      tags.push('code');
+    } else if (['md', 'markdown', 'rst', 'tex'].includes(fileExtension)) {
+      tags.push('markup');
+      tags.push('documents');
+    } else if (['svg', 'ai', 'eps', 'psd', 'sketch', 'fig', 'xd'].includes(fileExtension)) {
+      tags.push('design');
+      tags.push('images');
+    } else if (['blend', 'fbx', 'obj', 'dae', '3ds', 'max', 'maya'].includes(fileExtension)) {
+      tags.push('3d-models');
+    } else if (['ttf', 'otf', 'woff', 'woff2', 'eot'].includes(fileExtension)) {
+      tags.push('fonts');
+    } else if (['apk', 'ipa', 'exe', 'msi', 'dmg', 'deb', 'rpm', 'pkg'].includes(fileExtension)) {
+      tags.push('applications');
+    } else if (['ipynb', 'rmd', 'qmd'].includes(fileExtension)) {
+      tags.push('notebooks');
+      tags.push('code');
+    } else if (['db', 'sqlite', 'sql', 'mdb'].includes(fileExtension)) {
+      tags.push('databases');
+    } else if (['bin', 'dat', 'dump', 'img', 'iso', 'dmg'].includes(fileExtension)) {
+      tags.push('binary');
+    } else {
+      // If we can't classify it, mark it as 'other'
+      tags.push('other');
+    }
+    
+    // Add MIME type category if it's useful
+    if (fileType.includes('application/')) {
+      if (fileType.includes('pdf')) {
+        // Already handled above
+      } else if (fileType.includes('json')) {
+        tags.push('data');
+      } else if (fileType.includes('octet-stream')) {
+        tags.push('binary');
+      }
+    }
+    
+    // Add file size category
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (fileSizeMB < 1) {
+      tags.push('small');
+    } else if (fileSizeMB < 10) {
+      tags.push('medium');
+    } else if (fileSizeMB < 100) {
+      tags.push('large');
+    } else {
+      tags.push('xlarge');
+    }
+    
+    // Remove duplicates and return
+    return [...new Set(tags)];
+  };
+
+  // Get preview tags for the current file
+  const previewTags = file ? classifyFile(file) : [];
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -65,10 +155,8 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
         setContractAddError(null);
         
         try {
-          // Get file extension and type for tags
-          const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
-          const fileType = file.type || 'unknown';
-          const tags = [fileExtension, fileType].filter(Boolean);
+          // Classify file and generate comprehensive tags
+          const tags = classifyFile(file);
 
           await addFile.mutateAsync({
             tokenId: folderId,
@@ -78,6 +166,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
           });
           
           console.log("✅ File added to contract successfully!");
+          console.log("📋 File tags:", tags);
         } catch (error) {
           console.error("❌ Error adding file to contract:", error);
           setContractAddError(error instanceof Error ? error.message : "Failed to add file to folder");
@@ -197,9 +286,40 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                     </>
                   )}
                   {file && (
-                    <Badge variant="secondary" className="text-xs">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </Badge>
+                    <div className="space-y-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </Badge>
+                      {previewTags.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">Auto-tags:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {previewTags.map((tag, index) => {
+                              // Color-code tags by category
+                              const getTagVariant = (tag: string) => {
+                                if (['images', 'design'].includes(tag)) return 'default'; // Blue
+                                if (['videos', 'audio'].includes(tag)) return 'secondary'; // Gray
+                                if (['documents', 'spreadsheets', 'presentations', 'markup'].includes(tag)) return 'outline'; // White
+                                if (['code', 'web', 'notebooks', 'databases'].includes(tag)) return 'destructive'; // Red
+                                if (['archives', 'binary', 'applications'].includes(tag)) return 'default'; // Blue
+                                if (['embeds'].includes(tag)) return 'secondary'; // Gray
+                                return 'outline'; // Default
+                              };
+                              
+                              return (
+                                <Badge 
+                                  key={index} 
+                                  variant={getTagVariant(tag)}
+                                  className="text-xs px-2 py-0.5"
+                                >
+                                  {tag}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

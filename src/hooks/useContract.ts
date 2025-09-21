@@ -145,6 +145,143 @@ export const useContract = () => {
         enabled: !!contract && !!tokenId && !!(user || address),
       });
     },
+
+    // Get file count in a folder
+    useFileCount: (tokenId: string | number) => {
+      return useQuery({
+        queryKey: ["file-count", tokenId],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          const count = await contract.getFileCount(tokenId);
+          return Number(count);
+        },
+        enabled: !!contract && !!tokenId,
+      });
+    },
+
+    // Check if a file exists in a folder
+    useFileExists: (tokenId: string | number, cid: string) => {
+      return useQuery({
+        queryKey: ["file-exists", tokenId, cid],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          return await contract.fileExists(tokenId, cid);
+        },
+        enabled: !!contract && !!tokenId && !!cid,
+      });
+    },
+
+    // Search files by tag in a specific folder
+    useSearchFilesByTag: (tokenId: string | number, tag: string, enabled = true) => {
+      return useQuery({
+        queryKey: ["search-files-by-tag", tokenId, tag],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          const files = await contract.searchFilesByTag(tokenId, tag);
+          return files.map((file: {
+            cid: string;
+            filename: string;
+            timestamp: bigint;
+            owner: string;
+            tags: string[];
+          }) => ({
+            cid: file.cid,
+            filename: file.filename,
+            timestamp: file.timestamp,
+            owner: file.owner,
+            tags: file.tags,
+          })) as FileEntry[];
+        },
+        enabled: enabled && !!contract && !!tokenId && !!tag,
+      });
+    },
+
+    // Search files by tag across multiple folders
+    useSearchFilesByTagAcrossFolders: (folderIds: (string | number)[], tag: string, enabled = true) => {
+      return useQuery({
+        queryKey: ["search-files-across-folders", folderIds, tag],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          const files = await contract.searchFilesByTagAcrossFolders(folderIds, tag);
+          return files.map((file: {
+            cid: string;
+            filename: string;
+            timestamp: bigint;
+            owner: string;
+            tags: string[];
+          }) => ({
+            cid: file.cid,
+            filename: file.filename,
+            timestamp: file.timestamp,
+            owner: file.owner,
+            tags: file.tags,
+          })) as FileEntry[];
+        },
+        enabled: enabled && !!contract && folderIds.length > 0 && !!tag,
+      });
+    },
+
+    // Search my files by tag across all owned folders
+    useSearchMyFilesByTag: (tag: string, enabled = true) => {
+      return useQuery({
+        queryKey: ["search-my-files-by-tag", address, tag],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          const files = await contract.searchMyFilesByTag(tag);
+          return files.map((file: {
+            cid: string;
+            filename: string;
+            timestamp: bigint;
+            owner: string;
+            tags: string[];
+          }) => ({
+            cid: file.cid,
+            filename: file.filename,
+            timestamp: file.timestamp,
+            owner: file.owner,
+            tags: file.tags,
+          })) as FileEntry[];
+        },
+        enabled: enabled && !!contract && !!address && !!tag,
+      });
+    },
+
+    // Get all unique tags from files in a specific folder
+    useFolderTags: (tokenId: string | number) => {
+      return useQuery({
+        queryKey: ["folder-tags", tokenId],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          return await contract.getFolderTags(tokenId);
+        },
+        enabled: !!contract && !!tokenId,
+      });
+    },
+
+    // Search files by multiple tags (must have ALL tags)
+    useSearchFilesByMultipleTags: (tokenId: string | number, tags: string[], enabled = true) => {
+      return useQuery({
+        queryKey: ["search-files-by-multiple-tags", tokenId, tags],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          const files = await contract.searchFilesByMultipleTags(tokenId, tags);
+          return files.map((file: {
+            cid: string;
+            filename: string;
+            timestamp: bigint;
+            owner: string;
+            tags: string[];
+          }) => ({
+            cid: file.cid,
+            filename: file.filename,
+            timestamp: file.timestamp,
+            owner: file.owner,
+            tags: file.tags,
+          })) as FileEntry[];
+        },
+        enabled: enabled && !!contract && !!tokenId && tags.length > 0,
+      });
+    },
   };
 
   // Write mutations
@@ -192,7 +329,7 @@ export const useContract = () => {
         tokenId: string | number;
         cid: string;
         filename: string;
-        tags?: string[];
+        tags: string[];
       }) => {
         if (!contract || !signer) throw new Error("Contract or signer not initialized");
         const tx = await contract.addFile(tokenId, cid, filename, tags);
@@ -201,6 +338,8 @@ export const useContract = () => {
       onSuccess: (_, variables) => {
         // Invalidate files query for this folder
         queryClient.invalidateQueries({ queryKey: ["folder-files", variables.tokenId] });
+        queryClient.invalidateQueries({ queryKey: ["file-count", variables.tokenId] });
+        queryClient.invalidateQueries({ queryKey: ["folder-tags", variables.tokenId] });
       },
     }),
 
@@ -302,6 +441,28 @@ export const useContract = () => {
         queryClient.invalidateQueries({ queryKey: ["folder-access"] });
       },
     }),
+
+    // Remove a file from a folder
+    removeFile: useMutation({
+      mutationFn: async ({
+        tokenId,
+        cid,
+      }: {
+        tokenId: string | number;
+        cid: string;
+      }) => {
+        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const tx = await contract.removeFile(tokenId, cid);
+        return await tx.wait();
+      },
+      onSuccess: (_, variables) => {
+        // Invalidate files query for this folder
+        queryClient.invalidateQueries({ queryKey: ["folder-files", variables.tokenId] });
+        queryClient.invalidateQueries({ queryKey: ["file-count", variables.tokenId] });
+        queryClient.invalidateQueries({ queryKey: ["file-exists", variables.tokenId, variables.cid] });
+        queryClient.invalidateQueries({ queryKey: ["folder-tags", variables.tokenId] });
+      },
+    }),
   };
 
   // Helper functions
@@ -348,6 +509,7 @@ export const useMoveFile = () => useContract().mutations.moveFile;
 export const useSetFolderPublic = () => useContract().mutations.setFolderPublic;
 export const useShareFolder = () => useContract().mutations.shareFolder;
 export const useRevokeShare = () => useContract().mutations.revokeShare;
+export const useRemoveFile = () => useContract().mutations.removeFile;
 
 // Export individual query hooks for convenience
 export const useFiles = (tokenId: string | number, enabled = true) => 
@@ -365,3 +527,17 @@ export const useCanRead = (tokenId: string | number, user?: string) =>
   useContract().queries.useCanRead(tokenId, user);
 export const useCanWrite = (tokenId: string | number, user?: string) => 
   useContract().queries.useCanWrite(tokenId, user);
+export const useFileCount = (tokenId: string | number) => 
+  useContract().queries.useFileCount(tokenId);
+export const useFileExists = (tokenId: string | number, cid: string) => 
+  useContract().queries.useFileExists(tokenId, cid);
+export const useSearchFilesByTag = (tokenId: string | number, tag: string, enabled = true) => 
+  useContract().queries.useSearchFilesByTag(tokenId, tag, enabled);
+export const useSearchFilesByTagAcrossFolders = (folderIds: (string | number)[], tag: string, enabled = true) => 
+  useContract().queries.useSearchFilesByTagAcrossFolders(folderIds, tag, enabled);
+export const useSearchMyFilesByTag = (tag: string, enabled = true) => 
+  useContract().queries.useSearchMyFilesByTag(tag, enabled);
+export const useFolderTags = (tokenId: string | number) => 
+  useContract().queries.useFolderTags(tokenId);
+export const useSearchFilesByMultipleTags = (tokenId: string | number, tags: string[], enabled = true) => 
+  useContract().queries.useSearchFilesByMultipleTags(tokenId, tags, enabled);

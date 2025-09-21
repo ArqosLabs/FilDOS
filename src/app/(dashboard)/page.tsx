@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import { Folder } from "lucide-react";
@@ -40,25 +40,35 @@ export default function MyDrive() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [lastCreatedFolder, setLastCreatedFolder] = useState<{ name: string; tokenId: string } | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
   const { address, isConnected } = useAccount();
   const { data: ownedFolders, isLoading: foldersLoading, error: foldersError } = useOwnedFolders();
-  const { folderDataMap, isLoading: folderDataLoading, hasError: folderDataError } = useFolderList(ownedFolders || []);
+  const { 
+    folderDataMap, 
+    isLoading: folderDataLoading, 
+    hasError: folderDataError,
+    successCount,
+    totalCount 
+  } = useFolderList(ownedFolders || []);
   const mintFolder = useMintFolder();
+
+  // Prevent hydration mismatches by ensuring client-side rendering
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Transform contract data to FileItem format - only folders at root level
   const files: FileItem[] = (ownedFolders || []).map((tokenId: string) => {
     const folderData = folderDataMap.get(tokenId);
-    const isLoading = folderDataLoading && !folderData;
-    const hasError = folderDataError && !folderData;
     
     return {
       id: tokenId,
-      name: isLoading ? "Loading..." : hasError ? `Folder ${tokenId}` : folderData?.name || `Folder ${tokenId}`,
+      name: folderData?.name || `Folder ${tokenId}`,
       type: "folder" as const,
       folderType: folderData?.folderType || "",
-      modified: isLoading ? "Loading..." : hasError ? "Unknown" : formatDate(folderData?.createdAt || BigInt(0)),
+      modified: folderData ? formatDate(folderData.createdAt) : "Unknown",
       owner: address || "Unknown",
       starred: false,
       shared: folderData?.isPublic || false,
@@ -113,6 +123,18 @@ export default function MyDrive() {
   // Get current folder data for breadcrumb
   const isLoading = foldersLoading || folderDataLoading;
   const hasError = foldersError || mintFolder.error || folderDataError;
+
+  // Show loading state during hydration to prevent mismatch
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isConnected) {
     return (
@@ -180,9 +202,31 @@ export default function MyDrive() {
             <div className="flex items-center justify-center p-8">
               <div className="text-center">
                 <div className="text-red-600 mb-2">⚠️ Error</div>
-                <p className="text-gray-600">
-                  {mintFolder.error?.message || foldersError?.message || "Something went wrong"}
-                </p>
+                <div className="space-y-2">
+                  {foldersError && (
+                    <p className="text-gray-600">
+                      <strong>Failed to load folders:</strong> {foldersError.message}
+                    </p>
+                  )}
+                  {folderDataError && (
+                    <p className="text-gray-600">
+                      <strong>Failed to load folder details:</strong> Some folder information may be incomplete.
+                      {successCount > 0 && totalCount > 0 && (
+                        <span className="block text-sm text-gray-500 mt-1">
+                          Loaded {successCount} of {totalCount} folders successfully.
+                        </span>
+                      )}
+                    </p>
+                  )}
+                  {mintFolder.error && (
+                    <p className="text-gray-600">
+                      <strong>Failed to create folder:</strong> {mintFolder.error.message}
+                    </p>
+                  )}
+                  {!foldersError && !folderDataError && !mintFolder.error && (
+                    <p className="text-gray-600">Something went wrong. Please try again.</p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -196,7 +240,12 @@ export default function MyDrive() {
                   {foldersLoading && (
                     <p className="text-gray-600">Loading your folders...</p>
                   )}
-                  {folderDataLoading && (
+                  {folderDataLoading && totalCount > 0 && (
+                    <p className="text-gray-600">
+                      Loading folder details... ({successCount}/{totalCount})
+                    </p>
+                  )}
+                  {folderDataLoading && totalCount === 0 && (
                     <p className="text-gray-600">Loading folder details...</p>
                   )}
                   {!foldersLoading && !folderDataLoading && (
@@ -208,9 +257,28 @@ export default function MyDrive() {
           )}
 
           {/* File view */}
-          {!isLoading && !hasError && (
+          {(!isLoading || (folderDataLoading && successCount > 0)) && !hasError && (
             <>
-              {files.length === 0 ? (
+              {/* Show partial loading indicator if some folders are still loading */}
+              {folderDataLoading && successCount > 0 && totalCount > successCount && (
+                <div className="bg-blue-50 border-l-4 border-blue-400 p-4 m-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="animate-spin h-5 w-5 text-blue-400" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-blue-700">
+                        Loading folder details... ({successCount}/{totalCount} loaded)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {files.length === 0 && !foldersLoading ? (
                 <div className="flex flex-col items-center justify-center p-12 text-center">
                   <Folder className="w-16 h-16 text-gray-400 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No folders yet</h3>
@@ -218,7 +286,7 @@ export default function MyDrive() {
                     Create your first folder to start organizing your files.
                   </p>
                 </div>
-              ) : (
+              ) : files.length > 0 ? (
                 <>
                   {viewMode === "grid" ? (
                     <FileGrid 
@@ -236,7 +304,7 @@ export default function MyDrive() {
                     />
                   )}
                 </>
-              )}
+              ) : null}
             </>
           )}
         </main>

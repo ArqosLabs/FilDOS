@@ -10,7 +10,6 @@ import {
   FileArchive,
   Scale,
   Globe,
-  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -28,11 +27,10 @@ const sidebarItems = [
 ];
 
 const fileTypes = [
-  { icon: FileText, label: "Documents", route: "documents" },
-  { icon: Image, label: "Images", route: "images" },
-  { icon: Video, label: "Videos", route: "videos" },
-  { icon: FileArchive, label: "Archives", route: "archives" },
-  { icon: Brain, label: "Embeds", route: "embeds" }
+  { icon: FileText, label: "Documents", route: "tagged/documents" },
+  { icon: Image, label: "Images", route: "tagged/images" },
+  { icon: Video, label: "Videos", route: "tagged/videos" },
+  { icon: FileArchive, label: "Archives", route: "tagged/archives" }
 ];
 
 export default function Sidebar() {
