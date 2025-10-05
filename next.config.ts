@@ -16,6 +16,16 @@ const nextConfig: NextConfig = {
     // Ignore TypeScript errors in web3 folder during build
     ignoreBuildErrors: false,
   },
+  images: {
+  remotePatterns: [
+    {
+      protocol: "https",
+      hostname: "**.calibration.filbeam.io",
+      pathname: "/**",
+    },
+  ],
+  },
+
   // Exclude web3 from the build
   excludeDefaultMomentLocales: true,
 };

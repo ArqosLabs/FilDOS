@@ -25,6 +25,8 @@ import { FileItem } from "@/app/(dashboard)/page";
 import ShareFolderDialog from "@/components/share-folder-dialog";
 import MakePublicDialog from "@/components/make-public-dialog";
 import DetailsModal from "@/components/details-modal";
+import FilePreviewModal from "@/components/preview-modal";
+import { useState } from "react";
 
 interface FileGridProps {
   files: FileItem[];
@@ -73,6 +75,18 @@ const getFileColor = (type: FileItem["type"]) => {
 
 
 export default function FileGrid({ files, selectedFiles, onToggleSelection, onFolderClick }: FileGridProps) {
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const handleFileClick = (file: FileItem) => {
+    if (file.type === "folder" && onFolderClick && file.tokenId) {
+      onFolderClick(file.tokenId);
+    } else if (file.type !== "folder") {
+      setPreviewFile(file);
+      setIsPreviewOpen(true);
+    }
+  };
+
   return (
     <div className="flex-1 overflow-auto">
       <div className="p-6">
@@ -88,13 +102,7 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                   isSelected ? "ring-2 ring-primary bg-blue-50" : ""
                 } ${file.type === "embed" ? "opacity-40" : ""}`}
                 onClick={() => onToggleSelection(file.id)}
-                onDoubleClick={() => {
-                  if (file.type === "folder" && onFolderClick && file.tokenId) {
-                    onFolderClick(file.tokenId);
-                  } else if (file.type !== "folder" && onFolderClick && file.cid) {
-                    onFolderClick(undefined, `https://${file.owner}.calibration.filcdn.io/${file.cid}`);
-                  }
-                }}
+                onDoubleClick={() => handleFileClick(file)}
               >
                 {/* File Icon */}
                 <div className="flex flex-col items-center text-center">
@@ -189,6 +197,15 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
           })}
         </div>
       </div>
+      
+      <FilePreviewModal
+        file={previewFile}
+        isOpen={isPreviewOpen}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          setPreviewFile(null);
+        }}
+      />
     </div>
   );
 }

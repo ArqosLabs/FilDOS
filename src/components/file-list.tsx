@@ -34,6 +34,8 @@ import { FileItem } from "@/app/(dashboard)/page";
 import ShareFolderDialog from "@/components/share-folder-dialog";
 import MakePublicDialog from "@/components/make-public-dialog";
 import DetailsModal from "@/components/details-modal";
+import FilePreviewModal from "@/components/preview-modal";
+import { useState } from "react";
 
 interface FileListProps {
   files: FileItem[];
@@ -81,7 +83,18 @@ const getFileColor = (type: FileItem["type"]) => {
 };
 
 export default function FileList({ files, selectedFiles, onToggleSelection, onFolderClick }: FileListProps) {
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const allSelected = files.length > 0 && selectedFiles.length === files.length;
+
+  const handleFileClick = (file: FileItem) => {
+    if (file.type === "folder" && onFolderClick && file.tokenId) {
+      onFolderClick(file.tokenId);
+    } else if (file.type !== "folder") {
+      setPreviewFile(file);
+      setIsPreviewOpen(true);
+    }
+  };
 
   const handleSelectAll = () => {
     if (allSelected) {
@@ -132,13 +145,7 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                       isSelected ? "bg-blue-50" : ""
                     } ${file.type === "embed" ? "opacity-40" : ""}`}
                     onClick={() => onToggleSelection(file.id)}
-                    onDoubleClick={() => {
-                      if (file.type === "folder" && onFolderClick && file.tokenId) {
-                        onFolderClick(file.tokenId);
-                      } else if (file.type !== "folder" && onFolderClick && file.cid) {
-                        onFolderClick(undefined, `https://${file.owner}.calibration.filcdn.io/${file.cid}`);
-                      }
-                    }}
+                    onDoubleClick={() => handleFileClick(file)}
                   >
                     <TableCell>
                       <Checkbox
@@ -227,6 +234,15 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
           </Table>
         </div>
       </div>
+      
+      <FilePreviewModal
+        file={previewFile}
+        isOpen={isPreviewOpen}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          setPreviewFile(null);
+        }}
+      />
     </div>
   );
 }
