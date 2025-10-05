@@ -129,10 +129,9 @@ export default function TaggedFilesPage() {
     );
   };
 
-  const handleFileClick = (cid?: string) => {
-    if (cid) {
-      // Open file in new tab (assuming IPFS gateway)
-      window.open(`https://ipfs.io/ipfs/${cid}`, '_blank');
+  const handleFileClick = (url?: string) => {
+    if (url) {
+      window.open(url, '_blank');
     }
   };
 

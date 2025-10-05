@@ -13,6 +13,10 @@ import requests
 from datetime import datetime
 import io
 from urllib.parse import urlparse
+import weaviate
+from weaviate.classes.init import Auth
+from weaviate.classes.query import MetadataQuery
+import numpy as np
 
 # Suppress tokenizers warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -23,14 +27,37 @@ CORS(app)  # Enable CORS for all routes
 
 # Configuration
 TEMP_FOLDER = 'temp_files'
-EMBEDDINGS_FOLDER = 'embeddings'
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
 
 # Create directories
 os.makedirs(TEMP_FOLDER, exist_ok=True)
-os.makedirs(EMBEDDINGS_FOLDER, exist_ok=True)
 
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+
+# Weaviate Configuration
+WEAVIATE_URL = os.environ.get('WEAVIATE_URL', 'http://localhost:8080')
+WEAVIATE_API_KEY = os.environ.get('WEAVIATE_API_KEY', None)
+
+# Initialize Weaviate client
+try:
+    if WEAVIATE_API_KEY:
+        weaviate_client = weaviate.connect_to_weaviate_cloud(
+            cluster_url=WEAVIATE_URL,
+            auth_credentials=Auth.api_key(WEAVIATE_API_KEY)
+        )
+    else:
+        # Parse host and port from URL for local connection
+        parsed_url = urlparse(WEAVIATE_URL)
+        host = parsed_url.hostname or 'localhost'
+        port = parsed_url.port or 8080
+        weaviate_client = weaviate.connect_to_local(
+            host=host,
+            port=port
+        )
+    print("Connected to Weaviate successfully")
+except Exception as e:
+    print(f"Error connecting to Weaviate: {e}")
+    weaviate_client = None
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {
@@ -98,10 +125,67 @@ except Exception as e:
 
 print("All models loaded successfully!")
 
+# Create Weaviate schema/collection
+def sanitize_collection_name(name):
+    """Sanitize collection name to meet Weaviate requirements"""
+    # Weaviate class names must start with uppercase letter and contain only alphanumeric characters
+    import re
+    # Remove special characters and spaces
+    sanitized = re.sub(r'[^a-zA-Z0-9]', '', name)
+    # Ensure it starts with uppercase letter
+    if not sanitized:
+        sanitized = "Folder"
+    elif not sanitized[0].isupper():
+        sanitized = sanitized.capitalize()
+    # Prefix with Collection if it starts with a number
+    if sanitized[0].isdigit():
+        sanitized = "Folder" + sanitized
+    return sanitized
+
+def create_weaviate_collection(collection_name):
+    """Create a Weaviate collection for storing embeddings"""
+    try:
+        # Sanitize collection name
+        collection_name = sanitize_collection_name(collection_name)
+        
+        if weaviate_client and not weaviate_client.collections.exists(collection_name):
+            from weaviate.classes.config import Property, DataType, Configure
+            
+            weaviate_client.collections.create(
+                name=collection_name,
+                properties=[
+                    Property(name="filename", data_type=DataType.TEXT),
+                    Property(name="url", data_type=DataType.TEXT),
+                    Property(name="type", data_type=DataType.TEXT),
+                    Property(name="text_preview", data_type=DataType.TEXT),
+                    Property(name="timestamp", data_type=DataType.TEXT),
+                ],
+                # Use named vectors to support different dimensions
+                vectorizer_config=[
+                    Configure.NamedVectors.none(
+                        name="image_vector",
+                        vector_index_config=Configure.VectorIndex.hnsw()
+                    ),
+                    Configure.NamedVectors.none(
+                        name="text_vector",
+                        vector_index_config=Configure.VectorIndex.hnsw()
+                    )
+                ]
+            )
+            print(f"Created Weaviate collection: {collection_name}")
+        return collection_name
+    except Exception as e:
+        print(f"Error creating Weaviate collection: {e}")
+        return None
+
 # Helper functions
 def download_file_from_url(url, temp_dir):
     """Download file from URL and save to temp directory"""
     try:
+        # Add https:// if no scheme is present
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+        
         print(f"Downloading file from URL: {url}")
         response = requests.get(url, timeout=30)
         response.raise_for_status()
@@ -161,27 +245,6 @@ def download_file_from_url(url, temp_dir):
         print(f"Error downloading file from {url}: {e}")
         return None, None
 
-def load_embeddings_from_url(url):
-    """Load embeddings from URL"""
-    try:
-        print(f"Loading embeddings from URL: {url}")
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-        
-        # Load pickle data from response content
-        embeddings = pickle.loads(response.content)
-        print(f"Successfully loaded {len(embeddings)} embeddings from URL")
-        
-        # Log the structure of the first embedding for debugging
-        if embeddings:
-            first_embedding = embeddings[0]
-            print(f"First embedding structure: {list(first_embedding.keys())}")
-            
-        return embeddings
-    except Exception as e:
-        print(f"Error loading embeddings from {url}: {e}")
-        return []
-
 def extract_text(file_path):
     """Extract text from various file formats"""
     ext = file_path.lower().split(".")[-1]
@@ -201,15 +264,25 @@ def extract_text(file_path):
         print(f"Error extracting text from {file_path}: {e}")
         return None
 
-def embed_file(file_path, file_url, existing_embeddings=None):
-    """Create embeddings for a file and add to existing embeddings"""
-    if existing_embeddings is None:
-        existing_embeddings = []
-    
+def embed_and_store_file(file_path, file_url, collection_name):
+    """Create embeddings for a file and store in Weaviate"""
     ext = file_path.lower().split(".")[-1]
     filename = os.path.basename(file_path)
+    timestamp = datetime.now().isoformat()
 
     try:
+        collection = weaviate_client.collections.get(collection_name)
+        
+        # Check if file with this URL already exists
+        existing = collection.query.fetch_objects(
+            filters=weaviate.classes.query.Filter.by_property("url").equal(file_url),
+            limit=1
+        )
+        
+        if existing.objects:
+            print(f"File already exists in collection, skipping: {filename}")
+            return "skipped"
+        
         if ext in {"jpg", "jpeg", "png", "bmp", "webp"}:
             # Image Embedding using CLIP
             image = Image.open(file_path).convert("RGB")
@@ -217,123 +290,126 @@ def embed_file(file_path, file_url, existing_embeddings=None):
             with torch.no_grad():
                 image_emb = clip_model.get_image_features(**inputs)
             image_emb = image_emb / image_emb.norm(p=2)
-            existing_embeddings.append({
-                "type": "image",
-                "filename": filename,
-                "url": file_url,
-                "embedding": image_emb.cpu()
-            })
-            print(f"Image embedded: {filename}")
-            return existing_embeddings
+            
+            # Store in Weaviate with named vector
+            collection.data.insert(
+                properties={
+                    "filename": filename,
+                    "url": file_url,
+                    "type": "image",
+                    "text_preview": "",
+                    "timestamp": timestamp
+                },
+                vector={
+                    "image_vector": image_emb.cpu().numpy().flatten().tolist(),
+                    "text_vector": [0] * 384  # Dummy text vector
+                }
+            )
+            print(f"Image embedded and stored: {filename}")
+            return True
 
         elif ext in {"pdf", "docx", "txt", "md"}:
             # Text Embedding using BERT
             text = extract_text(file_path)
             if text:
                 text_emb = text_model.encode(text, convert_to_tensor=True)
-                existing_embeddings.append({
-                    "type": "text",
-                    "filename": filename,
-                    "url": file_url,
-                    "text": text[:1000],  # Store first 1000 chars for preview
-                    "embedding": text_emb.cpu()
-                })
-                print(f"Text embedded: {filename}")
-                return existing_embeddings
+                
+                # Store in Weaviate with named vector
+                collection.data.insert(
+                    properties={
+                        "filename": filename,
+                        "url": file_url,
+                        "type": "text",
+                        "text_preview": text[:1000],
+                        "timestamp": timestamp
+                    },
+                    vector={
+                        "image_vector": [0] * 512,  # Dummy image vector
+                        "text_vector": text_emb.cpu().numpy().flatten().tolist()
+                    }
+                )
+                print(f"Text embedded and stored: {filename}")
+                return True
             else:
                 print(f"Could not extract text: {filename}")
-                return existing_embeddings
+                return False
         else:
             print(f"Unsupported file type: {filename}")
-            return existing_embeddings
+            return False
     except Exception as e:
         print(f"Error embedding file {filename}: {e}")
-        return existing_embeddings
+        return False
 
-def search_embeddings(query, embeddings, top_k=3):
-    """Search through embeddings for relevant files"""
+def search_weaviate(query, collection_name, top_k=5):
+    """Search through Weaviate collection for relevant files"""
     try:
-        # Ensure top_k is an integer
-        if not isinstance(top_k, int):
-            top_k = int(top_k)
+        collection = weaviate_client.collections.get(collection_name)
         
-        print(f"Searching with query: '{query}', top_k: {top_k} (type: {type(top_k)})")
-        
-        # Process query for CLIP
+        # Process query for both image and text
         clip_inputs = clip_processor(text=query, return_tensors="pt").to(device)
         with torch.no_grad():
             query_emb_img = clip_model.get_text_features(**clip_inputs)
         query_emb_img = query_emb_img / query_emb_img.norm(p=2)
-        query_emb_img = query_emb_img.cpu()
-
-        # Process query for SentenceTransformer
-        query_emb_txt = text_model.encode(query, convert_to_tensor=True).cpu()
-
-        results = []
-        for item in embeddings:
-            try:
-                if item["type"] == "image":
-                    score = util.pytorch_cos_sim(query_emb_img, item["embedding"])[0][0].item()
-                elif item["type"] == "text":
-                    score = util.pytorch_cos_sim(query_emb_txt, item["embedding"])[0][0].item()
-                else:
-                    continue
-                results.append((score, item))
-            except Exception as e:
-                print(f"Error computing similarity for {item.get('filename', 'unknown')}: {e}")
-                continue
-
-        print(f"Found {len(results)} total results before filtering")
-        top_results = sorted(results, key=lambda x: x[0], reverse=True)[:top_k]
-        print(f"Returning top {len(top_results)} results")
         
-        # Format results for API response - return original online URLs
-        formatted_results = []
-        for score, item in top_results:
-            result = {
-                "score": score,
-                "type": item["type"],
-                "filename": item.get("filename", "unknown"),
-                "url": item.get("url", "unknown")  # This should be the original online URL
-            }
-            if item["type"] == "text" and "text" in item:
-                result["excerpt"] = item["text"]
-            formatted_results.append(result)
+        query_emb_txt = text_model.encode(query, convert_to_tensor=True)
         
-        return formatted_results
-    except Exception as e:
-        print(f"Error in search: {e}")
-        return []
-
-
-def create_embed_file():
-    """Create a new empty embeddings file"""
-    try:
-        # Create empty embeddings list
-        embeddings = []
-        
-        # Generate filename with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"embeddings_{timestamp}.pkl"
-        
-        # Create pickle file in memory
-        pickle_data = pickle.dumps(embeddings)
-        
-        # Return the file as download
-        return send_file(
-            io.BytesIO(pickle_data),
-            mimetype='application/octet-stream',
-            as_attachment=True,
-            download_name=filename
+        # Search with image embeddings (for image files)
+        results_img = collection.query.near_vector(
+            near_vector=query_emb_img.cpu().numpy().flatten().tolist(),
+            target_vector="image_vector",
+            limit=top_k,
+            return_metadata=MetadataQuery(distance=True),
+            filters=weaviate.classes.query.Filter.by_property("type").equal("image")
         )
         
+        # Search with text embeddings (for text files)
+        results_txt = collection.query.near_vector(
+            near_vector=query_emb_txt.cpu().numpy().flatten().tolist(),
+            target_vector="text_vector",
+            limit=top_k,
+            return_metadata=MetadataQuery(distance=True),
+            filters=weaviate.classes.query.Filter.by_property("type").equal("text")
+        )
+        
+        # Combine and sort results
+        all_results = []
+        for result in results_img.objects:
+            score = 1 - result.metadata.distance  # Convert distance to similarity
+            all_results.append({
+                "score": score,
+                "type": result.properties["type"],
+                "filename": result.properties["filename"],
+                "url": result.properties["url"],
+                "excerpt": result.properties.get("text_preview", "")
+            })
+        
+        for result in results_txt.objects:
+            score = 1 - result.metadata.distance
+            # Check if already in results
+            if not any(r["url"] == result.properties["url"] for r in all_results):
+                all_results.append({
+                    "score": score,
+                    "type": result.properties["type"],
+                    "filename": result.properties["filename"],
+                    "url": result.properties["url"],
+                    "excerpt": result.properties.get("text_preview", "")
+                })
+        
+        # Sort by score and return top_k
+        all_results.sort(key=lambda x: x["score"], reverse=True)
+        return all_results[:top_k]
+        
     except Exception as e:
-        return jsonify({'error': f'Error creating embeddings file: {str(e)}'}), 500
+        print(f"Error searching Weaviate: {e}")
+        return []
 
 @app.route('/embed', methods=['POST'])
 def embed_endpoint():
-    """Embed multiple files from URLs and return embeddings file"""
+    """Embed multiple files from URLs and store in Weaviate"""
     try:
+        if not weaviate_client:
+            return jsonify({'error': 'Weaviate client not initialized'}), 500
+        
         # Handle both JSON and form data
         if request.is_json:
             data = request.get_json()
@@ -349,6 +425,7 @@ def embed_endpoint():
             return jsonify({'error': 'JSON data or form data required'}), 400
         
         file_urls = data.get('file_urls', [])
+        collection_name = data.get('collection_name', 'FileEmbeddings')
         
         # Handle single file_url for backward compatibility
         if not file_urls and data.get('file_url'):
@@ -357,12 +434,16 @@ def embed_endpoint():
         if not file_urls:
             return jsonify({'error': 'file_urls array is required'}), 400
         
+        # Create collection if it doesn't exist and get sanitized name
+        sanitized_collection_name = create_weaviate_collection(collection_name)
+        if not sanitized_collection_name:
+            return jsonify({'error': 'Failed to create collection'}), 500
+        
         # Create temp directory for this request
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Start with empty embeddings
-            embeddings = []
             processed_files = []
             failed_files = []
+            skipped_files = []
             
             # Process each file URL
             for i, file_url in enumerate(file_urls):
@@ -387,15 +468,28 @@ def embed_endpoint():
                         })
                         continue
                     
-                    # Embed the file
+                    # Embed and store the file
                     print(f"Embedding file: {filename}")
-                    embeddings = embed_file(file_path, file_url, embeddings)
-                    processed_files.append({
-                        'url': file_url,
-                        'filename': filename,
-                        'status': 'success'
-                    })
-                    print(f"Successfully processed {filename}")
+                    result = embed_and_store_file(file_path, file_url, sanitized_collection_name)
+                    if result == "skipped":
+                        skipped_files.append({
+                            'url': file_url,
+                            'filename': filename,
+                            'reason': 'File already exists in collection'
+                        })
+                        print(f"Skipped existing file {filename}")
+                    elif result:
+                        processed_files.append({
+                            'url': file_url,
+                            'filename': filename,
+                            'status': 'success'
+                        })
+                        print(f"Successfully processed {filename}")
+                    else:
+                        failed_files.append({
+                            'url': file_url,
+                            'error': 'Failed to embed file'
+                        })
                     
                 except Exception as e:
                     print(f"Error processing file {i+1}: {e}")
@@ -404,37 +498,29 @@ def embed_endpoint():
                         'error': str(e)
                     })
             
-            print(f"Processing complete: {len(processed_files)} successful, {len(failed_files)} failed, {len(embeddings)} total embeddings")
+            print(f"Processing complete: {len(processed_files)} successful, {len(skipped_files)} skipped, {len(failed_files)} failed")
             
-            # Create pickle file
-            pickle_data = pickle.dumps(embeddings)
-            
-            # Generate filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"embeddings_{timestamp}.pkl"
-            
-            # Create response with metadata
-            response = send_file(
-                io.BytesIO(pickle_data),
-                mimetype='application/octet-stream',
-                as_attachment=True,
-                download_name=filename
-            )
-            
-            # Add metadata to response headers
-            response.headers['X-Processed-Files'] = str(len(processed_files))
-            response.headers['X-Failed-Files'] = str(len(failed_files))
-            response.headers['X-Total-Embeddings'] = str(len(embeddings))
-            
-            return response
+            return jsonify({
+                'collection_name': sanitized_collection_name,
+                'original_collection_name': collection_name,
+                'processed_files': processed_files,
+                'skipped_files': skipped_files,
+                'failed_files': failed_files,
+                'total_processed': len(processed_files),
+                'total_skipped': len(skipped_files),
+                'total_failed': len(failed_files)
+            })
             
     except Exception as e:
         return jsonify({'error': f'Error embedding files: {str(e)}'}), 500
 
 @app.route('/search', methods=['POST'])
 def search_endpoint():
-    """Search through embeddings and return file URLs"""
+    """Search through Weaviate collection and return file URLs"""
     try:
+        if not weaviate_client:
+            return jsonify({'error': 'Weaviate client not initialized'}), 500
+        
         # Handle both JSON and form data
         if request.is_json:
             data = request.get_json()
@@ -445,46 +531,100 @@ def search_endpoint():
             return jsonify({'error': 'JSON data or form data required'}), 400
         
         query = data.get('query')
-        embed_file_url = data.get('embed_file_url')
-        top_k = 5
+        collection_name = data.get('collection_name', 'FileEmbeddings')
+        top_k = int(data.get('top_k', 5))
 
         if not query:
             return jsonify({'error': 'query is required'}), 400
         
-        if not embed_file_url:
-            return jsonify({'error': 'embed_file_url is required'}), 400
+        # Sanitize collection name for search
+        sanitized_collection_name = sanitize_collection_name(collection_name)
         
-        # Load embeddings from URL
-        embeddings = load_embeddings_from_url(embed_file_url)
-        
-        if len(embeddings) == 0:
-            return jsonify({
-                'query': query,
-                'results': [],
-                'message': 'No embeddings found'
-            })
-        
-        # Search embeddings
-        results = search_embeddings(query, embeddings, top_k)
+        # Search Weaviate
+        results = search_weaviate(query, sanitized_collection_name, top_k)
 
         print(f"Search completed. Found {len(results)} results for query: '{query}'")
         
         return jsonify({
             'query': query,
+            'collection_name': sanitized_collection_name,
+            'original_collection_name': collection_name,
             'results': results,
-            'total_embeddings': len(embeddings)
+            'total_results': len(results)
         })
         
     except Exception as e:
         return jsonify({'error': f'Error searching: {str(e)}'}), 500
 
+@app.route('/collections', methods=['GET'])
+def list_collections():
+    """List all Weaviate collections"""
+    try:
+        if not weaviate_client:
+            return jsonify({'error': 'Weaviate client not initialized'}), 500
+        
+        # Get all collections - list_all() returns a dict with collection names as keys
+        all_collections = weaviate_client.collections.list_all()
+        
+        # Extract collection names
+        if isinstance(all_collections, dict):
+            collections = list(all_collections.keys())
+        else:
+            # Fallback: try to get names if it's an iterable of objects
+            collections = [col if isinstance(col, str) else col.name for col in all_collections]
+        
+        return jsonify({
+            'collections': collections,
+            'total': len(collections)
+        })
+    except Exception as e:
+        return jsonify({'error': f'Error listing collections: {str(e)}'}), 500
+
+@app.route('/collections/<collection_name>', methods=['GET', 'DELETE'])
+def manage_collection(collection_name):
+    """Get details or delete a Weaviate collection"""
+    try:
+        if not weaviate_client:
+            return jsonify({'error': 'Weaviate client not initialized'}), 500
+        
+        # Sanitize collection name
+        sanitized_name = sanitize_collection_name(collection_name)
+        
+        if request.method == 'GET':
+            # Get collection details
+            if not weaviate_client.collections.exists(sanitized_name):
+                return jsonify({'error': f'Collection {sanitized_name} not found'}), 404
+            
+            collection = weaviate_client.collections.get(sanitized_name)
+            # Get object count
+            response = collection.aggregate.over_all(total_count=True)
+            count = response.total_count if response else 0
+            
+            return jsonify({
+                'name': sanitized_name,
+                'original_name': collection_name,
+                'count': count,
+                'exists': True
+            })
+        
+        elif request.method == 'DELETE':
+            # Delete collection
+            weaviate_client.collections.delete(sanitized_name)
+            return jsonify({
+                'message': f'Collection {sanitized_name} deleted successfully'
+            })
+    except Exception as e:
+        return jsonify({'error': f'Error managing collection: {str(e)}'}), 500
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
+    weaviate_status = weaviate_client.is_ready() if weaviate_client else False
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'models_loaded': True
+        'models_loaded': True,
+        'weaviate_connected': weaviate_status
     })
 
 @app.errorhandler(413)
