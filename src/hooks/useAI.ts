@@ -5,19 +5,41 @@ import { config } from "@/config";
 // Types for AI endpoints
 export type EmbedRequest = {
   file_urls: string[];
+  collection_name?: string;
+};
+
+export type ProcessedFile = {
+  url: string;
+  filename: string;
+  status: string;
+};
+
+export type SkippedFile = {
+  url: string;
+  filename: string;
+  reason: string;
+};
+
+export type FailedFile = {
+  url: string;
+  error: string;
 };
 
 export type EmbedResponse = {
-  success: boolean;
+  collection_name: string;
+  original_collection_name: string;
+  processed_files: ProcessedFile[];
+  skipped_files: SkippedFile[];
+  failed_files: FailedFile[];
+  total_processed: number;
+  total_skipped: number;
+  total_failed: number;
   error?: string;
-  processed_files?: number;
-  failed_files?: number;
-  total_embeddings?: number;
 };
 
 export type SearchRequest = {
   query: string;
-  embed_file_url: string;
+  collection_name?: string;
 };
 
 export type SearchResult = {
@@ -30,9 +52,10 @@ export type SearchResult = {
 
 export type SearchResponse = {
   query: string;
+  collection_name: string;
+  original_collection_name: string;
   results: SearchResult[];
-  total_embeddings: number;
-  message?: string;
+  total_results: number;
   error?: string;
 };
 
@@ -42,23 +65,26 @@ export type SearchResponse = {
 export const useCreateEmbeddings = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
-  const [embedFileUrl, setEmbedFileUrl] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationKey: ["create-embeddings"],
-    mutationFn: async (fileUrls: string[]): Promise<string> => {
+    mutationFn: async (params: { fileUrls: string[]; collectionName?: string }): Promise<EmbedResponse> => {
+      const { fileUrls, collectionName } = params;
+      
       if (!fileUrls || fileUrls.length === 0) {
         throw new Error("File URLs are required");
       }
 
       setProgress(0);
       setStatus("🔄 Creating embeddings...");
-      setEmbedFileUrl(null);
 
       const formData = new FormData();
       fileUrls.forEach((url) => {
         formData.append('file_urls', url);
       });
+      if (collectionName) {
+        formData.append('collection_name', collectionName);
+      }
 
       const response = await fetch(`${config.aiServerUrl}/embed`, {
         method: 'POST',
@@ -73,20 +99,12 @@ export const useCreateEmbeddings = () => {
       setProgress(50);
       setStatus("🔄 Processing embeddings...");
 
-      // Get the blob and create a URL for it
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      
-      // Get metadata from headers
-      const processedFiles = response.headers.get('X-Processed-Files');
-      const failedFiles = response.headers.get('X-Failed-Files');
-      const totalEmbeddings = response.headers.get('X-Total-Embeddings');
+      const data: EmbedResponse = await response.json();
 
       setProgress(100);
-      setStatus(`✅ Embeddings created! Processed: ${processedFiles}, Failed: ${failedFiles}, Total: ${totalEmbeddings}`);
-      setEmbedFileUrl(url);
+      setStatus(`✅ Embeddings created! Processed: ${data.total_processed}, Skipped: ${data.total_skipped}, Failed: ${data.total_failed}`);
 
-      return url;
+      return data;
     },
     onError: (error) => {
       setStatus(`❌ Error creating embeddings: ${error.message}`);
@@ -97,15 +115,14 @@ export const useCreateEmbeddings = () => {
   return {
     createEmbeddings: mutation.mutate,
     isCreating: mutation.isPending,
+    embedResult: mutation.data,
     error: mutation.error,
     progress,
     status,
-    embedFileUrl,
     reset: () => {
       mutation.reset();
       setProgress(0);
       setStatus("");
-      setEmbedFileUrl(null);
     },
   };
 };
@@ -118,19 +135,18 @@ export const useSearchEmbeddings = () => {
 
   const mutation = useMutation({
     mutationKey: ["search-embeddings"],
-    mutationFn: async ({ query, embed_file_url}: SearchRequest): Promise<SearchResponse> => {
+    mutationFn: async ({ query, collection_name }: SearchRequest): Promise<SearchResponse> => {
       if (!query) {
         throw new Error("Query is required");
-      }
-      if (!embed_file_url) {
-        throw new Error("Embed file URL is required");
       }
 
       setStatus("🔍 Searching embeddings...");
 
       const formData = new FormData();
       formData.append('query', query);
-      formData.append('embed_file_url', embed_file_url);
+      if (collection_name) {
+        formData.append('collection_name', collection_name);
+      }
 
       const response = await fetch(`${config.aiServerUrl}/search`, {
         method: 'POST',
@@ -204,7 +220,7 @@ export const useAI = () => {
     isCreatingEmbeddings: embeddings.isCreating,
     embeddingsProgress: embeddings.progress,
     embeddingsStatus: embeddings.status,
-    embedFileUrl: embeddings.embedFileUrl,
+    embedResult: embeddings.embedResult,
     embeddingsError: embeddings.error,
     resetEmbeddings: embeddings.reset,
 

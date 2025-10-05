@@ -6,12 +6,16 @@ def check_models_exist():
     """Check if models are already downloaded"""
     MODEL_CACHE_DIR = os.path.join(os.path.dirname(__file__), "models")
     clip_cache_dir = os.path.join(MODEL_CACHE_DIR, "clip-vit-base-patch32")
+    siglip_cache_dir = os.path.join(MODEL_CACHE_DIR, "siglip-base-patch16-224")
     sbert_cache_dir = os.path.join(MODEL_CACHE_DIR, "all-MiniLM-L6-v2")
+    e5_cache_dir = os.path.join(MODEL_CACHE_DIR, "multilingual-e5-base")
     
     clip_exists = os.path.exists(clip_cache_dir) and os.listdir(clip_cache_dir)
+    siglip_exists = os.path.exists(siglip_cache_dir) and os.listdir(siglip_cache_dir)
     sbert_exists = os.path.exists(sbert_cache_dir) and os.listdir(sbert_cache_dir)
+    e5_exists = os.path.exists(e5_cache_dir) and os.listdir(e5_cache_dir)
     
-    return clip_exists and sbert_exists
+    return clip_exists and siglip_exists and sbert_exists and e5_exists
 
 def main():
     """Main startup function"""

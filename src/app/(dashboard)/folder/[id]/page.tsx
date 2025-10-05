@@ -140,7 +140,7 @@ export default function FolderPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Folder Contents</h2>
               <div className="flex items-center space-x-2">
-                <SearchDialog files={files}>
+                <SearchDialog folderId={folderId} files={files}>
                   <Button
                     variant="outline"
                   >

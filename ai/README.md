@@ -1,12 +1,17 @@
 # FilDOS AI API - Document Embedding Service with Weaviate
 
-A Flask-based API service for creating and searching document embeddings using CLIP (for images) and SentenceTransformers (for text). This service uses Weaviate vector database for efficient storage and retrieval of embeddings.
+A Flask-based API service for creating and searching document embeddings using state-of-the-art AI models. This service uses Weaviate vector database for efficient storage and retrieval of embeddings.
 
 ## 🚀 Features
 
 - **Vector Database**: Weaviate for persistent, scalable embedding storage
 - **Multi-format Support**: Images (JPEG, PNG, BMP, WebP), Text (PDF, DOCX, TXT, MD)
-- **Dual Embedding Models**: CLIP for images, SentenceTransformers for text
+- **Advanced AI Models**: 
+  - **SigLIP** (google/siglip-base-patch16-224): Superior image understanding
+  - **Multilingual E5** (intfloat/multilingual-e5-base): Advanced multilingual text embeddings
+  - **CLIP** (openai/clip-vit-base-patch32): Multi-modal embeddings
+  - **MiniLM** (all-MiniLM-L6-v2): Fast text embeddings
+- **OCR Support**: Extract and embed text from images using EasyOCR
 - **Semantic Search**: Fast vector similarity search across all content types
 - **URL-based Processing**: Process files directly from URLs (IPFS, HTTP, etc.)
 - **Batch Processing**: Handle multiple files in a single request
@@ -17,14 +22,39 @@ A Flask-based API service for creating and searching document embeddings using C
 
 ### AI Models
 
-- **CLIP (openai/clip-vit-base-patch32)**: Multi-modal embeddings for images
-- **SentenceTransformers (all-MiniLM-L6-v2)**: High-quality text embeddings
-- **Device Support**: Automatic GPU detection with CPU fallback
+#### Image Models
+- **SigLIP (google/siglip-base-patch16-224)**: State-of-the-art image understanding model
+  - Better than CLIP for most vision tasks
+  - 768-dimensional embeddings
+  - Superior zero-shot classification
+- **CLIP (openai/clip-vit-base-patch32)**: Multi-modal embeddings fallback
+  - 512-dimensional embeddings
+
+#### Text Models
+- **Multilingual E5 (intfloat/multilingual-e5-base)**: Advanced multilingual text embeddings
+  - 768-dimensional embeddings
+  - Supports 100+ languages
+  - State-of-the-art performance on multilingual retrieval
+  - Requires "query:" prefix for queries and "passage:" for documents
+- **SentenceTransformers (all-MiniLM-L6-v2)**: Fast and efficient text embeddings
+  - 384-dimensional embeddings
+  - Used for OCR text from images
+
+#### OCR Engine
+- **EasyOCR**: Extract text from images
+  - Supports 80+ languages
+  - GPU acceleration support
+  - Used to extract text from images, which is then embedded using MiniLM
+
+### Device Support
+- Automatic GPU detection with CPU fallback
+- CUDA support for PyTorch models
+- GPU-accelerated OCR when available
 
 ### Vector Database
 
 - **Weaviate**: High-performance vector database for storing and querying embeddings
-- **Collections**: Organize embeddings by user and folder
+- **Collections**: Organize embeddings by user, project, or dataset
 - **Hybrid Search**: Combines image and text embeddings for comprehensive results
 
 ### API Endpoints
@@ -98,6 +128,7 @@ Create embeddings for files from URLs and store in Weaviate.
     "https://ipfs.io/ipfs/QmHash/document.pdf"
   ],
   "collection_name": "MyFiles"
+}
 ```
 
 **Response**:
@@ -254,3 +285,41 @@ Health check endpoint.
   "weaviate_connected": true
 }
 ```
+
+## 📁 File Format Support
+
+### Images
+- **JPEG/JPG**: Full support with SigLIP embeddings + OCR text extraction
+- **PNG**: Full support including transparency + OCR text extraction
+- **BMP**: Basic bitmap support + OCR text extraction
+- **WebP**: Modern web format support + OCR text extraction
+
+### Text Documents
+- **PDF**: Full text extraction with pdfplumber + Multilingual E5 embeddings
+- **DOCX**: Microsoft Word document support + Multilingual E5 embeddings
+- **TXT**: Plain text files + Multilingual E5 embeddings
+- **MD**: Markdown files + Multilingual E5 embeddings
+
+## 🤖 How It Works
+
+### Image Processing Pipeline
+1. **Image Embedding**: Images are processed using SigLIP to create 768-dimensional visual embeddings
+2. **OCR Text Extraction**: EasyOCR extracts any text visible in the image (supports 80+ languages)
+3. **Text Embedding**: If meaningful text is found (>10 characters), a separate text embedding is created using MiniLM
+4. **Dual Indexing**: Both visual and textual embeddings are stored, enabling:
+   - Visual search: "Find images of cats"
+   - Text search: "Find images containing the word 'invoice'"
+   - Hybrid search: Search works on both visual content and visible text
+
+### Text Processing Pipeline
+1. **Text Extraction**: Content is extracted from PDFs, DOCX, TXT, or MD files
+2. **Multilingual Embedding**: Text is embedded using Multilingual E5 with "passage:" prefix
+3. **Storage**: Embeddings stored with text preview for quick reference
+
+### Search Pipeline
+1. **Query Processing**: 
+   - Visual queries use SigLIP text encoder to create image-compatible embeddings
+   - Text queries use Multilingual E5 with "query:" prefix
+2. **Vector Search**: Weaviate performs fast approximate nearest neighbor search
+3. **Result Merging**: Results from both image and text vectors are combined and ranked
+4. **Score Calculation**: Distance scores converted to similarity scores (0-1 range)

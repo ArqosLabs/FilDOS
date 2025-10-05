@@ -4,7 +4,7 @@ import os
 import torch
 from PIL import Image
 from sentence_transformers import SentenceTransformer, util
-from transformers import CLIPProcessor, CLIPModel
+from transformers import CLIPProcessor, CLIPModel, AutoProcessor, AutoModel
 import pdfplumber
 from docx import Document
 import pickle
@@ -17,6 +17,11 @@ import weaviate
 from weaviate.classes.init import Auth
 from weaviate.classes.query import MetadataQuery
 import numpy as np
+import easyocr
+try:
+    import pytesseract
+except ImportError:
+    pytesseract = None
 
 # Suppress tokenizers warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -110,6 +115,23 @@ except Exception as e:
     print(f"Error loading CLIP model: {e}")
     raise
 
+# Load SigLIP for better image understanding
+siglip_cache_dir = os.path.join(MODEL_CACHE_DIR, "siglip-base-patch16-224")
+print("Loading SigLIP model...")
+try:
+    siglip_model = AutoModel.from_pretrained(
+        "google/siglip-base-patch16-224",
+        cache_dir=siglip_cache_dir
+    ).to(device)
+    siglip_processor = AutoProcessor.from_pretrained(
+        "google/siglip-base-patch16-224",
+        cache_dir=siglip_cache_dir
+    )
+    print("SigLIP model loaded successfully")
+except Exception as e:
+    print(f"Error loading SigLIP model: {e}")
+    raise
+
 # Load Sentence-BERT for text
 sbert_cache_dir = os.path.join(MODEL_CACHE_DIR, "all-MiniLM-L6-v2")
 print("Loading SentenceTransformer model...")
@@ -122,6 +144,28 @@ try:
 except Exception as e:
     print(f"Error loading SentenceTransformer model: {e}")
     raise
+
+# Load Multilingual E5 for better multilingual text embeddings
+e5_cache_dir = os.path.join(MODEL_CACHE_DIR, "multilingual-e5-base")
+print("Loading Multilingual E5 model...")
+try:
+    e5_model = SentenceTransformer(
+        "intfloat/multilingual-e5-base",
+        cache_folder=e5_cache_dir
+    ).to(device)
+    print("Multilingual E5 model loaded successfully")
+except Exception as e:
+    print(f"Error loading Multilingual E5 model: {e}")
+    raise
+
+# Initialize OCR reader
+print("Initializing OCR reader...")
+try:
+    ocr_reader = easyocr.Reader(['en'], gpu=(device == 'cuda'))
+    print("OCR reader initialized successfully")
+except Exception as e:
+    print(f"Warning: Could not initialize OCR reader: {e}")
+    ocr_reader = None
 
 print("All models loaded successfully!")
 
@@ -245,6 +289,30 @@ def download_file_from_url(url, temp_dir):
         print(f"Error downloading file from {url}: {e}")
         return None, None
 
+def extract_text_from_image(image_path):
+    """Extract text from image using OCR"""
+    try:
+        if ocr_reader is None:
+            print("OCR reader not available")
+            return None
+        
+        # Use EasyOCR
+        result = ocr_reader.readtext(image_path)
+        
+        # Extract text from results
+        text = " ".join([detection[1] for detection in result])
+        
+        if text.strip():
+            print(f"OCR extracted {len(text)} characters from image")
+            return text
+        else:
+            print("No text detected in image")
+            return None
+            
+    except Exception as e:
+        print(f"Error performing OCR on {image_path}: {e}")
+        return None
+
 def extract_text(file_path):
     """Extract text from various file formats"""
     ext = file_path.lower().split(".")[-1]
@@ -284,12 +352,23 @@ def embed_and_store_file(file_path, file_url, collection_name):
             return "skipped"
         
         if ext in {"jpg", "jpeg", "png", "bmp", "webp"}:
-            # Image Embedding using CLIP
+            # Image Embedding using SigLIP (better than CLIP)
             image = Image.open(file_path).convert("RGB")
-            inputs = clip_processor(images=image, return_tensors="pt").to(device)
+            inputs = siglip_processor(images=image, return_tensors="pt").to(device)
             with torch.no_grad():
-                image_emb = clip_model.get_image_features(**inputs)
-            image_emb = image_emb / image_emb.norm(p=2)
+                image_emb = siglip_model.get_image_features(**inputs)
+            # Normalize to unit length for proper cosine similarity
+            image_emb = image_emb / image_emb.norm(p=2, dim=-1, keepdim=True)
+            
+            # Try to extract text from image using OCR
+            ocr_text = extract_text_from_image(file_path)
+            text_preview = ocr_text[:1000] if ocr_text else ""
+            
+            # If we have OCR text, also create a text embedding using MiniLM
+            text_emb = None
+            if ocr_text and len(ocr_text.strip()) > 10:  # Only if meaningful text found
+                print(f"Creating text embedding from OCR text for {filename}")
+                text_emb = text_model.encode(ocr_text, convert_to_tensor=True, normalize_embeddings=True)
             
             # Store in Weaviate with named vector
             collection.data.insert(
@@ -297,22 +376,25 @@ def embed_and_store_file(file_path, file_url, collection_name):
                     "filename": filename,
                     "url": file_url,
                     "type": "image",
-                    "text_preview": "",
+                    "text_preview": text_preview,
                     "timestamp": timestamp
                 },
                 vector={
                     "image_vector": image_emb.cpu().numpy().flatten().tolist(),
-                    "text_vector": [0] * 384  # Dummy text vector
+                    "text_vector": text_emb.cpu().numpy().flatten().tolist() if text_emb is not None else [0] * 384
                 }
             )
-            print(f"Image embedded and stored: {filename}")
+            print(f"Image embedded and stored: {filename}" + (" (with OCR text)" if ocr_text else ""))
             return True
 
         elif ext in {"pdf", "docx", "txt", "md"}:
-            # Text Embedding using BERT
+            # Text Embedding using Multilingual E5 (better multilingual support)
             text = extract_text(file_path)
             if text:
-                text_emb = text_model.encode(text, convert_to_tensor=True)
+                # Multilingual E5 requires "query: " or "passage: " prefix
+                # For storage, we use "passage: " prefix
+                text_with_prefix = f"passage: {text}"
+                text_emb = e5_model.encode(text_with_prefix, convert_to_tensor=True, normalize_embeddings=True)
                 
                 # Store in Weaviate with named vector
                 collection.data.insert(
@@ -324,7 +406,7 @@ def embed_and_store_file(file_path, file_url, collection_name):
                         "timestamp": timestamp
                     },
                     vector={
-                        "image_vector": [0] * 512,  # Dummy image vector
+                        "image_vector": [0] * 768,  # Dummy image vector (SigLIP uses 768 dims)
                         "text_vector": text_emb.cpu().numpy().flatten().tolist()
                     }
                 )
@@ -345,13 +427,18 @@ def search_weaviate(query, collection_name, top_k=5):
     try:
         collection = weaviate_client.collections.get(collection_name)
         
-        # Process query for both image and text
-        clip_inputs = clip_processor(text=query, return_tensors="pt").to(device)
+        # Process query for image search using SigLIP
+        # Normalize embeddings to unit length for proper cosine similarity
+        siglip_inputs = siglip_processor(text=[query], return_tensors="pt", padding=True).to(device)
         with torch.no_grad():
-            query_emb_img = clip_model.get_text_features(**clip_inputs)
-        query_emb_img = query_emb_img / query_emb_img.norm(p=2)
+            query_emb_img = siglip_model.get_text_features(**siglip_inputs)
+        # Normalize to unit length
+        query_emb_img = query_emb_img / query_emb_img.norm(p=2, dim=-1, keepdim=True)
         
-        query_emb_txt = text_model.encode(query, convert_to_tensor=True)
+        # Process query for text search using Multilingual E5
+        # For queries, use "query: " prefix and normalize embeddings
+        query_with_prefix = f"query: {query}"
+        query_emb_txt = e5_model.encode(query_with_prefix, convert_to_tensor=True, normalize_embeddings=True)
         
         # Search with image embeddings (for image files)
         results_img = collection.query.near_vector(
@@ -372,11 +459,17 @@ def search_weaviate(query, collection_name, top_k=5):
         )
         
         # Combine and sort results
+        # For normalized vectors with cosine distance: similarity = 1 - distance
+        # Cosine distance ranges from 0 (identical) to 2 (opposite)
+        # Cosine similarity ranges from 1 (identical) to -1 (opposite)
         all_results = []
         for result in results_img.objects:
-            score = 1 - result.metadata.distance  # Convert distance to similarity
+            # Convert cosine distance to similarity score
+            # Distance 0 -> Similarity 1.0 (perfect match)
+            # Distance 2 -> Similarity -1.0 (opposite)
+            score = 1 - result.metadata.distance
             all_results.append({
-                "score": score,
+                "score": float(score),
                 "type": result.properties["type"],
                 "filename": result.properties["filename"],
                 "url": result.properties["url"],
@@ -388,7 +481,7 @@ def search_weaviate(query, collection_name, top_k=5):
             # Check if already in results
             if not any(r["url"] == result.properties["url"] for r in all_results):
                 all_results.append({
-                    "score": score,
+                    "score": float(score),
                     "type": result.properties["type"],
                     "filename": result.properties["filename"],
                     "url": result.properties["url"],
