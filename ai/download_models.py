@@ -1,7 +1,7 @@
 import os
 import torch
 from sentence_transformers import SentenceTransformer
-from transformers import CLIPProcessor, CLIPModel
+from transformers import CLIPProcessor, CLIPModel, AutoProcessor, AutoModel
 
 def download_models():
     """Download and cache all required AI models"""
@@ -30,19 +30,45 @@ def download_models():
         )
         print("✓ CLIP model downloaded successfully")
         
+        # Download SigLIP model for better image understanding
+        print("\n2. Downloading SigLIP model (google/siglip-base-patch16-224)...")
+        siglip_cache_dir = os.path.join(MODEL_CACHE_DIR, "siglip-base-patch16-224")
+        
+        siglip_model = AutoModel.from_pretrained(
+            "google/siglip-base-patch16-224",
+            cache_dir=siglip_cache_dir
+        )
+        siglip_processor = AutoProcessor.from_pretrained(
+            "google/siglip-base-patch16-224",
+            cache_dir=siglip_cache_dir
+        )
+        print("✓ SigLIP model downloaded successfully")
+        
         # Download SentenceTransformer model
-        print("\n2. Downloading SentenceTransformer model (all-MiniLM-L6-v2)...")
+        print("\n3. Downloading SentenceTransformer model (all-MiniLM-L6-v2)...")
         sbert_cache_dir = os.path.join(MODEL_CACHE_DIR, "all-MiniLM-L6-v2")
         
         text_model = SentenceTransformer(
             "all-MiniLM-L6-v2",
             cache_folder=sbert_cache_dir
         )
-        print("SentenceTransformer model downloaded successfully")
-        print(f"\nAll models downloaded and cached successfully!")
+        print("✓ SentenceTransformer model downloaded successfully")
+        
+        # Download multilingual E5 model for better multilingual text embeddings
+        print("\n4. Downloading Multilingual E5 model (intfloat/multilingual-e5-base)...")
+        e5_cache_dir = os.path.join(MODEL_CACHE_DIR, "multilingual-e5-base")
+        
+        e5_model = SentenceTransformer(
+            "intfloat/multilingual-e5-base",
+            cache_folder=e5_cache_dir
+        )
+        print("✓ Multilingual E5 model downloaded successfully")
+        print(f"\n✓ All models downloaded and cached successfully!")
         print(f"Models cached in: {MODEL_CACHE_DIR}")
-        print(f"CLIP cache: {clip_cache_dir}")
-        print(f"SentenceTransformer cache: {sbert_cache_dir}")
+        print(f"  - CLIP cache: {clip_cache_dir}")
+        print(f"  - SigLIP cache: {siglip_cache_dir}")
+        print(f"  - SentenceTransformer (MiniLM) cache: {sbert_cache_dir}")
+        print(f"  - Multilingual E5 cache: {e5_cache_dir}")
         
         # Show cache size
         total_size = get_directory_size(MODEL_CACHE_DIR)
@@ -80,12 +106,16 @@ def check_models_exist():
     """Check if models are already downloaded"""
     MODEL_CACHE_DIR = os.path.join(os.path.dirname(__file__), "models")
     clip_cache_dir = os.path.join(MODEL_CACHE_DIR, "clip-vit-base-patch32")
+    siglip_cache_dir = os.path.join(MODEL_CACHE_DIR, "siglip-base-patch16-224")
     sbert_cache_dir = os.path.join(MODEL_CACHE_DIR, "all-MiniLM-L6-v2")
+    e5_cache_dir = os.path.join(MODEL_CACHE_DIR, "multilingual-e5-base")
     
     clip_exists = os.path.exists(clip_cache_dir) and os.listdir(clip_cache_dir)
+    siglip_exists = os.path.exists(siglip_cache_dir) and os.listdir(siglip_cache_dir)
     sbert_exists = os.path.exists(sbert_cache_dir) and os.listdir(sbert_cache_dir)
+    e5_exists = os.path.exists(e5_cache_dir) and os.listdir(e5_cache_dir)
     
-    return clip_exists and sbert_exists
+    return clip_exists and siglip_exists and sbert_exists and e5_exists
 
 def main():
     """Main function"""
@@ -98,11 +128,7 @@ def main():
         total_size = get_directory_size(MODEL_CACHE_DIR)
         print(f"Models already exist in cache ({format_size(total_size)})")
         print(f"Cache location: {MODEL_CACHE_DIR}")
-        
-        response = input("\nDo you want to re-download models? (y/N): ").lower()
-        if response not in ['y', 'yes']:
-            print("Skipping download. Models are ready to use!")
-            return
+        return
     
     success = download_models()
     
