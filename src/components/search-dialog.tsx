@@ -98,7 +98,7 @@ const latestEmbedFile = useMemo(() => {
         <div className="flex-1 overflow-y-auto space-y-4 p-2">
           {/* Server and Embed File Status */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg border">
+            <div className="flex items-center justify-between p-3 rounded-md border">
               <div className="flex items-center gap-2">
                 <div className="text-sm font-medium">AI Server Status:</div>
                 <Badge variant={isServerHealthy ? 'default' : 'destructive'}>
@@ -110,7 +110,7 @@ const latestEmbedFile = useMemo(() => {
               )}
             </div>
 
-            <div className="p-3 rounded-lg border">
+            <div className="p-3 rounded-md border">
               {latestEmbedFile ? (
                 <div className="space-y-1">
                   <div className="text-sm text-primary">
@@ -173,7 +173,7 @@ const latestEmbedFile = useMemo(() => {
 
           {/* Search Error */}
           {searchError && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+            <div className="flex items-start gap-2 p-3 rounded-md bg-red-50 border border-red-200">
               <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-red-700">
                 {searchError.message}
@@ -252,7 +252,7 @@ const latestEmbedFile = useMemo(() => {
 
           {/* Helper Text */}
           {!latestEmbedFile && (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-yellow-800">

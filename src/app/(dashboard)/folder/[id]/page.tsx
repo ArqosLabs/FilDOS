@@ -123,7 +123,7 @@ export default function FolderPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
+          <h2 className="text-2xl font-medium mb-4">Connect Your Wallet</h2>
           <p className="text-gray-600">Please connect your wallet to access your folders and files.</p>
         </div>
       </div>
@@ -131,14 +131,14 @@ export default function FolderPage() {
   }
 
   return (
-    <div className="">
+    <div>
       <Header isFilePage={true} viewMode={viewMode} setViewMode={setViewMode} />
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Upload Button - Always visible at the top */}
-          <div className="p-4 border-b bg-gray-50">
+          <div className="p-4 border-b bg-background">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Folder Contents</h2>
+              <h2 className="text-lg font-medium">Folder Contents</h2>
               <div className="flex items-center space-x-2">
                 <SearchDialog files={files}>
                   <Button
@@ -177,7 +177,7 @@ export default function FolderPage() {
               <ArrowLeft className="w-4 h-4 mr-1" />
               Back to My Drive
             </button>
-            <h2 className="text-lg font-semibold mt-2">
+            <h2 className="text-lg font-medium mt-2">
               {folderDataLoading
                 ? "Loading folder..."
                 : folderData?.name || `Folder ${folderId}`
@@ -234,7 +234,7 @@ export default function FolderPage() {
               {files.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-12 text-center">
                   <Upload className="w-16 h-16 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
                     No files in this folder
                   </h3>
                   <p className="text-gray-600 mb-4">

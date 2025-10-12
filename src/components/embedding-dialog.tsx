@@ -188,7 +188,7 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
         
         <div className="space-y-4">
           {/* Server Status */}
-          <div className="flex items-center justify-between p-3 rounded-lg border">
+          <div className="flex items-center justify-between p-3 rounded-md border">
             <div className="flex items-center gap-2">
               <div className="text-sm font-medium">AI Server Status:</div>
               <Badge variant={isServerHealthy ? 'default' : 'destructive'}>
@@ -201,7 +201,7 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
           </div>
 
           {/* Files Summary */}
-          <div className="p-3 rounded-lg border">
+          <div className="p-3 rounded-md border">
             <div className="text-sm font-medium mb-2">Files to embed:</div>
             <div className="text-sm text-gray-600">
               {embeddableFiles.length} embeddable files out of {files.length} total files
@@ -235,7 +235,7 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
             )}
 
             {step === 'error' && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+              <div className="flex items-start gap-2 p-3 rounded-md bg-red-50 border border-red-200">
                 <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-red-700">
                   {errorMessage}
@@ -244,7 +244,7 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
             )}
 
             {step === 'complete' && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
+              <div className="flex items-start gap-2 p-3 rounded-md bg-green-50 border border-green-200">
                 <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-green-700">
                   Embeddings created and saved successfully! You can now use semantic search on your files.

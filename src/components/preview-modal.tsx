@@ -192,7 +192,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
                 <div className="flex items-start text-red-700">
                   <AlertCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold">Error Loading File</h4>
+                    <h4 className="font-medium">Error Loading File</h4>
                     <p className="text-sm mt-1">{error}</p>
                   </div>
                 </div>
@@ -227,7 +227,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
                   {React.createElement(getFileIcon(file.name), {
                     className: "w-5 h-5 text-gray-600 mr-2"
                   })}
-                  <h4 className="text-lg font-semibold">File Preview</h4>
+                  <h4 className="text-lg font-medium">File Preview</h4>
                 </div>
                 <div className="flex gap-2">
                   <Button onClick={handleDownload} variant="outline" size="sm">
@@ -243,8 +243,8 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* Text Content */}
               {fileContent && (
-                <div className="bg-white p-4 rounded border max-h-96 overflow-y-auto">
-                  <pre className="text-sm text-gray-800 whitespace-pre-wrap break-words font-mono">
+                <div className="bg-background p-4 rounded border max-h-96 overflow-y-auto">
+                  <pre className="text-sm text-gray-800 whitespace-pre-wrap break-words ">
                     {fileContent}
                   </pre>
                 </div>
@@ -252,7 +252,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* Image Preview */}
               {previewUrl && fileType.startsWith('image/') && (
-                <div className="bg-white p-4 rounded border">
+                <div className="bg-background p-4 rounded border">
                   <div className="relative w-full flex justify-center">
                     <Image
                       src={previewUrl}
@@ -268,7 +268,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* Video Preview */}
               {previewUrl && fileType.startsWith('video/') && (
-                <div className="bg-white p-4 rounded border">
+                <div className="bg-background p-4 rounded border">
                   <video 
                     controls 
                     className="max-w-full max-h-96 rounded mx-auto"
@@ -281,7 +281,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* No Preview Available */}
               {!fileContent && !previewUrl && !isLoading && (
-                <div className="bg-white p-8 rounded border text-center">
+                <div className="bg-background p-8 rounded border text-center">
                   <Eye className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-500 mb-4">
                     Preview not available for this file type.
@@ -305,7 +305,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
           {!address && (
             <Card className="p-6 text-center bg-amber-50 border-amber-200">
               <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-              <h4 className="font-semibold text-amber-800">Wallet Required</h4>
+              <h4 className="font-medium text-amber-800">Wallet Required</h4>
               <p className="text-sm text-amber-700 mt-1">
                 Please connect your wallet to view files.
               </p>

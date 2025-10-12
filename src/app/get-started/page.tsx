@@ -20,7 +20,7 @@ export default function GetStarted() {
           {/* Header */}
           <div className="text-center space-y-4">
             <Badge className="bg-primary text-white">Get Started</Badge>
-            <h1 className="text-4xl font-bold text-gray-900">
+            <h1 className="text-4xl font-medium text-gray-900">
               Welcome to FilDOS
             </h1>
           </div>

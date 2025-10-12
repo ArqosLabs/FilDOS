@@ -617,7 +617,7 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">FIL Balance</span>
           </div>
-          <span className="font-mono text-sm">
+          <span className="text-sm">
             {isLoading ? "..." : `${balances?.filBalanceFormatted?.toLocaleString()} FIL`}
           </span>
         </div>
@@ -625,7 +625,7 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">USDFC Balance</span>
           </div>
-          <span className="font-mono text-sm">
+          <span className="text-sm">
             {isLoading ? "..." : `${balances?.usdfcBalanceFormatted?.toLocaleString()} USDFC`}
           </span>
         </div>
@@ -633,7 +633,7 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Warm Storage Balance</span>
           </div>
-          <span className="font-mono text-sm">
+          <span className="text-sm">
             {isLoading ? "..." : `${balances?.warmStorageBalanceFormatted?.toLocaleString()} USDFC`}
           </span>
         </div>
@@ -689,7 +689,7 @@ const StorageStatusSection = ({
               {isLoading ? "..." : `${balances?.persistenceDaysLeft.toFixed(1)} days`}
             </Badge>
           </div>
-          <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+          <div className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">Persistence (Current Usage)</span>

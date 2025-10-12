@@ -30,13 +30,17 @@ export default function Web3Providers({
           <WagmiProvider config={config}>
             <RainbowKitProvider
               modalSize="compact"
-                  theme={lightTheme({
-                    accentColor: '#0295f6',
-                    accentColorForeground: 'white',
-                    borderRadius: 'medium',
-                    fontStack: 'system',
-                    overlayBlur: 'small',
-                  })}
+              theme={lightTheme({
+                accentColor: '#0295f6',
+                accentColorForeground: 'white',
+                borderRadius: 'small',
+                fontStack: 'system',
+                overlayBlur: 'small'
+              })}
+              appInfo={{
+                appName: 'FilDOS',
+                learnMoreUrl: 'https://fildos.cloud',
+              }}
             >
               <main className="flex flex-col min-h-screen">
                 {children}

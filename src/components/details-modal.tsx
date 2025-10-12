@@ -101,7 +101,7 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
         <div className="space-y-6">
           {/* General Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">General Information</h3>
+            <h3 className="text-lg font-medium">General Information</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               
@@ -131,13 +131,13 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
 
           {/* Ownership & Permissions */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Ownership & Permissions</h3>
+            <h3 className="text-lg font-medium">Ownership & Permissions</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-600">Owner</label>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm bg-gray-50 p-2 rounded border flex-1 font-mono">
+                  <p className="text-sm bg-gray-50 p-2 rounded border flex-1 ">
                     {file.owner}
                   </p>
                   <Button
@@ -178,14 +178,14 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
 
           {/* Blockchain Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Blockchain Information</h3>
+            <h3 className="text-lg font-medium">Blockchain Information</h3>
             
             <div className="grid grid-cols-1 gap-4">
               {file.tokenId && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-600">Token ID</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm bg-gray-50 p-2 rounded border flex-1 font-mono">
+                    <p className="text-sm bg-gray-50 p-2 rounded border flex-1 ">
                       {file.tokenId}
                     </p>
                     <Button
@@ -208,7 +208,7 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-600">Content ID (CID)</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm bg-gray-50 p-2 rounded border flex-1 font-mono break-all">
+                    <p className="text-sm bg-gray-50 p-2 rounded border flex-1  break-all">
                       {file.cid}
                     </p>
                     <Button
@@ -234,12 +234,12 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
             <>
               <Separator />
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">File Access</h3>
+                <h3 className="text-lg font-medium">File Access</h3>
                 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-600">IPFS/Filecoin URL</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm bg-gray-50 p-2 rounded border flex-1 font-mono break-all">
+                    <p className="text-sm bg-gray-50 p-2 rounded border flex-1  break-all">
                       {fileUrl}
                     </p>
                     <Button
@@ -277,7 +277,7 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
             <>
               <Separator />
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Tags</h3>
+                <h3 className="text-lg font-medium">Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {file.tags.map((tag, index) => (
                     <Badge key={index} variant="outline" className="text-xs">

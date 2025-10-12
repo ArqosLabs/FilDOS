@@ -73,7 +73,7 @@ export default function SharedFolders() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
+          <h2 className="text-2xl font-medium mb-4">Connect Your Wallet</h2>
           <p className="text-gray-600">Please connect your wallet to access shared folders.</p>
         </div>
       </div>
@@ -81,7 +81,7 @@ export default function SharedFolders() {
   }
 
   return (
-    <div className="">
+    <div>
       <Header isFilePage={true} viewMode={viewMode} setViewMode={setViewMode} />
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 flex flex-col overflow-hidden">
@@ -90,7 +90,7 @@ export default function SharedFolders() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Share className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-semibold">Shared With Me</h2>
+                <h2 className="text-lg font-medium">Shared With Me</h2>
               </div>
               <div className="text-sm text-gray-600">
                 {files.length} folder{files.length !== 1 ? 's' : ''} shared with you
@@ -136,13 +136,13 @@ export default function SharedFolders() {
               {files.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-12 text-center">
                   <Users className="w-16 h-16 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No shared folders yet</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No shared folders yet</h3>
                   <p className="text-gray-600 mb-4">
                     Folders that others share with you will appear here.
                   </p>
                   <p className="text-sm text-gray-500">
                     Ask others to share their folders with your wallet address:<br />
-                    <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono mt-2 inline-block">
+                    <code className="bg-gray-100 px-2 py-1 rounded text-xs  mt-2 inline-block">
                       {address}
                     </code>
                   </p>

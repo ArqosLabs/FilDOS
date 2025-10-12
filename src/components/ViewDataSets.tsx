@@ -17,10 +17,10 @@ export const ViewDataSets = () => {
   }
 
   return (
-    <div className="p-6 bg-white overflow-y-auto">
+    <div className="p-6 bg-background overflow-y-auto">
       <div className="flex justify-between items-center pb-4 border-b">
-        <div className="sticky top-0 bg-white z-10">
-          <h3 className="text-xl font-semibold text-gray-900">Proof Sets</h3>
+        <div className="sticky top-0 bg-background z-10">
+          <h3 className="text-xl font-medium text-gray-900">Proof Sets</h3>
           <p className="text-sm text-gray-500 mt-1">
             View and manage your storage data sets
           </p>
@@ -37,7 +37,7 @@ export const ViewDataSets = () => {
           dataset && (
             <div
               key={dataset?.clientDataSetId}
-              className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+              className="bg-gray-50 rounded-md p-4 border border-gray-200"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -89,7 +89,7 @@ export const ViewDataSets = () => {
                 <h5 className="text-sm font-medium text-gray-900 mb-2">
                   Piece Details
                 </h5>
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="bg-background rounded-md border border-gray-200 p-4">
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
                       <p className="text-sm text-gray-600">

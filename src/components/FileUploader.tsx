@@ -48,7 +48,7 @@ export const FileUploader = () => {
   return (
     <div className="mt-4 p-6">
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-md p-8 text-center cursor-pointer transition-colors ${
           isDragging
             ? "border-blue-500 bg-blue-50"
             : "border-gray-300 hover:border-gray-400"
@@ -158,8 +158,8 @@ export const FileUploader = () => {
       )}
       {/* Uploaded file info panel */}
       {uploadedInfo && !isLoading && (
-        <div className="mt-6 bg-background border border-border rounded-xl p-4 text-left">
-          <h4 className="font-semibold mb-2 text-foreground">
+        <div className="mt-6 bg-background border border-border rounded-md p-4 text-left">
+          <h4 className="font-medium mb-2 text-foreground">
             File Upload Details
           </h4>
           <div className="text-sm text-foreground">
