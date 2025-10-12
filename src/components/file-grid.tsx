@@ -1,16 +1,10 @@
 "use client";
 
 import {
-  Folder,
-  FileText,
-  Image,
-  Video,
-  FileType,
   MoreVertical,
   Share,
   Globe,
   Info,
-  Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,13 +14,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { FileItem } from "@/app/(dashboard)/page";
 import ShareFolderDialog from "@/components/share-folder-dialog";
 import MakePublicDialog from "@/components/make-public-dialog";
 import DetailsModal from "@/components/details-modal";
 import FilePreviewModal from "@/components/preview-modal";
 import { useState } from "react";
+import Image from "next/image";
 
 interface FileGridProps {
   files: FileItem[];
@@ -35,41 +29,26 @@ interface FileGridProps {
   onFolderClick?: (folderId?: string, url?: string) => void;
 }
 
-const getFileIcon = (type: FileItem["type"]) => {
+const getFileLogo = (type: FileItem["type"]) => {
   switch (type) {
     case "folder":
-      return Folder;
+      return "/logos/folder.png";
     case "document":
-      return FileText;
+      return "/logos/document.png";
     case "image":
-      return Image;
+      return "/logos/image.png";
     case "video":
-      return Video;
+      return "/logos/video.png";
     case "pdf":
-      return FileType;
-    case "embed":
-      return Brain;
+      return "/logos/pdf.png";
+    case "audio":
+      return "/logos/audio.png";
+    case "presentation":
+      return "/logos/presentation.png";
+    case "spreadsheet":
+      return "/logos/spreadsheet.png";
     default:
-      return FileType;
-  }
-};
-
-const getFileColor = (type: FileItem["type"]) => {
-  switch (type) {
-    case "folder":
-      return "text-blue-600";
-    case "document":
-      return "text-blue-500";
-    case "image":
-      return "text-green-500";
-    case "video":
-      return "text-red-500";
-    case "pdf":
-      return "text-red-600";
-    case "embed":
-      return "text-purple-500";
-    default:
-      return "text-gray-500";
+      return "/logos/other.png";
   }
 };
 
@@ -92,41 +71,37 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
       <div className="p-6">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {files.map((file) => {
-            const Icon = getFileIcon(file.type);
+            const logoSrc = getFileLogo(file.type);
             const isSelected = selectedFiles.includes(file.id);
 
             return (
               <div
                 key={file.id}
-                className={`group relative bg-background border border-gray-200 rounded-md p-4 hover:shadow-md transition-all cursor-pointer ${
+                className={`group relative bg-background border border-gray-200 rounded-md p-4 hover:shadow-sm transition-all cursor-pointer select-none ${
                   isSelected ? "ring-2 ring-primary bg-blue-50" : ""
-                } ${file.type === "embed" ? "opacity-40" : ""}`}
+                }`}
                 onClick={() => onToggleSelection(file.id)}
                 onDoubleClick={() => handleFileClick(file)}
               >
                 {/* File Icon */}
                 <div className="flex flex-col items-center text-center">
-                  <Icon className={`w-12 h-12 mb-3 ${getFileColor(file.type)}`} />
+                  <Image 
+                    src={logoSrc} 
+                    alt={file.type} 
+                    width={48} 
+                    height={48} 
+                    className="mb-3"
+                  />
 
                   {/* File Name */}
-                  <h3 className="text-sm font-medium text-gray-900 truncate w-full mb-1">
+                  <h3 className="text-sm font-base text-black truncate w-full mb-1">
                     {file.name}
                   </h3>
 
                   {/* File Info */}
-                  <div className="text-xs text-gray-500 space-y-1">
+                  <div className="text-xs text-gray-400 space-y-1">
                     {file.size && <div>{file.size}</div>}
                     <div>{file.modified}</div>
-                  </div>
-
-                  {/* Badges */}
-                  <div className="flex gap-1 mt-2">
-                    {file.shared && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Share className="w-3 h-3 mr-1" />
-                        Shared
-                      </Badge>
-                    )}
                   </div>
                 </div>
 

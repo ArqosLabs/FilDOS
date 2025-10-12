@@ -332,8 +332,8 @@ export const useContract = () => {
         tags: string[];
       }) => {
         if (!contract || !signer) throw new Error("Contract or signer not initialized");
-        const tx = await contract.addFile(tokenId, cid, filename, tags);
-        return await tx.wait();
+        const transaction = await contract.addFile(tokenId, cid, filename, tags);
+        return await transaction.wait();
       },
       onSuccess: (_, variables) => {
         // Invalidate files query for this folder

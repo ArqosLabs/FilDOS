@@ -18,7 +18,7 @@ interface FileItem {
   id: string;
   name: string;
   folderType: string;
-  type: "folder" | "document" | "image" | "video" | "pdf" | "embed" | "other";
+  type: "folder" | "document" | "image" | "video" | "pdf" | "audio" | "presentation" | "spreadsheet" | "other";
   size?: string;
   modified: string;
   owner: string;
@@ -42,7 +42,9 @@ const getFileTypeFromTags = (tags: string[]): FileItem['type'] => {
   if (tags.includes('images') || tags.includes('design')) return 'image';
   if (tags.includes('videos')) return 'video';
   if (tags.includes('documents') || tags.includes('pdf')) return 'document';
-  if (tags.includes('embeds')) return 'embed';
+  if (tags.includes('audio')) return 'audio';
+  if (tags.includes('presentations')) return 'presentation';
+  if (tags.includes('spreadsheets')) return 'spreadsheet';
   return 'other';
 };
 

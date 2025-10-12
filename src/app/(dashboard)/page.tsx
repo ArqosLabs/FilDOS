@@ -16,7 +16,7 @@ export interface FileItem {
   id: string;
   name: string;
   folderType: string;
-  type: "folder" | "document" | "image" | "video" | "pdf" | "embed" | "other";
+  type: "folder" | "document" | "image" | "video" | "pdf" | "audio" | "audio" | "pdf" | "presentation" | "spreadsheet" | "other" | "embed";
   size?: string;
   modified: string;
   owner: string;

@@ -9,9 +9,6 @@ import Image from 'next/image';
 import { 
   Download, 
   Eye, 
-  FileText, 
-  Image as ImageIcon, 
-  Video, 
   AlertCircle, 
   Loader2,
   ExternalLink
@@ -43,11 +40,16 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
     }
   }, [file]);
 
-  const getFileIcon = useCallback((fileName: string) => {
+  const getFileLogo = useCallback((fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase() || '';
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) return ImageIcon;
-    if (['mp4', 'webm', 'avi', 'mov'].includes(extension)) return Video;
-    return FileText;
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) return '/logos/image.png';
+    if (['mp4', 'webm', 'avi', 'mov'].includes(extension)) return '/logos/video.png';
+    if (['mp3', 'wav', 'ogg', 'flac'].includes(extension)) return '/logos/audio.png';
+    if (['pdf'].includes(extension)) return '/logos/pdf.png';
+    if (['doc', 'docx', 'txt', 'md'].includes(extension)) return '/logos/document.png';
+    if (['xls', 'xlsx', 'csv'].includes(extension)) return '/logos/excel.png';
+    if (['ppt', 'pptx'].includes(extension)) return '/logos/ppt.png';
+    return '/logos/other.png';
   }, []);
 
   const getContentType = useCallback((fileName: string) => {
@@ -169,9 +171,13 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {React.createElement(getFileIcon(file.name), {
-              className: "w-5 h-5 text-gray-600"
-            })}
+            <Image 
+              src={getFileLogo(file.name)} 
+              alt="file icon" 
+              width={20} 
+              height={20}
+              className="text-gray-600"
+            />
             <span className="truncate">{file.name}</span>
           </DialogTitle>
         </DialogHeader>
@@ -224,10 +230,6 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
             <Card className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  {React.createElement(getFileIcon(file.name), {
-                    className: "w-5 h-5 text-gray-600 mr-2"
-                  })}
-                  <h4 className="text-lg font-medium">File Preview</h4>
                 </div>
                 <div className="flex gap-2">
                   <Button onClick={handleDownload} variant="outline" size="sm">

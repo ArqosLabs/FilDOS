@@ -155,7 +155,6 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
         setContractAddError(null);
         
         try {
-          // Classify file and generate comprehensive tags
           const tags = classifyFile(file);
 
           await addFile.mutateAsync({
@@ -165,8 +164,8 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
             tags: tags,
           });
           
-          console.log("✅ File added to contract successfully!");
-          console.log("📋 File tags:", tags);
+          console.log("File added to contract successfully!");
+          console.log("File tags:", tags);
         } catch (error) {
           console.error("❌ Error adding file to contract:", error);
           setContractAddError(error instanceof Error ? error.message : "Failed to add file to folder");
@@ -219,21 +218,18 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader className="space-y-3">
-          <DialogTitle className="text-2xl flex items-center gap-2">
+          <DialogTitle className="text-xl flex items-center gap-2">
             <Upload className="h-6 w-6" />
             Upload File
           </DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            Upload your files to decentralized storage on Filecoin
-          </p>
         </DialogHeader>
 
         <div className="space-y-6">
-          <Card className={`border-2 border-dashed cursor-pointer transition-all duration-200 ${
+          <Card className={`border-1 border-dashed cursor-pointer transition-all duration-200 ${
             isDragging
               ? "border-primary bg-primary/5 shadow-lg"
               : file
-                ? "border-green-500 bg-green-50"
+                ? "border-secondary bg-secondary/5"
                 : "border-muted-foreground/25 hover:border-muted-foreground/50"
           }`}>
             <CardContent
@@ -257,9 +253,9 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
               />
               <div className="flex flex-col items-center gap-4">
                 {file ? (
-                  <div className="flex items-center gap-3 p-4 bg-green-100 rounded-full">
-                    <File className="h-8 w-8 text-green-600" />
-                    <CheckCircle className="h-6 w-6 text-green-600" />
+                  <div className="flex items-center gap-3 p-4 bg-secondary/50 rounded-full">
+                    <File className="h-8 w-8 text-primary" />
+                    <CheckCircle className="h-6 w-6 text-primary" />
                   </div>
                 ) : (
                   <div className={`p-4 rounded-full ${
@@ -291,9 +287,9 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                         {(file.size / 1024 / 1024).toFixed(2)} MB
                       </Badge>
                       {previewTags.length > 0 && (
-                        <div className="space-y-1">
+                        <div className="space-y-1 mx-auto">
                           <p className="text-xs text-muted-foreground">Auto-tags:</p>
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1 justify-center">
                             {previewTags.map((tag, index) => {
                               // Color-code tags by category
                               const getTagVariant = (tag: string) => {

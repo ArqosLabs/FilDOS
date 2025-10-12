@@ -20,6 +20,7 @@ export const useFileUpload = () => {
   const [uploadedInfo, setUploadedInfo] = useState<UploadedInfo | null>(null);
   const { synapse } = useSynapse();
   const { address } = useAccount();
+
   const mutation = useMutation({
     mutationKey: ["file-upload", address],
     mutationFn: async (file: File) => {
@@ -27,24 +28,20 @@ export const useFileUpload = () => {
       if (!address) throw new Error("Address not found");
       setProgress(0);
       setUploadedInfo(null);
-      setStatus("🔄 Initializing file upload to Filecoin...");
+      setStatus("Initializing file upload to Filecoin...");
 
       // 1) Convert File → ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
       // 2) Convert ArrayBuffer → Uint8Array
       const uint8ArrayBytes = new Uint8Array(arrayBuffer);
-
-      // 3) Create Synapse instance
-
-      // 4) Get dataset
+      // 3) Get dataset
       const datasets = await synapse.storage.findDataSets(address);
-      // 5) Check if we have a dataset
+      // 4) Check if we have a dataset
       const datasetExists = datasets.length > 0;
       // Include dataset creation fee if no dataset exists
       const includeDatasetCreationFee = !datasetExists;
-
-      // 6) Check if we have enough USDFC to cover the storage costs and deposit if not
-      setStatus("💰 Checking USDFC balance and storage allowances...");
+      // 5) Check if we have enough USDFC to cover the storage costs and deposit if not
+      setStatus("Checking USDFC balance and storage allowances...");
       setProgress(5);
       await preflightCheck(
         file,
@@ -54,50 +51,50 @@ export const useFileUpload = () => {
         setProgress
       );
 
-      setStatus("🔗 Setting up storage service and dataset...");
+      setStatus("Setting up storage service and dataset...");
       setProgress(25);
 
-      // 7) Create storage service
+      // 6) Create storage service
       const storageService = await synapse.createStorage({
         callbacks: {
           onDataSetResolved: (info) => {
             console.log("Dataset resolved:", info);
-            setStatus("🔗 Existing dataset found and resolved");
+            setStatus("Existing dataset found and resolved");
             setProgress(30);
           },
           onDataSetCreationStarted: (transactionResponse, statusUrl) => {
             console.log("Dataset creation started:", transactionResponse);
             console.log("Dataset creation status URL:", statusUrl);
-            setStatus("🏗️ Creating new dataset on blockchain...");
+            setStatus("Creating new dataset on blockchain...");
             setProgress(35);
           },
           onDataSetCreationProgress: (status) => {
             console.log("Dataset creation progress:", status);
             if (status.transactionSuccess) {
-              setStatus(`⛓️ Dataset transaction confirmed on chain`);
+              setStatus(`Dataset transaction confirmed on chain`);
               setProgress(45);
             }
             if (status.serverConfirmed) {
               setStatus(
-                `🎉 Dataset ready! (${Math.round(status.elapsedMs / 1000)}s)`
+                `Dataset ready! (${Math.round(status.elapsedMs / 1000)}s)`
               );
               setProgress(50);
             }
           },
           onProviderSelected: (provider) => {
             console.log("Storage provider selected:", provider);
-            setStatus(`🏪 Storage provider selected`);
+            setStatus(`Storage provider selected (${provider.name})`);
           },
         },
       });
 
-      setStatus("📁 Uploading file to storage provider...");
+      setStatus("Uploading file to storage provider...");
       setProgress(55);
-      // 8) Upload file to storage provider
+      // 7) Upload file to storage provider
       const { pieceCid } = await storageService.upload(uint8ArrayBytes, {
         onUploadComplete: (piece) => {
           setStatus(
-            `📊 File uploaded! Signing msg to add pieces to the dataset`
+            `File uploaded! Signing msg to add pieces to the dataset`
           );
           setUploadedInfo((prev) => ({
             ...prev,
@@ -109,8 +106,8 @@ export const useFileUpload = () => {
         },
         onPieceAdded: (transactionResponse) => {
           setStatus(
-            `🔄 Waiting for transaction to be confirmed on chain${
-              transactionResponse ? `(txHash: ${transactionResponse.hash})` : ""
+            `Waiting for transaction to be confirmed on chain${
+              transactionResponse ? `(txHash: ${transactionResponse.hash.slice(0, 6)}...${transactionResponse.hash.slice(-4)})` : ""
             }`
           );
           if (transactionResponse) {
@@ -122,7 +119,7 @@ export const useFileUpload = () => {
           }
         },
         onPieceConfirmed: () => {
-          setStatus("🌳 Data pieces added to dataset successfully");
+          setStatus("Data pieces added to dataset successfully");
           setProgress(90);
         },
       });
@@ -136,7 +133,7 @@ export const useFileUpload = () => {
       }));
     },
     onSuccess: () => {
-      setStatus("🎉 File successfully stored on Filecoin!");
+      setStatus("File successfully stored on Filecoin!");
       setProgress(100);
     },
     onError: (error) => {

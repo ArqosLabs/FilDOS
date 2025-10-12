@@ -124,7 +124,7 @@ export default function MakePublicDialog({
                 </>
               ) : (
                 <>
-                  <li>• Allow anyone to view the folder and its contents</li>
+                  <li>• Allow anyone to view the folder and its content</li>
                   <li>• Make it discoverable in public folder listings</li>
                   <li>• Enable access without explicit sharing</li>
                 </>

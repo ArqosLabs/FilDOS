@@ -25,6 +25,8 @@ import {
 import { useState, useMemo, useEffect } from "react";
 import { useSynapse } from "@/providers/SynapseProvider";
 import { StorageConfigDialog, StorageConfig } from "./storage-config-dialog";
+import { fetchWarmStorageCosts } from "@/utils/warmStorageUtils";
+import { getPricePerTBPerMonth } from "@/utils";
 
 const STORAGE_CONFIG_KEY = "fildos_user_storage_config";
 
@@ -33,7 +35,8 @@ export const StorageManager = () => {
   const revokeService = useRevokeService();
   const { synapse } = useSynapse();
   const [revokeStatus, setRevokeStatus] = useState<string>("");
-  
+  const [pricePerTiBPerMonth, setPricePerTiBPerMonth] = useState<string | null>(null);
+
   const [userConfig, setUserConfig] = useState<StorageConfig>(() => {
     if (typeof window === "undefined") {
       return {
@@ -42,7 +45,7 @@ export const StorageManager = () => {
         minDaysThreshold: defaultConfig.minDaysThreshold,
       };
     }
-    
+
     try {
       const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
       if (saved) {
@@ -51,7 +54,7 @@ export const StorageManager = () => {
     } catch (error) {
       console.error("Failed to load storage config from localStorage:", error);
     }
-    
+
     return {
       storageCapacity: defaultConfig.storageCapacity,
       persistencePeriod: defaultConfig.persistencePeriod,
@@ -68,6 +71,22 @@ export const StorageManager = () => {
       }
     }
   }, [userConfig]);
+
+  useEffect(() => {
+    const fetchPricing = async () => {
+      if (synapse) {
+        try {
+          const storageCosts = await fetchWarmStorageCosts(synapse);
+          const pricePerTiB = getPricePerTBPerMonth(storageCosts);
+          const priceInUSDFC = Number(formatUnits(pricePerTiB, 18));
+          setPricePerTiBPerMonth(priceInUSDFC.toFixed(2));
+        } catch (error) {
+          console.error("Failed to fetch storage pricing:", error);
+        }
+      }
+    };
+    fetchPricing();
+  }, [synapse]);
 
   const config = useMemo(
     () => ({
@@ -90,18 +109,18 @@ export const StorageManager = () => {
   const { mutation: paymentMutation, status } = usePayment();
   const { mutateAsync: handlePayment, isPending: isProcessingPayment } =
     paymentMutation;
-  
+
   const [isRevoking, setIsRevoking] = useState(false);
 
   const handleRefetchBalances = async () => {
     await refetchBalances();
   };
-  
+
   const handleConfigSave = (newConfig: StorageConfig) => {
     setUserConfig(newConfig);
     refetchBalances();
   };
-  
+
   if (!isConnected) {
     return null;
   }
@@ -131,9 +150,10 @@ export const StorageManager = () => {
   return (
     <div className="flex-1 overflow-auto">
       <div className="max-w-7xl space-y-6 p-6">
-        <StorageBalanceHeader 
+        <StorageBalanceHeader
           config={config}
           onConfigSave={handleConfigSave}
+          pricePerTiBPerMonth={pricePerTiBPerMonth}
         />
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -167,17 +187,17 @@ export const StorageManager = () => {
 
         {status && (
           <Card className={`${status.includes("❌")
-              ? "border-red-200 bg-red-50"
-              : status.includes("✅")
-                ? "border-green-200 bg-green-50"
-                : "border-blue-200 bg-blue-50"
+            ? "border-red-200 bg-red-50"
+            : status.includes("✅")
+              ? "border-green-200 bg-green-50"
+              : "border-blue-200 bg-blue-50"
             }`}>
             <CardContent className="pt-6">
               <p className={`text-sm ${status.includes("❌")
-                  ? "text-red-700"
-                  : status.includes("✅")
-                    ? "text-green-700"
-                    : "text-blue-700"
+                ? "text-red-700"
+                : status.includes("✅")
+                  ? "text-green-700"
+                  : "text-blue-700"
                 }`}>
                 {status}
               </p>
@@ -186,17 +206,17 @@ export const StorageManager = () => {
         )}
         {revokeStatus && (
           <Card className={`${revokeStatus.includes("❌")
-              ? "border-red-200 bg-red-50"
-              : revokeStatus.includes("✅")
-                ? "border-green-200 bg-green-50"
-                : "border-blue-200 bg-blue-50"
+            ? "border-red-200 bg-red-50"
+            : revokeStatus.includes("✅")
+              ? "border-green-200 bg-green-50"
+              : "border-blue-200 bg-blue-50"
             }`}>
             <CardContent className="pt-6">
               <p className={`text-sm ${revokeStatus.includes("❌")
-                  ? "text-red-700"
-                  : revokeStatus.includes("✅")
-                    ? "text-green-700"
-                    : "text-blue-700"
+                ? "text-red-700"
+                : revokeStatus.includes("✅")
+                  ? "text-green-700"
+                  : "text-blue-700"
                 }`}>
                 {revokeStatus}
               </p>
@@ -217,8 +237,8 @@ const AllowanceStatusSection = ({
   onRevoke,
   isRevoking,
   config,
-}: SectionProps & { 
-  onRevoke?: () => void | Promise<void>; 
+}: SectionProps & {
+  onRevoke?: () => void | Promise<void>;
   isRevoking?: boolean;
   config: StorageConfig & { withCDN: boolean; aiServerUrl: string };
 }) => {
@@ -535,9 +555,11 @@ const RateIncreaseAction = ({
 const StorageBalanceHeader = ({
   config,
   onConfigSave,
+  pricePerTiBPerMonth,
 }: {
   config: StorageConfig & { withCDN: boolean; aiServerUrl: string };
   onConfigSave: (config: StorageConfig) => void;
+  pricePerTiBPerMonth: string | null;
 }) => {
   const { chainId } = useAccount();
 
@@ -565,36 +587,43 @@ const StorageBalanceHeader = ({
             />
             {chainId === 314159 && (
               <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  window.open(
-                    "https://forest-explorer.chainsafe.dev/faucet/calibnet_usdfc",
-                    "_blank"
-                  );
-                }}
-              >
-                <Coins className="h-4 w-4 mr-2" />
-                Get tUSDFC
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  window.open(
-                    "https://faucet.calibnet.chainsafe-fil.io/funds.html",
-                    "_blank"
-                  );
-                }}
-              >
-                <Coins className="h-4 w-4 mr-2" />
-                Get tFIL
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    window.open(
+                      "https://forest-explorer.chainsafe.dev/faucet/calibnet_usdfc",
+                      "_blank"
+                    );
+                  }}
+                >
+                  <Coins className="h-4 w-4 mr-2" />
+                  Get tUSDFC
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    window.open(
+                      "https://faucet.calibnet.chainsafe-fil.io/funds.html",
+                      "_blank"
+                    );
+                  }}
+                >
+                  <Coins className="h-4 w-4 mr-2" />
+                  Get tFIL
+                </Button>
               </>
             )}
           </div>
         </div>
+        {pricePerTiBPerMonth && (
+          <div className="flex justify-end items-center">
+            <Badge variant="outline" className="text-xs">
+              Current Pricing:{" "} {pricePerTiBPerMonth} USDFC per TiB/month
+            </Badge>
+          </div>
+        )}
       </CardHeader>
     </Card>
   );
@@ -645,8 +674,8 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
 /**
  * Section displaying storage status
  */
-const StorageStatusSection = ({ 
-  balances, 
+const StorageStatusSection = ({
+  balances,
   isLoading,
 }: SectionProps & { config: StorageConfig & { withCDN: boolean; aiServerUrl: string } }) => {
   const storageUsagePercent = balances?.currentRateAllowanceGB
