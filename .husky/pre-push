@@ -1,7 +1,5 @@
-echo '#!/bin/sh
+#!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
 npm run build-check
-' > .husky/pre-push
 
-chmod +x .husky/pre-push
