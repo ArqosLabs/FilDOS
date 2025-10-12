@@ -448,14 +448,14 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                       <Hash className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="font-medium">CommP</p>
-                        <p className="text-muted-foreground  truncate">{uploadedInfo.pieceCid?.slice(0,10) + "..."}</p>
+                        <p className="text-muted-foreground truncate">{uploadedInfo.pieceCid?.slice(0,10) + "..."}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Hash className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="font-medium">TX Hash</p>
-                        <p className="text-muted-foreground  truncate">{uploadedInfo.txHash?.slice(0, 10)}...</p>
+                        <p className="text-muted-foreground truncate">{uploadedInfo.txHash?.slice(0, 10)}...</p>
                       </div>
                     </div>
                   </div>
