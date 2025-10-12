@@ -116,7 +116,7 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
     <div className="flex-1 overflow-auto">
       <div className="p-6">
 
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-background border border-gray-200 rounded-md overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>

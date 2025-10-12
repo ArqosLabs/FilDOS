@@ -272,7 +272,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                 )}
                 
                 <div className="space-y-2">
-                  <p className="text-lg font-semibold">
+                  <p className="text-lg font-medium">
                     {file ? file.name : "Drop your file here"}
                   </p>
                   {!file && (
@@ -422,11 +422,11 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
           )}
           {/* Upload Success Details */}
           {uploadedInfo && !isLoading && !contractAddError && (
-            <Card className="">
+            <Card>
               <CardContent className="pt-6">
                 
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-green-700">
+                  <h3 className="text-sm font-medium text-green-700">
                     {isAddingToContract ? "Uploading & Adding to Folder..." : "File Successfully Uploaded & Added to Folder"}
                   </h3>
                   <div className="grid grid-cols-2 gap-2 text-xs">
@@ -448,14 +448,14 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                       <Hash className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="font-medium">CommP</p>
-                        <p className="text-muted-foreground font-mono truncate">{uploadedInfo.pieceCid?.slice(0,10) + "..."}</p>
+                        <p className="text-muted-foreground  truncate">{uploadedInfo.pieceCid?.slice(0,10) + "..."}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Hash className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="font-medium">TX Hash</p>
-                        <p className="text-muted-foreground font-mono truncate">{uploadedInfo.txHash?.slice(0, 10)}...</p>
+                        <p className="text-muted-foreground  truncate">{uploadedInfo.txHash?.slice(0, 10)}...</p>
                       </div>
                     </div>
                   </div>

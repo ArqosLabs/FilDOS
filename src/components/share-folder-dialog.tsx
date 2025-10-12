@@ -135,7 +135,7 @@ export default function ShareFolderDialog({ children, folderId, folderName }: Sh
             </div>
           </div>
 
-          <div className="bg-blue-50 p-3 rounded-md">
+          <div className="bg-blue-50 p-3 rounded-sm">
             <div className="flex items-center gap-2 mb-2">
               <Users className="w-4 h-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-900">Permission Summary</span>

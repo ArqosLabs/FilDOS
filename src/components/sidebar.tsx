@@ -51,7 +51,7 @@ export default function Sidebar() {
     : 0;
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <aside className="w-64 bg-background border-r border-gray-200 flex flex-col">
       <div className="p-4 flex-1">
         {/* Navigation Items */}
         <nav className="space-y-1">

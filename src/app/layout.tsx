@@ -3,6 +3,12 @@ import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css"
 import { Analytics } from "@vercel/analytics/next"
 import { SynapseProvider } from "@/providers/SynapseProvider";
+import { Inter } from 'next/font/google'
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',   // optional: prevents layout shift
+})
 
 export default function RootLayout({
   children,
@@ -12,6 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+      className={inter.className}
       >
         <Web3Providers>
           <SynapseProvider>

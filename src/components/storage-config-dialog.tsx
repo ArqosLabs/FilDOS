@@ -138,14 +138,14 @@ export const StorageConfigDialog = ({
                   type="button"
                   onClick={() => setStorageCapacity(option.value)}
                   className={cn(
-                    "flex items-center justify-between p-3 rounded-lg border-2 transition-all hover:border-primary/50",
+                    "flex items-center justify-between p-3 rounded-md border-2 transition-all hover:border-primary/50",
                     storageCapacity === option.value
                       ? "border-primary bg-primary/5"
                       : "border-border bg-background"
                   )}
                 >
                   <div className="flex flex-col items-start">
-                    <span className="font-semibold">{option.label}</span>
+                    <span className="font-medium">{option.label}</span>
                     <span className="text-xs text-muted-foreground">
                       {option.description}
                     </span>

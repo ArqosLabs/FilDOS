@@ -78,7 +78,7 @@ export default function MakePublicDialog({
         
         <div className="space-y-4">
           {/* Current Status */}
-          <div className="bg-gray-50 p-3 rounded-md">
+          <div className="bg-gray-50 p-3 rounded-sm">
             <div className="flex items-center gap-2 mb-2">
               <div className="text-sm font-medium text-gray-900">Current Status</div>
             </div>
@@ -104,7 +104,7 @@ export default function MakePublicDialog({
           </div>
 
           {/* What will change */}
-          <div className={`p-3 rounded-md ${isCurrentlyPublic ? 'bg-orange-50' : 'bg-blue-50'}`}>
+          <div className={`p-3 rounded-sm ${isCurrentlyPublic ? 'bg-orange-50' : 'bg-blue-50'}`}>
             <div className="flex items-center gap-2 mb-2">
               {isCurrentlyPublic ? (
                 <AlertTriangle className="w-4 h-4 text-orange-600" />
@@ -133,7 +133,7 @@ export default function MakePublicDialog({
           </div>
 
           {/* New Status Preview */}
-          <div className="bg-gray-50 p-3 rounded-md">
+          <div className="bg-gray-50 p-3 rounded-sm">
             <div className="flex items-center gap-2 mb-2">
               <div className="text-sm font-medium text-gray-900">After Change</div>
             </div>

@@ -8,12 +8,12 @@ export default function NotFound() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-md">
+      <header className="border-b bg-background/80 backdrop-blur-md">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-2">
               <Image src="/FILDOS.png" alt="FilDOS Logo" width={32} height={32} className="w-8 h-8" />
-              <h1 className="text-2xl font-bold text-primary tracking-tight">
+              <h1 className="text-xl font-medium text-primary tracking-tight">
                 FilDOS
               </h1>
             </Link>
@@ -57,14 +57,14 @@ export default function NotFound() {
               404 - Page Not Found
             </Badge>
             
-            <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-4">
+            <h1 className="text-5xl md:text-6xl font-medium text-gray-900 mb-4">
               Oops! Lost in the
               <span className="text-primary block">Semantic Space</span>
             </h1>
             
             <p className="text-xl text-gray-600 max-w-xl mx-auto leading-relaxed">
               The page you&apos;re looking for doesn&apos;t exist yet, but our AI-native storage revolution is 
-              <span className="font-semibold text-primary"> coming soon!</span>
+              <span className="font-medium text-primary"> coming soon!</span>
             </p>
           </div>
 

@@ -140,7 +140,7 @@ export default function MyDrive() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
+          <h2 className="text-2xl font-medium mb-4">Connect Your Wallet</h2>
           <p className="text-gray-600">Please connect your wallet to access your folders and files.</p>
         </div>
       </div>
@@ -148,14 +148,14 @@ export default function MyDrive() {
   }
 
   return (
-    <div className="">
+    <div>
       <Header isFilePage={true} viewMode={viewMode} setViewMode={setViewMode} />
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Create Folder Button - Always visible at the top */}
-          <div className="p-4 border-b bg-gray-50">
+          <div className="p-4 border-b bg-background">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">My Drive</h2>
+              <h2 className="text-lg font-medium">My Drive</h2>
               <CreateFolderDialog onCreateFolder={handleCreateFolder}>
                 <Button
                   className="bg-primary hover:bg-secondary text-white"
@@ -185,7 +185,7 @@ export default function MyDrive() {
                   <div className="-mx-1.5 -my-1.5">
                     <button
                       onClick={() => setLastCreatedFolder(null)}
-                      className="inline-flex bg-green-50 rounded-md p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600"
+                      className="inline-flex bg-green-50 rounded-sm p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600"
                     >
                       <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -281,7 +281,7 @@ export default function MyDrive() {
               {files.length === 0 && !foldersLoading ? (
                 <div className="flex flex-col items-center justify-center p-12 text-center">
                   <Folder className="w-16 h-16 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No folders yet</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No folders yet</h3>
                   <p className="text-gray-600 mb-4">
                     Create your first folder to start organizing your files.
                   </p>

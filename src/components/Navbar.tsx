@@ -18,7 +18,7 @@ export default function Navbar() {
             height={48}
           />
           <div>
-            <h1 className="text-lg font-semibold text-foreground">FilDOS</h1>
+            <h1 className="text-lg font-medium text-foreground">FilDOS</h1>
             <p className="text-xs text-muted-foreground">Filecoin Drive OS</p>
           </div>
         </div>

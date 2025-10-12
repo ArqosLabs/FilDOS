@@ -98,7 +98,7 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
             return (
               <div
                 key={file.id}
-                className={`group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer ${
+                className={`group relative bg-background border border-gray-200 rounded-md p-4 hover:shadow-md transition-all cursor-pointer ${
                   isSelected ? "ring-2 ring-primary bg-blue-50" : ""
                 } ${file.type === "embed" ? "opacity-40" : ""}`}
                 onClick={() => onToggleSelection(file.id)}
@@ -137,7 +137,7 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 bg-white/80 backdrop-blur-sm"
+                        className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <MoreVertical className="w-4 h-4" />
@@ -188,7 +188,7 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                 {/* Selection Indicator */}
                 {isSelected && (
                   <div className="absolute top-2 left-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                    <div className="w-2 h-2 bg-background rounded-full"></div>
                   </div>
                 )}
 
