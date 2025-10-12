@@ -24,11 +24,7 @@ const formatDate = (timestamp: bigint) => {
   });
 };
 
-const getFileTypeFromExtension = (filename: string, tags?: string[]): FileItem['type'] => {
-  // Check if it's an embed file based on tags or filename pattern
-  if (tags?.includes('embed') || filename.includes('embedding') || filename.endsWith('.pkl')) {
-    return 'embed';
-  }
+const getFileTypeFromExtension = (filename: string): FileItem['type'] => {
   
   const ext = filename.split('.').pop()?.toLowerCase();
   switch (ext) {
@@ -49,6 +45,19 @@ const getFileTypeFromExtension = (filename: string, tags?: string[]): FileItem['
     case 'docx':
     case 'txt':
       return 'document';
+    case 'mp3':
+    case 'wav':
+    case 'flac':
+      return 'audio';
+    case 'xls':
+    case 'xlsx':
+    case 'csv':
+      return 'spreadsheet';
+    case 'ppt':
+    case 'pptx':
+      return 'presentation';
+    case 'pdf':
+      return 'pdf';  
     default:
       return 'other';
   }
@@ -76,7 +85,7 @@ export default function FolderPage() {
   const files: FileItem[] = folderFiles ? folderFiles.map(file => ({
     id: file.cid,
     name: file.filename,
-    type: getFileTypeFromExtension(file.filename, file.tags),
+    type: getFileTypeFromExtension(file.filename),
     folderType: "",
     modified: formatDate(file.timestamp),
     owner: file.owner,
@@ -138,7 +147,7 @@ export default function FolderPage() {
           {/* Upload Button - Always visible at the top */}
           <div className="p-4 border-b bg-background">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Folder Contents</h2>
+              <h2 className="text-lg font-medium">Folder Content</h2>
               <div className="flex items-center space-x-2">
                 <SearchDialog files={files}>
                   <Button
@@ -215,7 +224,7 @@ export default function FolderPage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <div className="space-y-1">
                   {filesLoading && (
-                    <p className="text-gray-600">Loading folder contents...</p>
+                    <p className="text-gray-600">Loading folder content...</p>
                   )}
                   {folderDataLoading && (
                     <p className="text-gray-600">Loading folder details...</p>

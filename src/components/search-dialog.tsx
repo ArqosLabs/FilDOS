@@ -199,7 +199,7 @@ const latestEmbedFile = useMemo(() => {
                   return (
                     <Card 
                       key={index} 
-                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      className="cursor-pointer hover:shadow-sm transition-shadow"
                       onClick={() => handleResultClick(result.url)}
                     >
                       <CardContent className="p-4">

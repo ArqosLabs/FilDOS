@@ -12,11 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Folder,
-  FileText,
-  Image,
-  Video,
-  FileType,
   Calendar,
   User,
   Globe,
@@ -26,43 +21,35 @@ import {
   Check,
 } from "lucide-react";
 import { FileItem } from "@/app/(dashboard)/page";
+import Image from "next/image";
 
 interface DetailsModalProps {
   file: FileItem;
   children: React.ReactNode;
 }
 
-const getFileIcon = (type: FileItem["type"]) => {
+const getFileLogo = (type: FileItem["type"]) => {
   switch (type) {
     case "folder":
-      return Folder;
+      return "/logos/folder.png";
     case "document":
-      return FileText;
+      return "/logos/document.png";
     case "image":
-      return Image;
+      return "/logos/image.png";
     case "video":
-      return Video;
+      return "/logos/video.png";
     case "pdf":
-      return FileType;
+      return "/logos/pdf.png";
+    case "audio":
+      return "/logos/audio.png";
+    case "presentation":
+      return "/logos/ppt.png";
+    case "spreadsheet":
+      return "/logos/excel.png";
+    case "other":
+      return "/logos/other.png";
     default:
-      return FileType;
-  }
-};
-
-const getFileColor = (type: FileItem["type"]) => {
-  switch (type) {
-    case "folder":
-      return "text-blue-600";
-    case "document":
-      return "text-blue-500";
-    case "image":
-      return "text-green-500";
-    case "video":
-      return "text-red-500";
-    case "pdf":
-      return "text-red-600";
-    default:
-      return "text-gray-500";
+      return "/logos/other.png";
   }
 };
 
@@ -70,7 +57,7 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
   const [open, setOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   
-  const Icon = getFileIcon(file.type);
+  const logoSrc = getFileLogo(file.type);
   const fileUrl = file.type !== "folder" && file.cid 
     ? `https://${file.owner}.calibration.filcdn.io/${file.cid}` 
     : null;
@@ -93,7 +80,12 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <Icon className={`w-6 h-6 ${getFileColor(file.type)}`} />
+            <Image 
+              src={logoSrc} 
+              alt={file.type} 
+              width={24} 
+              height={24}
+            />
             <span className="truncate">{file.name}</span>
           </DialogTitle>
         </DialogHeader>

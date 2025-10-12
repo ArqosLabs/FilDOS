@@ -1,16 +1,10 @@
 "use client";
 
 import {
-  Folder,
-  FileText,
-  Image,
-  Video,
-  FileType,
   MoreVertical,
   Share,
   Globe,
   Info,
-  Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +30,7 @@ import MakePublicDialog from "@/components/make-public-dialog";
 import DetailsModal from "@/components/details-modal";
 import FilePreviewModal from "@/components/preview-modal";
 import { useState } from "react";
+import Image from "next/image";
 
 interface FileListProps {
   files: FileItem[];
@@ -44,41 +39,28 @@ interface FileListProps {
   onFolderClick?: (folderId?: string, url?: string) => void;
 }
 
-const getFileIcon = (type: FileItem["type"]) => {
+const getFileLogo = (type: FileItem["type"]) => {
   switch (type) {
     case "folder":
-      return Folder;
+      return "/logos/folder.png";
     case "document":
-      return FileText;
+      return "/logos/document.png";
     case "image":
-      return Image;
+      return "/logos/image.png";
     case "video":
-      return Video;
+      return "/logos/video.png";
     case "pdf":
-      return FileType;
-    case "embed":
-      return Brain;
+      return "/logos/pdf.png";
+    case "audio":
+      return "/logos/audio.png";
+    case "presentation":
+      return "/logos/ppt.png";
+    case "spreadsheet":
+      return "/logos/excel.png";
+    case "other":
+      return "/logos/other.png";
     default:
-      return FileType;
-  }
-};
-
-const getFileColor = (type: FileItem["type"]) => {
-  switch (type) {
-    case "folder":
-      return "text-blue-600";
-    case "document":
-      return "text-blue-500";
-    case "image":
-      return "text-green-500";
-    case "video":
-      return "text-red-500";
-    case "pdf":
-      return "text-red-600";
-    case "embed":
-      return "text-purple-500";
-    default:
-      return "text-gray-500";
+      return "/logos/other.png";
   }
 };
 
@@ -135,15 +117,15 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
             </TableHeader>
             <TableBody>
               {files.map((file) => {
-                const Icon = getFileIcon(file.type);
+                const logoSrc = getFileLogo(file.type);
                 const isSelected = selectedFiles.includes(file.id);
 
                 return (
                   <TableRow
                     key={file.id}
-                    className={`hover:bg-gray-50 cursor-pointer ${
+                    className={`hover:bg-gray-50 cursor-pointer select-none ${
                       isSelected ? "bg-blue-50" : ""
-                    } ${file.type === "embed" ? "opacity-40" : ""}`}
+                    }`}
                     onClick={() => onToggleSelection(file.id)}
                     onDoubleClick={() => handleFileClick(file)}
                   >
@@ -155,23 +137,22 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                       />
                     </TableCell>
                     <TableCell>
-                      <Icon className={`w-5 h-5 ${getFileColor(file.type)}`} />
+                      <Image 
+                        src={logoSrc} 
+                        alt={file.type} 
+                        width={20} 
+                        height={20}
+                      />
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-base">
                       <div className="flex items-center gap-2">
                         <span>{file.name}</span>
-                        {file.shared && (
-                          <Badge variant="secondary" className="text-xs">
-                            <Share className="w-3 h-3 mr-1" />
-                            Shared
-                          </Badge>
-                        )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className="text-sm text-gray-400">
                       {file.owner.slice(0, 6) + "..." + file.owner.slice(-4)}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className="text-sm text-gray-400">
                       {file.modified}
                     </TableCell>
                     <TableCell>
