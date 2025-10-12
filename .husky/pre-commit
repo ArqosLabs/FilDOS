@@ -1,8 +1,5 @@
-mkdir -p .husky
-echo '#!/bin/sh
+#!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
 npm run precommit-check
-' > .husky/pre-commit
 
-chmod +x .husky/pre-commit
