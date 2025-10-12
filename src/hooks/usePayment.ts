@@ -33,7 +33,7 @@ export const usePayment = () => {
       if (!synapse) throw new Error("Synapse not found");
       if (!warmStorageService)
         throw new Error("Warm storage service not found");
-      setStatus("🔄 Preparing transaction...");
+      setStatus("Preparing transaction...");
 
       const paymentsAddress = synapse.getPaymentsAddress();
 
@@ -59,24 +59,24 @@ export const usePayment = () => {
       }
 
       if (allowance < MAX_UINT256 / BigInt(2)) {
-        setStatus("💰 Approving USDFC to cover storage costs...");
+        setStatus("Approving USDFC to cover storage costs...");
         const transaction = await synapse.payments.approve(
           paymentsAddress,
           MAX_UINT256,
           TOKENS.USDFC
         );
         await transaction.wait();
-        setStatus("💰 Successfully approved USDFC to cover storage costs");
+        setStatus("Successfully approved USDFC to cover storage costs");
       }
       if (amount > BigInt(0)) {
-        setStatus("💰 Depositing USDFC to cover storage costs...");
+        setStatus("Depositing USDFC to cover storage costs...");
         const transaction = await synapse.payments.deposit(amount);
         await transaction.wait();
-        setStatus("💰 Successfully deposited USDFC to cover storage costs");
+        setStatus("Successfully deposited USDFC to cover storage costs");
       }
 
       setStatus(
-        "💰 Approving Filecoin Warm Storage service USDFC spending rates..."
+        "Approving Filecoin Warm Storage service USDFC spending rates..."
       );
       const transaction = await synapse.payments.approveService(
         synapse.getWarmStorageAddress(),
@@ -86,17 +86,35 @@ export const usePayment = () => {
       );
       await transaction.wait();
       setStatus(
-        "💰 Successfully approved Filecoin Warm Storage spending rates"
+        "Successfully approved Filecoin Warm Storage spending rates"
       );
     },
     onSuccess: () => {
-      setStatus("✅ Payment was successful!");
+      setStatus("Payment was successful!");
     },
     onError: (error) => {
       console.error("Payment failed:", error);
       setStatus(
         `❌ ${error.message || "Transaction failed. Please try again."}`
       );
+    },
+  });
+  return { mutation, status };
+};
+
+export const useRevokeService = () => {
+  const [status, setStatus] = useState<string>("");
+  const { synapse } = useSynapse();
+  const mutation = useMutation({
+    mutationFn: async ({ service }: { service: string }) => {
+      if (!synapse) throw new Error("Synapse not ready");
+      setStatus("Preparing transaction...");
+      const transaction = await synapse.payments.revokeService(
+        service,
+        TOKENS.USDFC
+      );
+      await transaction.wait();
+      setStatus("Successfully revoked service");
     },
   });
   return { mutation, status };

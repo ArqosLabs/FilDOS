@@ -10,6 +10,8 @@ import {
   FileArchive,
   Scale,
   Globe,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -39,6 +41,8 @@ export default function Sidebar() {
   const {
     data,
     isLoading: isBalanceLoading,
+    refetch,
+    isRefetching,
   } = useBalances();
   const balances = data;
 
@@ -88,8 +92,23 @@ export default function Sidebar() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-muted-foreground">
-                  {isBalanceLoading ? "..." : `${balances?.currentStorageGB?.toLocaleString()} GB of ${balances?.currentRateAllowanceGB?.toLocaleString()} GB used`}
+                  {isBalanceLoading ? (
+                    <span className="flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Loading...
+                    </span>
+                  ) : (
+                    `${balances?.currentStorageGB?.toLocaleString()} GB of ${balances?.currentRateAllowanceGB?.toLocaleString()} GB used`
+                  )}
                 </span>
+                <button
+                  onClick={() => refetch()}
+                  disabled={isBalanceLoading || isRefetching}
+                  className="p-1 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-none transition-colors"
+                  title="Refresh storage data"
+                >
+                  <RefreshCw className={`h-3 w-3 text-muted-foreground ${isRefetching ? 'animate-spin' : ''}`} />
+                </button>
               </div>
               {!isBalanceLoading && (
                 <Progress value={storageUsagePercent} className="h-2" />

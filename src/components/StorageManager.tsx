@@ -2,8 +2,8 @@
 
 import { useAccount } from "wagmi";
 import { useBalances } from "@/hooks/useBalances";
-import { usePayment } from "@/hooks/usePayment";
-import { config } from "@/config";
+import { usePayment, useRevokeService } from "@/hooks/usePayment";
+import { config as defaultConfig } from "@/config";
 import { formatUnits } from "viem";
 import { AllowanceItemProps, PaymentActionProps, SectionProps } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,35 +22,119 @@ import {
   Database,
   Shield
 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { useSynapse } from "@/providers/SynapseProvider";
+import { StorageConfigDialog, StorageConfig } from "./storage-config-dialog";
 
-/**
- * Component to display and manage token payments for storage
- */
+const STORAGE_CONFIG_KEY = "fildos_user_storage_config";
+
 export const StorageManager = () => {
   const { isConnected } = useAccount();
+  const revokeService = useRevokeService();
+  const { synapse } = useSynapse();
+  const [revokeStatus, setRevokeStatus] = useState<string>("");
+  
+  const [userConfig, setUserConfig] = useState<StorageConfig>(() => {
+    if (typeof window === "undefined") {
+      return {
+        storageCapacity: defaultConfig.storageCapacity,
+        persistencePeriod: defaultConfig.persistencePeriod,
+        minDaysThreshold: defaultConfig.minDaysThreshold,
+      };
+    }
+    
+    try {
+      const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error("Failed to load storage config from localStorage:", error);
+    }
+    
+    return {
+      storageCapacity: defaultConfig.storageCapacity,
+      persistencePeriod: defaultConfig.persistencePeriod,
+      minDaysThreshold: defaultConfig.minDaysThreshold,
+    };
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify(userConfig));
+      } catch (error) {
+        console.error("Failed to save storage config to localStorage:", error);
+      }
+    }
+  }, [userConfig]);
+
+  const config = useMemo(
+    () => ({
+      ...defaultConfig,
+      ...userConfig,
+    }),
+    [userConfig]
+  );
+
   const {
     data,
     isLoading: isBalanceLoading,
     refetch: refetchBalances,
-    error,
-  } = useBalances();
+  } = useBalances(
+    config.storageCapacity,
+    config.persistencePeriod,
+    config.minDaysThreshold
+  );
   const balances = data;
   const { mutation: paymentMutation, status } = usePayment();
   const { mutateAsync: handlePayment, isPending: isProcessingPayment } =
     paymentMutation;
+  
+  const [isRevoking, setIsRevoking] = useState(false);
 
   const handleRefetchBalances = async () => {
     await refetchBalances();
   };
-  console.log(error);
+  
+  const handleConfigSave = (newConfig: StorageConfig) => {
+    setUserConfig(newConfig);
+    refetchBalances();
+  };
+  
   if (!isConnected) {
     return null;
   }
 
+  const handleRevoke = async () => {
+    const { mutation, status } = revokeService;
+    try {
+      if (!synapse) throw new Error("Synapse not ready");
+      setIsRevoking(true);
+      setRevokeStatus(status);
+      await mutation.mutateAsync({
+        service: synapse.getWarmStorageAddress()
+      });
+      setRevokeStatus(status);
+      await refetchBalances();
+    } catch (err) {
+      const message =
+        typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message?: string }).message)
+          : "Failed to revoke approval";
+      setRevokeStatus(`❌ ${message}`);
+    } finally {
+      setIsRevoking(false);
+    }
+  };
+
   return (
     <div className="flex-1 overflow-auto">
       <div className="max-w-7xl space-y-6 p-6">
-        <StorageBalanceHeader />
+        <StorageBalanceHeader 
+          config={config}
+          onConfigSave={handleConfigSave}
+        />
 
         <div className="grid gap-6 md:grid-cols-2">
           <WalletBalancesSection
@@ -60,12 +144,16 @@ export const StorageManager = () => {
           <StorageStatusSection
             balances={balances}
             isLoading={isBalanceLoading}
+            config={config}
           />
         </div>
 
         <AllowanceStatusSection
           balances={balances}
           isLoading={isBalanceLoading}
+          onRevoke={handleRevoke}
+          isRevoking={isRevoking}
+          config={config}
         />
 
         <ActionSection
@@ -74,6 +162,7 @@ export const StorageManager = () => {
           isProcessingPayment={isProcessingPayment}
           onPayment={handlePayment}
           handleRefetchBalances={handleRefetchBalances}
+          config={config}
         />
 
         {status && (
@@ -95,6 +184,25 @@ export const StorageManager = () => {
             </CardContent>
           </Card>
         )}
+        {revokeStatus && (
+          <Card className={`${revokeStatus.includes("❌")
+              ? "border-red-200 bg-red-50"
+              : revokeStatus.includes("✅")
+                ? "border-green-200 bg-green-50"
+                : "border-blue-200 bg-blue-50"
+            }`}>
+            <CardContent className="pt-6">
+              <p className={`text-sm ${revokeStatus.includes("❌")
+                  ? "text-red-700"
+                  : revokeStatus.includes("✅")
+                    ? "text-green-700"
+                    : "text-blue-700"
+                }`}>
+                {revokeStatus}
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
@@ -103,7 +211,17 @@ export const StorageManager = () => {
 /**
  * Section displaying allowance status
  */
-const AllowanceStatusSection = ({ balances, isLoading }: SectionProps) => {
+const AllowanceStatusSection = ({
+  balances,
+  isLoading,
+  onRevoke,
+  isRevoking,
+  config,
+}: SectionProps & { 
+  onRevoke?: () => void | Promise<void>; 
+  isRevoking?: boolean;
+  config: StorageConfig & { withCDN: boolean; aiServerUrl: string };
+}) => {
   const depositNeededFormatted = Number(
     formatUnits(balances?.depositNeeded ?? BigInt(0), 18)
   ).toFixed(3);
@@ -176,6 +294,17 @@ const AllowanceStatusSection = ({ balances, isLoading }: SectionProps) => {
           </Card>
         )}
       </CardContent>
+      <CardContent>
+        <div className="flex justify-end">
+          <Button
+            variant="destructive"
+            onClick={onRevoke}
+            disabled={isLoading || isRevoking}
+          >
+            {isRevoking ? "Revoking..." : "Revoke Warm Storage Approval"}
+          </Button>
+        </div>
+      </CardContent>
     </Card>
   );
 };
@@ -189,7 +318,8 @@ const ActionSection = ({
   isProcessingPayment,
   onPayment,
   handleRefetchBalances,
-}: PaymentActionProps) => {
+  config,
+}: PaymentActionProps & { config: StorageConfig & { withCDN: boolean; aiServerUrl: string } }) => {
   if (isLoading || !balances) return null;
 
   if (balances.isSufficient) {
@@ -402,7 +532,13 @@ const RateIncreaseAction = ({
 /**
  * Header section with title and USDFC faucet button
  */
-const StorageBalanceHeader = () => {
+const StorageBalanceHeader = ({
+  config,
+  onConfigSave,
+}: {
+  config: StorageConfig & { withCDN: boolean; aiServerUrl: string };
+  onConfigSave: (config: StorageConfig) => void;
+}) => {
   const { chainId } = useAccount();
 
   return (
@@ -418,8 +554,17 @@ const StorageBalanceHeader = () => {
               Monitor your storage usage and manage USDFC deposits for Filecoin storage
             </CardDescription>
           </div>
-          {chainId === 314159 && (
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <StorageConfigDialog
+              currentConfig={{
+                storageCapacity: config.storageCapacity,
+                persistencePeriod: config.persistencePeriod,
+                minDaysThreshold: config.minDaysThreshold,
+              }}
+              onSave={onConfigSave}
+            />
+            {chainId === 314159 && (
+              <>
               <Button
                 variant="outline"
                 size="sm"
@@ -446,8 +591,9 @@ const StorageBalanceHeader = () => {
                 <Coins className="h-4 w-4 mr-2" />
                 Get tFIL
               </Button>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </CardHeader>
     </Card>
@@ -499,7 +645,10 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
 /**
  * Section displaying storage status
  */
-const StorageStatusSection = ({ balances, isLoading }: SectionProps) => {
+const StorageStatusSection = ({ 
+  balances, 
+  isLoading,
+}: SectionProps & { config: StorageConfig & { withCDN: boolean; aiServerUrl: string } }) => {
   const storageUsagePercent = balances?.currentRateAllowanceGB
     ? (balances.currentStorageGB / balances.currentRateAllowanceGB) * 100
     : 0;

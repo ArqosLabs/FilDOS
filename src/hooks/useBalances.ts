@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { TOKENS } from "@filoz/synapse-sdk";
+import { TOKENS, SIZE_CONSTANTS } from "@filoz/synapse-sdk";
 import { useAccount } from "wagmi";
 import { calculateStorageMetrics } from "@/utils/calculateStorageMetrics";
 import { formatUnits } from "viem";
@@ -8,13 +8,21 @@ import { useSynapse } from "@/providers/SynapseProvider";
 
 /**
  * Hook to fetch and format wallet balances and storage metrics
+ * @param storageCapacity - Storage capacity in GB
+ * @param persistencePeriod - Persistence period in days
+ * @param minDaysThreshold - Minimum days threshold
  */
-export const useBalances = () => {
+export const useBalances = (
+  storageCapacity?: number,
+  persistencePeriod?: number,
+  minDaysThreshold?: number
+) => {
   const { synapse } = useSynapse();
   const { address } = useAccount();
 
   const query = useQuery({
-    queryKey: ["balances", address],
+    queryKey: ["balances", address, storageCapacity, persistencePeriod, minDaysThreshold],
+    enabled: !!synapse && !!address,
     queryFn: async (): Promise<UseBalancesResponse> => {
       if (!synapse) throw new Error("Synapse not found");
 
@@ -27,8 +35,17 @@ export const useBalances = () => {
 
       const usdfcDecimals = synapse.payments.decimals(TOKENS.USDFC);
 
-      // Calculate storage metrics
-      const storageMetrics = await calculateStorageMetrics(synapse);
+      // Calculate storage metrics with user config
+      const storageCapacityBytes = storageCapacity
+        ? storageCapacity * Number(SIZE_CONSTANTS.GiB)
+        : undefined;
+      
+      const storageMetrics = await calculateStorageMetrics(
+        synapse,
+        persistencePeriod,
+        storageCapacityBytes,
+        minDaysThreshold
+      );
 
       return {
         filBalance: filRaw,
