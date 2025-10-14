@@ -9,7 +9,7 @@ import { useFolderList } from "@/hooks/useFolderList";
 import Header from "@/components/header";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
-import { FileItem } from "../page";
+import { FileItem } from "@/types";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);

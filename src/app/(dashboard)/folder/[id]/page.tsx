@@ -11,9 +11,9 @@ import Header from "@/components/header";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
 import { useFiles, useFolderData } from "@/hooks/useContract";
-import { FileItem } from "../../page";
 import EmbeddingDialog from "@/components/embedding-dialog";
 import SearchDialog from "@/components/search-dialog";
+import { FileItem } from "@/types";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);

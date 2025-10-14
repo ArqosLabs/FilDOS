@@ -20,7 +20,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
-import { FileItem } from "@/app/(dashboard)/page";
+import { FileItem } from "@/types";
 import Image from "next/image";
 
 interface DetailsModalProps {

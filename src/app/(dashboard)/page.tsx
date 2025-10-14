@@ -25,6 +25,14 @@ export interface FileItem {
   tokenId?: string;
   cid?: string;
   tags?: string[];
+  encrypted?: boolean;
+  encryptedMetadata?: {
+    dataToEncryptHash: string;
+    originalFileName: string;
+    originalFileSize: number;
+    originalFileType: string;
+    encryptedAt: number;
+  };
 }
 
 const formatDate = (timestamp: bigint) => {

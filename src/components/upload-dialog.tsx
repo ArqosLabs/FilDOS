@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { useAccount } from "wagmi";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAddFile } from "@/hooks/useContract";
@@ -23,7 +25,9 @@ import {
   RefreshCw,
   FileText,
   Hash,
-  HardDrive
+  HardDrive,
+  Lock,
+  Shield
 } from "lucide-react";
 
 interface UploadDialogProps {
@@ -39,6 +43,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
   const [isAddingToContract, setIsAddingToContract] = useState(false);
   const [contractAddError, setContractAddError] = useState<string | null>(null);
   const [processedUploadId, setProcessedUploadId] = useState<string | null>(null);
+  const [encryptFile, setEncryptFile] = useState(false);
   const { isConnected } = useAccount();
 
   const { uploadFileMutation, uploadedInfo, handleReset, status, progress } =
@@ -322,11 +327,35 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
             </CardContent>
           </Card>
 
+          {/* Encryption Option */}
+          {file && !uploadedInfo && (
+            <Card className="border-blue-200 bg-blue-50/50">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Checkbox 
+                    id="encrypt"
+                    checked={encryptFile}
+                    onCheckedChange={(checked) => setEncryptFile(checked as boolean)}
+                    disabled={isLoading || isAddingToContract}
+                  />
+                  <div className="flex-1">
+                    <Label 
+                      htmlFor="encrypt" 
+                      className="flex items-center gap-2 text-light cursor-pointer"
+                    >
+                      Encrypt with Lit Protocol
+                    </Label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex gap-3">
             <Button
               onClick={async () => {
                 if (!file) return;
-                await uploadFile(file);
+                await uploadFile({ file, encrypt: encryptFile });
               }}
               disabled={!file || isLoading || isAddingToContract || !!uploadedInfo}
               className="flex-1"
@@ -362,6 +391,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                 setIsAddingToContract(false);
                 setContractAddError(null);
                 setProcessedUploadId(null);
+                setEncryptFile(false);
               }}
               disabled={!file || isLoading || isAddingToContract}
               size="lg"
@@ -454,7 +484,29 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                         <p className="text-muted-foreground truncate">{uploadedInfo.txHash?.slice(0, 10)}...</p>
                       </div>
                     </div>
+                    {uploadedInfo.encrypted && (
+                      <div className="flex items-center gap-2">
+                        <Lock className="h-4 w-4 text-blue-600" />
+                        <div>
+                          <p className="font-medium text-blue-700">Encrypted</p>
+                          <p className="text-muted-foreground">Lit Protocol</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
+                  {uploadedInfo.encrypted && uploadedInfo.encryptedMetadata && (
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs font-medium text-blue-900 mb-2 flex items-center gap-1">
+                        <Shield className="h-3 w-3" />
+                        Encryption Details
+                      </p>
+                      <div className="space-y-1 text-xs text-blue-800">
+                        <p>Original: {uploadedInfo.encryptedMetadata.originalFileName}</p>
+                        <p>Hash: {uploadedInfo.encryptedMetadata.dataToEncryptHash.slice(0, 20)}...</p>
+                        <p>Encrypted: {new Date(uploadedInfo.encryptedMetadata.encryptedAt).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

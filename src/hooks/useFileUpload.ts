@@ -3,12 +3,21 @@ import { useMutation } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { preflightCheck } from "@/utils/preflightCheck";
 import { useSynapse } from "@/providers/SynapseProvider";
+import { encryptFileWithLit, initLitClient } from "@/lib/litClient";
 
 export type UploadedInfo = {
   fileName?: string;
   fileSize?: number;
   pieceCid?: string;
   txHash?: string;
+  encrypted?: boolean;
+  encryptedMetadata?: {
+    dataToEncryptHash: string;
+    originalFileName: string;
+    originalFileSize: number;
+    originalFileType: string;
+    encryptedAt: number;
+  };
 };
 
 /**
@@ -23,15 +32,54 @@ export const useFileUpload = () => {
 
   const mutation = useMutation({
     mutationKey: ["file-upload", address],
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ file, encrypt = false }: { file: File; encrypt?: boolean }) => {
       if (!synapse) throw new Error("Synapse not found");
       if (!address) throw new Error("Address not found");
       setProgress(0);
       setUploadedInfo(null);
       setStatus("Initializing file upload to Filecoin...");
 
+      let fileToUpload = file;
+      let encryptedMetadata: UploadedInfo["encryptedMetadata"];
+
+      // Optional encryption step
+      if (encrypt) {
+        setStatus("Initializing Lit Protocol...");
+        setProgress(5);
+        
+        try {
+          await initLitClient();
+          setStatus("Encrypting file with Lit Protocol...");
+          setProgress(10);
+          
+          const encrypted = await encryptFileWithLit(file, address);
+          
+          // Convert ciphertext to a Blob/File for upload
+          const encryptedBlob = new Blob([encrypted.ciphertext], { 
+            type: "application/octet-stream" 
+          });
+          fileToUpload = new File([encryptedBlob], `${file.name}.encrypted`, {
+            type: "application/octet-stream"
+          });
+          
+          encryptedMetadata = {
+            dataToEncryptHash: encrypted.dataToEncryptHash,
+            originalFileName: encrypted.originalFileName,
+            originalFileSize: encrypted.originalFileSize,
+            originalFileType: encrypted.originalFileType,
+            encryptedAt: encrypted.encryptedAt,
+          };
+          
+          setStatus("File encrypted successfully!");
+          setProgress(15);
+        } catch (error) {
+          console.error("Encryption error:", error);
+          throw new Error(`Encryption failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+
       // 1) Convert File → ArrayBuffer
-      const arrayBuffer = await file.arrayBuffer();
+      const arrayBuffer = await fileToUpload.arrayBuffer();
       // 2) Convert ArrayBuffer → Uint8Array
       const uint8ArrayBytes = new Uint8Array(arrayBuffer);
       // 3) Get dataset
@@ -42,9 +90,9 @@ export const useFileUpload = () => {
       const includeDatasetCreationFee = !datasetExists;
       // 5) Check if we have enough USDFC to cover the storage costs and deposit if not
       setStatus("Checking USDFC balance and storage allowances...");
-      setProgress(5);
+      setProgress(encrypt ? 20 : 5);
       await preflightCheck(
-        file,
+        fileToUpload,
         synapse,
         includeDatasetCreationFee,
         setStatus,
@@ -52,7 +100,7 @@ export const useFileUpload = () => {
       );
 
       setStatus("Setting up storage service and dataset...");
-      setProgress(25);
+      setProgress(encrypt ? 30 : 25);
 
       // 6) Create storage service
       const storageService = await synapse.createStorage({
@@ -60,25 +108,25 @@ export const useFileUpload = () => {
           onDataSetResolved: (info) => {
             console.log("Dataset resolved:", info);
             setStatus("Existing dataset found and resolved");
-            setProgress(30);
+            setProgress(encrypt ? 35 : 30);
           },
           onDataSetCreationStarted: (transactionResponse, statusUrl) => {
             console.log("Dataset creation started:", transactionResponse);
             console.log("Dataset creation status URL:", statusUrl);
             setStatus("Creating new dataset on blockchain...");
-            setProgress(35);
+            setProgress(encrypt ? 40 : 35);
           },
           onDataSetCreationProgress: (status) => {
             console.log("Dataset creation progress:", status);
             if (status.transactionSuccess) {
               setStatus(`Dataset transaction confirmed on chain`);
-              setProgress(45);
+              setProgress(encrypt ? 50 : 45);
             }
             if (status.serverConfirmed) {
               setStatus(
                 `Dataset ready! (${Math.round(status.elapsedMs / 1000)}s)`
               );
-              setProgress(50);
+              setProgress(encrypt ? 55 : 50);
             }
           },
           onProviderSelected: (provider) => {
@@ -89,7 +137,7 @@ export const useFileUpload = () => {
       });
 
       setStatus("Uploading file to storage provider...");
-      setProgress(55);
+      setProgress(encrypt ? 60 : 55);
       // 7) Upload file to storage provider
       const { pieceCid } = await storageService.upload(uint8ArrayBytes, {
         onUploadComplete: (piece) => {
@@ -98,11 +146,13 @@ export const useFileUpload = () => {
           );
           setUploadedInfo((prev) => ({
             ...prev,
-            fileName: file.name,
+            fileName: encrypt ? file.name : fileToUpload.name,
             fileSize: file.size,
             pieceCid: piece.toV1().toString(),
+            encrypted: encrypt,
+            encryptedMetadata: encryptedMetadata,
           }));
-          setProgress(80);
+          setProgress(encrypt ? 85 : 80);
         },
         onPieceAdded: (transactionResponse) => {
           setStatus(
@@ -124,12 +174,14 @@ export const useFileUpload = () => {
         },
       });
 
-      setProgress(95);
+      setProgress(encrypt ? 98 : 95);
       setUploadedInfo((prev) => ({
         ...prev,
-        fileName: file.name,
+        fileName: encrypt ? file.name : fileToUpload.name,
         fileSize: file.size,
         pieceCid: pieceCid.toV1().toString(),
+        encrypted: encrypt,
+        encryptedMetadata: encryptedMetadata,
       }));
     },
     onSuccess: () => {

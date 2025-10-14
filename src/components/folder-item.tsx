@@ -1,6 +1,6 @@
 "use client";
 
-import { FileItem } from "@/app/(dashboard)/page";
+import { FileItem } from "@/types";
 import { useFolderData } from "@/hooks/useContract";
 
 interface FolderItemProps {
