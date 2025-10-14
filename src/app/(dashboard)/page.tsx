@@ -11,29 +11,7 @@ import CreateFolderDialog from "@/components/create-folder-dialog";
 import { Button } from "@/components/ui/button";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
-
-export interface FileItem {
-  id: string;
-  name: string;
-  folderType: string;
-  type: "folder" | "document" | "image" | "video" | "pdf" | "audio" | "audio" | "pdf" | "presentation" | "spreadsheet" | "other" | "embed";
-  size?: string;
-  modified: string;
-  owner: string;
-  starred: boolean;
-  shared: boolean;
-  tokenId?: string;
-  cid?: string;
-  tags?: string[];
-  encrypted?: boolean;
-  encryptedMetadata?: {
-    dataToEncryptHash: string;
-    originalFileName: string;
-    originalFileSize: number;
-    originalFileType: string;
-    encryptedAt: number;
-  };
-}
+import { FileItem } from "@/types";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);

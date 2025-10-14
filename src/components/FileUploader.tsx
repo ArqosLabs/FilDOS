@@ -99,7 +99,7 @@ export const FileUploader = () => {
         <button
           onClick={async () => {
             if (!file) return;
-            await uploadFile(file);
+            await uploadFile({ file, encrypt: true });
           }}
           disabled={!file || isLoading || !!uploadedInfo}
           aria-disabled={!file || isLoading}
