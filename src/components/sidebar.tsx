@@ -9,9 +9,9 @@ import {
   Video,
   FileArchive,
   Scale,
-  Globe,
   RefreshCw,
   Loader2,
+  Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -23,7 +23,7 @@ import { useSelectedLayoutSegment } from "next/navigation";
 const sidebarItems = [
   { icon: HardDrive, label: "My Drive", route: null },
   { icon: Users, label: "Shared with me", route: "shared" },
-  { icon: Globe, label: "Public Folders", route: "public" },
+  { icon: Store, label: "Data Marketplace", route: "public" },
   // { icon: Trash2, label: "Trash", route: "trash" },
   { icon: Scale, label: "Data Sets", route: "data-sets" }
 ];

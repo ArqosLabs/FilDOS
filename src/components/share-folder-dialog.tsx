@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { Share, Users, Eye, Edit } from "lucide-react";
+import { Share, Users, Eye, Edit, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { useShareFolder } from "@/hooks/useContract";
+import { useShareFolder, useFolderSharees, useRevokeShare } from "@/hooks/useContract";
 
 interface ShareFolderDialogProps {
   children: React.ReactNode;
@@ -33,6 +33,8 @@ export default function ShareFolderDialog({ children, folderId, folderName }: Sh
 
   const { address } = useAccount();
   const shareFolder = useShareFolder();
+  const revokeShare = useRevokeShare();
+  const { data: sharees } = useFolderSharees(folderId);
 
   const handleShare = async () => {
     if (!granteeAddress.trim()) {
@@ -58,12 +60,25 @@ export default function ShareFolderDialog({ children, folderId, folderName }: Sh
       setGranteeAddress("");
       setCanRead(true);
       setCanWrite(false);
-      setOpen(false);
       
     } catch (error) {
       console.error("Error sharing folder:", error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRevokeShare = async (shareId: string) => {
+    const sharee = sharees?.sharees[sharees.shareIds.indexOf(shareId)];
+    if (!confirm(`Are you sure you want to revoke access for ${sharee?.slice(0, 6)}...${sharee?.slice(-4)}?`)) {
+      return;
+    }
+
+    try {
+      await revokeShare.mutateAsync({ shareId });
+    } catch (error) {
+      console.error("Error revoking share:", error);
+      alert("Failed to revoke access. Please try again.");
     }
   };
 
@@ -88,8 +103,53 @@ export default function ShareFolderDialog({ children, folderId, folderName }: Sh
         </DialogHeader>
         
         <div className="space-y-4">
+          {/* Current Sharees Section */}
+          {sharees && sharees.sharees.length > 0 && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Shared With ({sharees.sharees.length})
+              </Label>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {sharees.sharees.map((sharee, index) => (
+                  <div
+                    key={sharees.shareIds[index]}
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="font-mono text-xs truncate">
+                        {sharee.slice(0, 6)}...{sharee.slice(-4)}
+                      </span>
+                      <div className="flex gap-1">
+                        {sharees.canReadList[index] && (
+                          <Badge variant="outline" className="text-xs px-1 py-0">
+                            <Eye className="w-3 h-3" />
+                          </Badge>
+                        )}
+                        {sharees.canWriteList[index] && (
+                          <Badge variant="outline" className="text-xs px-1 py-0">
+                            <Edit className="w-3 h-3" />
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
+                      onClick={() => handleRevokeShare(sharees.shareIds[index])}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Add New Share Section */}
           <div className="space-y-2">
-            <Label htmlFor="grantee">Wallet Address</Label>
+            <Label htmlFor="grantee">Add New User</Label>
             <Input
               id="grantee"
               type="text"

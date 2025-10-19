@@ -56,7 +56,6 @@ export default function MyDrive() {
       folderType: folderData?.folderType || "",
       modified: folderData ? formatDate(folderData.createdAt) : "Unknown",
       owner: address || "Unknown",
-      starred: false,
       shared: folderData?.isPublic || false,
       tokenId,
       tags: [], // Add empty tags array
@@ -78,7 +77,6 @@ export default function MyDrive() {
     }
 
     try {
-      console.log(`Creating folder "${name}" of type "${folderType}"...`);
       const result = await mintFolder.mutateAsync({ name, folderType });
       
       // Set success state
@@ -222,22 +220,6 @@ export default function MyDrive() {
             <div className="flex items-center justify-center p-8">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <div className="space-y-1">
-                  {foldersLoading && (
-                    <p className="text-gray-600">Loading your folders...</p>
-                  )}
-                  {folderDataLoading && totalCount > 0 && (
-                    <p className="text-gray-600">
-                      Loading folder details... ({successCount}/{totalCount})
-                    </p>
-                  )}
-                  {folderDataLoading && totalCount === 0 && (
-                    <p className="text-gray-600">Loading folder details...</p>
-                  )}
-                  {!foldersLoading && !folderDataLoading && (
-                    <p className="text-gray-600">Loading...</p>
-                  )}
-                </div>
               </div>
             </div>
           )}

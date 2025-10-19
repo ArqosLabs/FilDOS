@@ -160,6 +160,9 @@ export interface FileEntry {
   timestamp: bigint;
   owner: string;
   tags: string[];
+  encrypted: boolean;
+  dataToEncryptHash: string;
+  fileType: string;
 }
 
 export interface FolderInfo {
@@ -168,6 +171,7 @@ export interface FolderInfo {
   isPublic: boolean;
   owner: string;
   createdAt: bigint;
+  viewingPrice: bigint; // Price in payment tokens to gain read access
 }
 
 export interface FolderAccess {
@@ -191,17 +195,11 @@ export interface FileItem {
   size?: string;
   modified: string;
   owner: string;
-  starred: boolean;
   shared: boolean;
   tokenId?: string;
   cid?: string;
   tags?: string[];
   encrypted?: boolean;
-  encryptedMetadata?: {
-    dataToEncryptHash: string;
-    originalFileName: string;
-    originalFileSize: number;
-    originalFileType: string;
-    encryptedAt: number;
-  };
+  dataToEncryptHash?: string;
+  fileType?: string;
 }

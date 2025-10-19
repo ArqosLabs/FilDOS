@@ -42,7 +42,6 @@ export default function SharedFolders() {
       folderType: folderData?.folderType || "",
       modified: isLoading ? "Loading..." : hasError ? "Unknown" : formatDate(folderData?.createdAt || BigInt(0)),
       owner: folderData?.owner || "Unknown",
-      starred: false,
       shared: true, // All folders in this view are shared
       tokenId,
       tags: [], // Add empty tags array

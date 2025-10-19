@@ -25,6 +25,7 @@ export const useFileDecryption = () => {
     }) => {
       if (!address) throw new Error("Address not found");
       
+      // Reset state at the start of each new decryption
       setProgress(0);
       setStatus("Initializing Lit Protocol...");
 
@@ -51,10 +52,19 @@ export const useFileDecryption = () => {
         return decryptedFile;
       } catch (error) {
         console.error("Decryption error:", error);
+        setProgress(0);
+        setStatus("");
         throw new Error(
           `Decryption failed: ${error instanceof Error ? error.message : String(error)}`
         );
       }
+    },
+    onSuccess: () => {
+      // Keep the success state briefly before reset
+      setTimeout(() => {
+        setProgress(0);
+        setStatus("");
+      }, 1000);
     },
     onError: (error) => {
       console.error("Decryption failed:", error);

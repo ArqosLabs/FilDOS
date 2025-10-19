@@ -23,6 +23,7 @@ export const useFolderList = (tokenIds: (string | number)[]) => {
           isPublic: data.isPublic,
           owner: data.owner,
           createdAt: data.createdAt,
+          viewingPrice: data.viewingPrice, // Added for viewing price feature
         };
       },
       enabled: !!contract && !!tokenId,

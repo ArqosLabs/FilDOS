@@ -22,7 +22,6 @@ interface FileItem {
   size?: string;
   modified: string;
   owner: string;
-  starred: boolean;
   shared: boolean;
   tokenId?: string;
   cid?: string;
@@ -106,10 +105,12 @@ export default function TaggedFilesPage() {
         type: getFileTypeFromTags(file.tags),
         modified: formatDate(file.timestamp),
         owner: file.owner,
-        starred: false,
         shared: false,
         cid: file.cid,
         tags: file.tags,
+        encrypted: file.encrypted,
+        dataToEncryptHash: file.dataToEncryptHash,
+        fileType: file.fileType,
       }));
   }, [searchResults, searchQuery]);
 

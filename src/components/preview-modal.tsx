@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import { useAccount } from 'wagmi';
 import Image from 'next/image';
 import { 
@@ -18,7 +17,8 @@ import {
   Unlock
 } from 'lucide-react';
 import { useFileDecryption } from '@/hooks/useFileDecryption';
-import { FileItem } from '@/types';
+import { useFiles } from '@/hooks/useContract';
+import { FileItem, FileEntry } from '@/types';
 
 interface FilePreviewModalProps {
   file: FileItem | null;
@@ -35,13 +35,33 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
   const [fileType, setFileType] = useState<string>('');
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [decryptedFile, setDecryptedFile] = useState<File | null>(null);
-  const hasLoadedRef = useRef<string | null>(null); // Track which file has been loaded
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const [fileMetadata, setFileMetadata] = useState<FileEntry | null>(null);
   
-  const { decryptFileMutation, progress: decryptProgress, status: decryptStatus } = useFileDecryption();
+  const { decryptFileMutation, progress: decryptProgress } = useFileDecryption();
+  const { data: folderFiles } = useFiles(
+    file?.tokenId || "",
+    !!file?.tokenId && isOpen
+  );
 
-  // Reset state when file changes
   useEffect(() => {
-    if (file) {
+    if (folderFiles && file?.cid) {
+      const metadata = folderFiles.find((f: FileEntry) => f.cid === file.cid);
+      if (metadata) {
+        setFileMetadata(metadata);
+      } else {
+        setFileMetadata(null);
+      }
+    } else if (!folderFiles) {
+      setFileMetadata(null);
+    }
+  }, [folderFiles, file?.cid]);
+
+  const lastLoadKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const currentCid = file?.cid;
+    if (currentCid) {
       setFileContent(null);
       setPreviewUrl(null);
       setError(null);
@@ -49,9 +69,25 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
       setFileType('');
       setIsDecrypting(false);
       setDecryptedFile(null);
-      hasLoadedRef.current = null; // Reset loaded state
+      setImageLoadError(false);
+      lastLoadKeyRef.current = null;
     }
-  }, [file]);
+  }, [file?.cid]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFileContent(null);
+      setPreviewUrl(null);
+      setError(null);
+      setIsLoading(false);
+      setFileType('');
+      setIsDecrypting(false);
+      setDecryptedFile(null);
+      setImageLoadError(false);
+      setFileMetadata(null);
+      lastLoadKeyRef.current = null;
+    }
+  }, [isOpen]);
 
   const getFileLogo = useCallback((fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase() || '';
@@ -157,7 +193,22 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
   }, [file, address, getContentType]);
 
   const handleDecryptAndPreview = useCallback(async () => {
-    if (!file?.encrypted || !file?.encryptedMetadata || !address) return;
+    if (!file?.encrypted) return;
+    if (!address) {
+      setError('Please connect your wallet to decrypt this file.');
+      return;
+    }
+    
+    // Check if we have metadata from contract
+    if (!fileMetadata) {
+      setError('File metadata not available. Unable to decrypt.');
+      return;
+    }
+    
+    if (!fileMetadata.dataToEncryptHash) {
+      setError('File encryption data missing. Unable to decrypt.');
+      return;
+    }
     
     setIsDecrypting(true);
     setError(null);
@@ -178,7 +229,6 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
         signal: controller.signal
       });
       
-      // Clear timeout on successful fetch
       if (timeoutId) {
         clearTimeout(timeoutId);
         timeoutId = null;
@@ -187,25 +237,29 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
-      // Get the ciphertext (encrypted content)
+
+      // Fetch the raw ciphertext directly from the endpoint
       const ciphertext = await response.text();
       
-      // Decrypt the file
+      // Use metadata from contract for decryption
+      const originalFileName = fileMetadata.filename;
+      const originalFileType = fileMetadata.fileType || 'application/octet-stream';
+      
+      // Decrypt the file using contract metadata
       const decrypted = await decryptFileMutation.mutateAsync({
-        ciphertext,
-        dataToEncryptHash: file.encryptedMetadata.dataToEncryptHash,
+        ciphertext: ciphertext,
+        dataToEncryptHash: fileMetadata.dataToEncryptHash,
         metadata: {
-          originalFileName: file.encryptedMetadata.originalFileName,
-          originalFileSize: file.encryptedMetadata.originalFileSize,
-          originalFileType: file.encryptedMetadata.originalFileType,
+          originalFileName: originalFileName,
+          originalFileSize: 0, // We don't have this in contract
+          originalFileType: originalFileType,
         },
       });
       
       setDecryptedFile(decrypted);
       
       // Generate preview for decrypted file
-      const contentType = file.encryptedMetadata.originalFileType;
+      const contentType = originalFileType;
       setFileType(contentType);
       
       if (contentType.startsWith('text/') || contentType === 'application/json') {
@@ -214,10 +268,25 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
           const text = e.target?.result as string;
           setFileContent(text);
         };
+        reader.onerror = (e) => {
+          console.error('FileReader error:', e);
+        };
         reader.readAsText(decrypted);
-      } else if (contentType.startsWith('image/') || contentType.startsWith('video/')) {
+      } else if (contentType.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          setPreviewUrl(dataUrl);
+        };
+        reader.onerror = (e) => {
+          console.error('FileReader error:', e);
+        };
+        reader.readAsDataURL(decrypted);
+      } else if (contentType.startsWith('video/')) {
         const url = URL.createObjectURL(decrypted);
         setPreviewUrl(url);
+      } else {
+        console.log('No preview handler for content type:', contentType);
       }
       
     } catch (error) {
@@ -242,16 +311,16 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
       }
       setIsDecrypting(false);
     }
-  }, [file, address, decryptFileMutation]);
+  }, [file, address, decryptFileMutation, fileMetadata]);
 
   const handleRetry = useCallback(() => {
     setError(null);
-    if (file?.encrypted && file?.encryptedMetadata) {
+    if (file?.encrypted && fileMetadata) {
       handleDecryptAndPreview();
     } else {
       fetchAndProcessFile();
     }
-  }, [fetchAndProcessFile, handleDecryptAndPreview, file]);
+  }, [fetchAndProcessFile, handleDecryptAndPreview, file, fileMetadata]);
 
   const handleDownload = useCallback(() => {
     if (file?.cid) {
@@ -285,30 +354,48 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
     }
   }, [file]);
 
-  // Load file when modal opens
+  // Cleanup any blob URLs when preview changes/unmounts
   useEffect(() => {
-    // Create a unique identifier for this file
-    const fileId = file?.cid || file?.id || '';
-    
-    // Only load if modal is open, file exists, not a folder, and we haven't loaded this file yet
-    if (isOpen && file && file.type !== 'folder' && hasLoadedRef.current !== fileId) {
-      hasLoadedRef.current = fileId; // Mark this file as being loaded
-      
-      // If file is encrypted, decrypt it
-      if (file.encrypted && file.encryptedMetadata) {
-        handleDecryptAndPreview();
-      } else {
-        // Otherwise, fetch normally
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  // Reset guard when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      lastLoadKeyRef.current = null;
+    }
+  }, [isOpen]);
+
+  // Derive a stable key for the current load intent
+  const loadKey = useMemo(() => {
+    if (!file) return null;
+    return `${file.cid}:${file.encrypted ? 'enc' : 'plain'}:${address || 'noaddr'}:${file.type}`;
+  }, [file, address]);
+
+  // Stable trigger that uses latest handlers without violating exhaustive-deps
+  const triggerLoadRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    triggerLoadRef.current = () => {
+      if (!file) return;
+      // Only auto-load non-encrypted files
+      // For encrypted files, user must click decrypt button
+      if (!file.encrypted) {
         fetchAndProcessFile();
       }
-    }
-    
-    // Reset when modal closes
-    if (!isOpen) {
-      hasLoadedRef.current = null;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, file?.cid, file?.id, file?.type, file?.encrypted]);
+    };
+  }, [file, fetchAndProcessFile]);
+
+  // Load file when modal opens (avoid loops by keying the action)
+  useEffect(() => {
+    if (!isOpen || !file || file.type === 'folder' || !loadKey) return;
+    if (lastLoadKeyRef.current === loadKey) return; // already attempted for this key
+    lastLoadKeyRef.current = loadKey;
+    triggerLoadRef.current();
+  }, [isOpen, loadKey, file]);
 
   if (!file) return null;
 
@@ -329,39 +416,38 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Encryption Indicator */}
+          {/* Encryption Indicator - Compact */}
           {file.encrypted && (
-            <Card className="p-3 bg-blue-50 border-blue-200">
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-blue-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-blue-900">
-                    Encrypted with Lit Protocol
-                  </p>
-                  <p className="text-xs text-blue-700">
-                    This file is encrypted and will be decrypted automatically if you have access.
-                  </p>
-                </div>
-                {decryptedFile && (
-                  <Badge variant="default" className="bg-green-500">
-                    <Unlock className="h-3 w-3 mr-1" />
-                    Decrypted
-                  </Badge>
-                )}
+                <Shield className="h-4 w-4 text-gray-600" />
+                <span className="text-sm text-gray-700">
+                  {decryptedFile ? 'Decrypted' : 'Encrypted'}
+                </span>
               </div>
-            </Card>
+              {!decryptedFile && !isDecrypting && (
+                <Button
+                  size="sm"
+                  onClick={handleDecryptAndPreview}
+                  disabled={!address}
+                  className="h-8"
+                >
+                  <Unlock className="h-3 w-3 mr-1" />
+                  Decrypt
+                </Button>
+              )}
+            </div>
           )}
 
-          {/* Decryption Progress */}
+          {/* Decryption Progress - Compact */}
           {isDecrypting && (
-            <Card className="p-4 bg-blue-50 border-blue-200">
-              <div className="flex items-center gap-2 mb-3">
-                <Unlock className="h-5 w-5 text-blue-600 animate-pulse" />
-                <span className="font-medium text-blue-900">Decrypting file...</span>
+            <div className="p-3 border rounded-lg bg-gray-50">
+              <div className="flex items-center gap-2 mb-2">
+                <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+                <span className="text-sm text-gray-700">Decrypting...</span>
               </div>
-              <Progress value={decryptProgress} className="h-2 mb-2" />
-              <p className="text-sm text-blue-700">{decryptStatus}</p>
-            </Card>
+              <Progress value={decryptProgress} className="h-1" />
+            </div>
           )}
 
           {/* Loading State */}
@@ -372,86 +458,68 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
             </Card>
           )}
 
-          {/* Error State */}
+          {/* Error State - Compact */}
           {error && (
-            <Card className="p-4 bg-red-50 border-red-200">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start text-red-700">
-                  <AlertCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-medium">Error Loading File</h4>
-                    <p className="text-sm mt-1">{error}</p>
-                  </div>
+            <div className="p-3 border border-red-200 rounded-lg bg-red-50">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-red-700">{error}</p>
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex gap-1 flex-shrink-0">
                   <Button 
                     onClick={handleRetry} 
-                    variant="outline" 
+                    variant="ghost" 
                     size="sm"
-                    className="text-red-700 border-red-300 hover:bg-red-100"
+                    className="h-7 px-2 text-xs"
                   >
                     Retry
                   </Button>
-                  <Button 
-                    onClick={handleOpenExternal} 
-                    variant="outline" 
-                    size="sm"
-                    className="text-red-700 border-red-300 hover:bg-red-100"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    Open
-                  </Button>
                 </div>
               </div>
-            </Card>
+            </div>
           )}
 
-          {/* File Preview */}
-          {!isLoading && !error && !isDecrypting && (
-            <Card className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  {file.encrypted && decryptedFile && (
-                    <Badge variant="outline" className="text-green-600 border-green-300">
-                      <Unlock className="h-3 w-3 mr-1" />
-                      Decrypted
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleDownload} variant="outline" size="sm">
-                    <Download className="w-4 h-4 mr-2" />
-                    {decryptedFile ? 'Download Decrypted' : 'Download'}
+          {/* File Preview - Only show when content is available */}
+          {!isLoading && !error && !isDecrypting && (fileContent || previewUrl || decryptedFile) && (
+            <Card className="p-0 overflow-hidden">
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2 p-3 border-b bg-gray-50">
+                <Button onClick={handleDownload} variant="ghost" size="sm" className="h-8">
+                  <Download className="w-3 h-3 mr-1" />
+                  Download
+                </Button>
+                {!file.encrypted && (
+                  <Button onClick={handleOpenExternal} variant="ghost" size="sm" className="h-8">
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    Open
                   </Button>
-                  {!file.encrypted && (
-                    <Button onClick={handleOpenExternal} variant="outline" size="sm">
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Open
-                    </Button>
-                  )}
-                </div>
+                )}
               </div>
 
               {/* Text Content */}
               {fileContent && (
-                <div className="bg-background p-4 rounded border max-h-96 overflow-y-auto">
-                  <pre className="text-sm text-gray-800 whitespace-pre-wrap break-words ">
+                <div className="p-4 max-h-[500px] overflow-y-auto">
+                  <pre className="text-xs text-gray-800 whitespace-pre-wrap break-words font-mono">
                     {fileContent}
                   </pre>
                 </div>
               )}
 
               {/* Image Preview */}
-              {previewUrl && fileType.startsWith('image/') && (
-                <div className="bg-background p-4 rounded border">
+              {previewUrl && fileType.startsWith('image/') && !imageLoadError && (
+                <div className="p-4 bg-gray-50">
                   <div className="relative w-full flex justify-center">
                     <Image
                       src={previewUrl}
                       alt={file.name}
                       width={800}
                       height={600}
-                      className="object-contain rounded max-h-96"
-                      style={{ maxHeight: '24rem' }}
+                      className="object-contain rounded max-h-[500px]"
+                      style={{ maxHeight: '500px' }}
+                      unoptimized
+                      onError={() => setImageLoadError(true)}
+                      loader={previewUrl.startsWith('blob:') || previewUrl.startsWith('data:') ? ({ src }) => src : undefined}
                     />
                   </div>
                 </div>
@@ -459,10 +527,10 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* Video Preview */}
               {previewUrl && fileType.startsWith('video/') && (
-                <div className="bg-background p-4 rounded border">
+                <div className="p-4 bg-gray-50">
                   <video 
                     controls 
-                    className="max-w-full max-h-96 rounded mx-auto"
+                    className="max-w-full max-h-[500px] rounded mx-auto"
                     src={previewUrl}
                   >
                     Your browser does not support video playback.
@@ -470,28 +538,54 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
                 </div>
               )}
 
-              {/* No Preview Available */}
-              {!fileContent && !previewUrl && !isLoading && !isDecrypting && (
-                <div className="bg-background p-8 rounded border text-center">
-                  <Eye className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500 mb-4">
-                    Preview not available for this file type.
-                  </p>
-                  <div className="flex gap-2 justify-center">
-                    <Button onClick={handleDownload} size="sm">
-                      <Download className="w-4 h-4 mr-2" />
-                      {decryptedFile ? 'Download Decrypted' : 'Download'}
-                    </Button>
-                    {!file.encrypted && (
-                      <Button onClick={handleOpenExternal} variant="outline" size="sm">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Open in Browser
-                      </Button>
-                    )}
-                  </div>
+              {/* Audio Preview */}
+              {previewUrl && fileType.startsWith('audio/') && (
+                <div className="p-4">
+                  <audio 
+                    controls 
+                    className="w-full"
+                    src={previewUrl}
+                  >
+                    Your browser does not support audio playback.
+                  </audio>
+                </div>
+              )}
+
+              {/* PDF Preview */}
+              {previewUrl && fileType === 'application/pdf' && (
+                <div className="p-4 bg-gray-50">
+                  <iframe
+                    src={previewUrl}
+                    className="w-full h-[500px] rounded border"
+                    title={file.name}
+                  />
                 </div>
               )}
             </Card>
+          )}
+
+          {/* No Preview Available - Only show when decrypted but no preview */}
+          {!isLoading && !error && !isDecrypting && decryptedFile && !fileContent && !previewUrl && (
+            <div className="p-8 border rounded-lg text-center bg-gray-50">
+              <Eye className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 mb-3">Preview not available</p>
+              <Button onClick={handleDownload} size="sm">
+                <Download className="w-3 h-3 mr-1" />
+                Download
+              </Button>
+            </div>
+          )}
+
+          {/* Waiting for Decrypt - Show when encrypted and not decrypted yet */}
+          {!isLoading && !error && !isDecrypting && file.encrypted && !decryptedFile && (
+            <div className="p-8 border rounded-lg text-center bg-gray-50">
+              <Shield className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 mb-3">File is encrypted</p>
+              <Button onClick={handleDecryptAndPreview} disabled={!address} size="sm">
+                <Unlock className="w-3 h-3 mr-1" />
+                Decrypt to preview
+              </Button>
+            </div>
           )}
 
           {/* Connect Wallet Prompt */}

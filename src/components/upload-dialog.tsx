@@ -159,6 +159,9 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
         setIsAddingToContract(true);
         setContractAddError(null);
         
+        // Add a delay to ensure the upload transaction completes and user is ready
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
         try {
           const tags = classifyFile(file);
 
@@ -167,13 +170,26 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
             cid: uploadedInfo.pieceCid,
             filename: uploadedInfo.fileName,
             tags: tags,
+            encrypted: uploadedInfo.encrypted || false,
+            dataToEncryptHash: uploadedInfo.encryptedMetadata?.dataToEncryptHash || "",
+            fileType: uploadedInfo.encrypted && uploadedInfo.encryptedMetadata
+              ? uploadedInfo.encryptedMetadata.originalFileType
+              : (uploadedInfo.fileType || file.type || "application/octet-stream"),
           });
           
           console.log("File added to contract successfully!");
           console.log("File tags:", tags);
         } catch (error) {
           console.error("❌ Error adding file to contract:", error);
-          setContractAddError(error instanceof Error ? error.message : "Failed to add file to folder");
+          const errorMessage = error instanceof Error ? error.message : "Failed to add file to folder";
+          
+          // Check if user rejected the transaction
+          if (errorMessage.includes("user rejected") || errorMessage.includes("User denied")) {
+            setContractAddError("Transaction cancelled. File uploaded but not added to folder. Please reset and try again.");
+          } else {
+            setContractAddError(errorMessage);
+          }
+          
           setProcessedUploadId(null); // Reset on error so user can retry
         } finally {
           setIsAddingToContract(false);

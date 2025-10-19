@@ -11,6 +11,9 @@ export type UploadedInfo = {
   pieceCid?: string;
   txHash?: string;
   encrypted?: boolean;
+  dataToEncryptHash?: string;
+  fileType?: string;
+  // Metadata from Lit encryption
   encryptedMetadata?: {
     dataToEncryptHash: string;
     originalFileName: string;
@@ -104,6 +107,8 @@ export const useFileUpload = () => {
 
       // 6) Create storage service
       const storageService = await synapse.createStorage({
+        providerId: 16,
+        withCDN: true,
         callbacks: {
           onDataSetResolved: (info) => {
             console.log("Dataset resolved:", info);
@@ -139,7 +144,7 @@ export const useFileUpload = () => {
       setStatus("Uploading file to storage provider...");
       setProgress(encrypt ? 60 : 55);
       // 7) Upload file to storage provider
-      const { pieceCid } = await storageService.upload(uint8ArrayBytes, {
+      await storageService.upload(uint8ArrayBytes, {
         onUploadComplete: (piece) => {
           setStatus(
             `File uploaded! Signing msg to add pieces to the dataset`
@@ -150,6 +155,8 @@ export const useFileUpload = () => {
             fileSize: file.size,
             pieceCid: piece.toV1().toString(),
             encrypted: encrypt,
+            fileType: file.type || "application/octet-stream",
+            dataToEncryptHash: encryptedMetadata?.dataToEncryptHash || "",
             encryptedMetadata: encryptedMetadata,
           }));
           setProgress(encrypt ? 85 : 80);
@@ -175,14 +182,6 @@ export const useFileUpload = () => {
       });
 
       setProgress(encrypt ? 98 : 95);
-      setUploadedInfo((prev) => ({
-        ...prev,
-        fileName: encrypt ? file.name : fileToUpload.name,
-        fileSize: file.size,
-        pieceCid: pieceCid.toV1().toString(),
-        encrypted: encrypt,
-        encryptedMetadata: encryptedMetadata,
-      }));
     },
     onSuccess: () => {
       setStatus("File successfully stored on Filecoin!");

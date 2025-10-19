@@ -36,12 +36,18 @@ export const useContract = () => {
             timestamp: bigint;
             owner: string;
             tags: string[];
+            encrypted: boolean;
+            dataToEncryptHash: string;
+            fileType: string;
           }) => ({
             cid: file.cid,
             filename: file.filename,
             timestamp: file.timestamp,
             owner: file.owner,
             tags: file.tags,
+            encrypted: file.encrypted,
+            dataToEncryptHash: file.dataToEncryptHash,
+            fileType: file.fileType,
           })) as FileEntry[];
         },
         enabled: enabled && !!contract && !!tokenId,
@@ -61,6 +67,7 @@ export const useContract = () => {
             isPublic: data.isPublic,
             owner: data.owner,
             createdAt: data.createdAt,
+            viewingPrice: data.viewingPrice,
           };
         },
         enabled: !!contract && !!tokenId,
@@ -282,6 +289,61 @@ export const useContract = () => {
         enabled: enabled && !!contract && !!tokenId && tags.length > 0,
       });
     },
+
+    // Get viewing price for a folder
+    useViewingPrice: (tokenId: string | number) => {
+      return useQuery({
+        queryKey: ["viewing-price", tokenId],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          const price = await contract.getViewingPrice(tokenId);
+          return price;
+        },
+        enabled: !!contract && !!tokenId,
+      });
+    },
+
+    // Check if user has paid for view access
+    useHasPaidViewAccess: (tokenId: string | number, viewer?: string) => {
+      return useQuery({
+        queryKey: ["has-paid-view-access", tokenId, viewer || address],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          return await contract.hasPaidViewAccess(tokenId, viewer || address);
+        },
+        enabled: !!contract && !!tokenId && !!(viewer || address),
+      });
+    },
+
+    // Get payment token address
+    usePaymentToken: () => {
+      return useQuery({
+        queryKey: ["payment-token"],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          return await contract.paymentToken();
+        },
+        enabled: !!contract,
+      });
+    },
+
+    // Get folder sharees (users with share access)
+    useFolderSharees: (tokenId: string | number) => {
+      return useQuery({
+        queryKey: ["folder-sharees", tokenId],
+        queryFn: async () => {
+          if (!contract) throw new Error("Contract not initialized");
+          const [shareIds, sharees, canReadList, canWriteList] = await contract.getFolderSharees(tokenId);
+          return {
+            shareIds: shareIds.map((id: bigint) => id.toString()),
+            sharees: sharees as string[],
+            canReadList: canReadList as boolean[],
+            canWriteList: canWriteList as boolean[],
+          };
+        },
+        enabled: !!contract && !!tokenId,
+      });
+    },
   };
 
   // Write mutations
@@ -325,14 +387,28 @@ export const useContract = () => {
         cid,
         filename,
         tags,
+        encrypted = false,
+        dataToEncryptHash = "",
+        fileType = "",
       }: {
         tokenId: string | number;
         cid: string;
         filename: string;
         tags: string[];
+        encrypted?: boolean;
+        dataToEncryptHash?: string;
+        fileType?: string;
       }) => {
         if (!contract || !signer) throw new Error("Contract or signer not initialized");
-        const transaction = await contract.addFile(tokenId, cid, filename, tags);
+        const transaction = await contract.addFile(
+          tokenId, 
+          cid, 
+          filename, 
+          tags,
+          encrypted,
+          dataToEncryptHash,
+          fileType
+        );
         return await transaction.wait();
       },
       onSuccess: (_, variables) => {
@@ -365,17 +441,19 @@ export const useContract = () => {
       },
     }),
 
-    // Set folder public/private
+    // Set folder public/private with optional viewing price
     setFolderPublic: useMutation({
       mutationFn: async ({
         tokenId,
         isPublic,
+        viewingPrice = 0,
       }: {
         tokenId: string | number;
         isPublic: boolean;
+        viewingPrice?: bigint | number;
       }) => {
         if (!contract || !signer) throw new Error("Contract or signer not initialized");
-        const tx = await contract.setFolderPublic(tokenId, isPublic);
+        const tx = await contract.setFolderPublic(tokenId, isPublic, viewingPrice);
         return await tx.wait();
       },
       onSuccess: (_, variables) => {
@@ -383,6 +461,8 @@ export const useContract = () => {
         queryClient.invalidateQueries({ queryKey: ["public-folders"] });
         // Invalidate folder data query to update the UI
         queryClient.invalidateQueries({ queryKey: ["folder-data", variables.tokenId] });
+        // Invalidate viewing price query
+        queryClient.invalidateQueries({ queryKey: ["viewing-price", variables.tokenId] });
       },
     }),
 
@@ -425,6 +505,8 @@ export const useContract = () => {
         // Invalidate shared folders query for the grantee
         queryClient.invalidateQueries({ queryKey: ["shared-folders", variables.grantee] });
         queryClient.invalidateQueries({ queryKey: ["folder-access", variables.tokenId, variables.grantee] });
+        // Invalidate folder sharees query
+        queryClient.invalidateQueries({ queryKey: ["folder-sharees", variables.tokenId] });
       },
     }),
 
@@ -439,6 +521,8 @@ export const useContract = () => {
         // Invalidate all shared folders queries
         queryClient.invalidateQueries({ queryKey: ["shared-folders"] });
         queryClient.invalidateQueries({ queryKey: ["folder-access"] });
+        // Invalidate all folder sharees queries
+        queryClient.invalidateQueries({ queryKey: ["folder-sharees"] });
       },
     }),
 
@@ -463,6 +547,44 @@ export const useContract = () => {
         queryClient.invalidateQueries({ queryKey: ["folder-tags", variables.tokenId] });
       },
     }),
+
+    // Set viewing price for a folder
+    setViewingPrice: useMutation({
+      mutationFn: async ({
+        tokenId,
+        price,
+      }: {
+        tokenId: string | number;
+        price: bigint | string;
+      }) => {
+        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const tx = await contract.setViewingPrice(tokenId, price);
+        return await tx.wait();
+      },
+      onSuccess: (_, variables) => {
+        // Invalidate viewing price query
+        queryClient.invalidateQueries({ queryKey: ["viewing-price", variables.tokenId] });
+      },
+    }),
+
+    // Pay for view access (direct payment - requires approval)
+    payForViewAccess: useMutation({
+      mutationFn: async ({
+        tokenId,
+      }: {
+        tokenId: string | number;
+      }) => {
+        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const tx = await contract.payForViewAccess(tokenId);
+        return await tx.wait();
+      },
+      onSuccess: (_, variables) => {
+        // Invalidate access queries
+        queryClient.invalidateQueries({ queryKey: ["has-paid-view-access", variables.tokenId] });
+        queryClient.invalidateQueries({ queryKey: ["can-read", variables.tokenId] });
+        queryClient.invalidateQueries({ queryKey: ["folder-access", variables.tokenId] });
+      },
+    })
   };
 
   // Helper functions
@@ -502,7 +624,6 @@ export const useContract = () => {
   };
 };
 
-// Export individual mutation hooks for convenience
 export const useMintFolder = () => useContract().mutations.mintFolder;
 export const useAddFile = () => useContract().mutations.addFile;
 export const useMoveFile = () => useContract().mutations.moveFile;
@@ -510,8 +631,9 @@ export const useSetFolderPublic = () => useContract().mutations.setFolderPublic;
 export const useShareFolder = () => useContract().mutations.shareFolder;
 export const useRevokeShare = () => useContract().mutations.revokeShare;
 export const useRemoveFile = () => useContract().mutations.removeFile;
+export const useSetViewingPrice = () => useContract().mutations.setViewingPrice;
+export const usePayForViewAccess = () => useContract().mutations.payForViewAccess;
 
-// Export individual query hooks for convenience
 export const useFiles = (tokenId: string | number, enabled = true) => 
   useContract().queries.useFiles(tokenId, enabled);
 export const useFolderData = (tokenId: string | number) =>
@@ -541,3 +663,14 @@ export const useFolderTags = (tokenId: string | number) =>
   useContract().queries.useFolderTags(tokenId);
 export const useSearchFilesByMultipleTags = (tokenId: string | number, tags: string[], enabled = true) => 
   useContract().queries.useSearchFilesByMultipleTags(tokenId, tags, enabled);
+export const useViewingPrice = (tokenId: string | number) => 
+  useContract().queries.useViewingPrice(tokenId);
+export const useHasPaidViewAccess = (tokenId: string | number, viewer?: string) => 
+  useContract().queries.useHasPaidViewAccess(tokenId, viewer);
+export const usePaymentToken = () => 
+  useContract().queries.usePaymentToken();
+export const useFolderSharees = (tokenId: string | number) => 
+  useContract().queries.useFolderSharees(tokenId);
+
+// Helper to get contract address
+export const useContractAddress = () => useContract().helpers.getAddress();

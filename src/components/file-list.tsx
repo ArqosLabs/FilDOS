@@ -5,6 +5,8 @@ import {
   Share,
   Globe,
   Info,
+  DollarSign,
+  MoveIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +30,8 @@ import ShareFolderDialog from "@/components/share-folder-dialog";
 import MakePublicDialog from "@/components/make-public-dialog";
 import DetailsModal from "@/components/details-modal";
 import FilePreviewModal from "@/components/preview-modal";
+import UpdatePriceDialog from "@/components/update-price-dialog";
+import MoveFileDialog from "@/components/move-file-dialog";
 import { useState } from "react";
 import Image from "next/image";
 
@@ -36,6 +40,7 @@ interface FileListProps {
   selectedFiles: string[];
   onToggleSelection: (fileId: string) => void;
   onFolderClick?: (folderId?: string, url?: string) => void;
+  currentFolderId?: string; // Add current folder ID for move functionality
 }
 
 const getFileLogo = (type: FileItem["type"]) => {
@@ -63,7 +68,7 @@ const getFileLogo = (type: FileItem["type"]) => {
   }
 };
 
-export default function FileList({ files, selectedFiles, onToggleSelection, onFolderClick }: FileListProps) {
+export default function FileList({ files, selectedFiles, onToggleSelection, onFolderClick, currentFolderId }: FileListProps) {
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const allSelected = files.length > 0 && selectedFiles.length === files.length;
@@ -175,6 +180,23 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                               </div>
                             </DetailsModal>
                           </DropdownMenuItem>
+                          {file.type !== "folder" && currentFolderId && file.cid && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild>
+                                <MoveFileDialog
+                                  fileName={file.name}
+                                  fileCid={file.cid}
+                                  currentFolderId={currentFolderId}
+                                >
+                                  <div className="flex items-center cursor-pointer p-1 font-light">
+                                    <MoveIcon className="w-4 h-4 mr-2" />
+                                    Move
+                                  </div>
+                                </MoveFileDialog>
+                              </DropdownMenuItem>
+                            </>
+                          )}
                           {file.type === "folder" && (
                             <>
                               <DropdownMenuSeparator />
@@ -201,6 +223,18 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                                     {file.shared ? "Make Private" : "Make Public"}
                                   </div>
                                 </MakePublicDialog>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild>
+                                <UpdatePriceDialog
+                                  folderId={file.tokenId || file.id}
+                                  folderName={file.name}
+                                >
+                                  <div className="flex items-center cursor-pointer p-1 font-light">
+                                    <DollarSign className="w-4 h-4 mr-2" />
+                                    Set Price
+                                  </div>
+                                </UpdatePriceDialog>
                               </DropdownMenuItem>
                             </>
                           )}

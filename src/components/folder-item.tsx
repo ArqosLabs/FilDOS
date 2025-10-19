@@ -5,7 +5,6 @@ import { useFolderData } from "@/hooks/useContract";
 
 interface FolderItemProps {
   tokenId: string;
-  isStarred: boolean;
   onToggleStar: (fileId: string) => void;
   onToggleSelection: (fileId: string) => void;
   onFolderClick: (folderId: string) => void;
@@ -14,7 +13,6 @@ interface FolderItemProps {
 
 export function FolderItem({
   tokenId,
-  isStarred,
 }: FolderItemProps) {
   const { data: folderData, isLoading, error } = useFolderData(tokenId);
 
@@ -33,7 +31,6 @@ export function FolderItem({
     type: "folder" as const,
     modified: isLoading ? "Loading..." : error ? "Unknown" : formatDate(folderData?.createdAt || BigInt(0)),
     owner: isLoading ? "Loading..." : error ? "Unknown" : folderData?.owner || "Unknown",
-    starred: isStarred,
     shared: folderData?.isPublic || false,
     tokenId,
     folderType: folderData?.folderType || "default",
