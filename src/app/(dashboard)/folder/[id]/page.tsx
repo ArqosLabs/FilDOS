@@ -126,7 +126,7 @@ export default function FolderPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -272,7 +272,7 @@ export default function FolderPage() {
           <div className="p-4 border-b">
             <button
               onClick={handleBackToRoot}
-              className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+              className="text-primary hover:text-secondary-foreground text-sm flex items-center"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
               Back to My Drive
@@ -312,18 +312,7 @@ export default function FolderPage() {
           {isLoading && !hasError && (
             <div className="flex items-center justify-center p-8">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <div className="space-y-1">
-                  {filesLoading && (
-                    <p className="text-gray-600">Loading folder content...</p>
-                  )}
-                  {folderDataLoading && (
-                    <p className="text-gray-600">Loading folder details...</p>
-                  )}
-                  {!filesLoading && !folderDataLoading && (
-                    <p className="text-gray-600">Loading...</p>
-                  )}
-                </div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               </div>
             </div>
           )}

@@ -13,12 +13,14 @@ import {
   AlertCircle, 
   Loader2,
   ExternalLink,
-  Shield,
-  Unlock
+  Unlock,
+  LockKeyhole,
+  Key
 } from 'lucide-react';
 import { useFileDecryption } from '@/hooks/useFileDecryption';
 import { useFiles } from '@/hooks/useContract';
 import { FileItem, FileEntry } from '@/types';
+import { Badge } from './ui/badge';
 
 interface FilePreviewModalProps {
   file: FileItem | null;
@@ -416,35 +418,12 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Encryption Indicator - Compact */}
-          {file.encrypted && (
-            <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-gray-600" />
-                <span className="text-sm text-gray-700">
-                  {decryptedFile ? 'Decrypted' : 'Encrypted'}
-                </span>
-              </div>
-              {!decryptedFile && !isDecrypting && (
-                <Button
-                  size="sm"
-                  onClick={handleDecryptAndPreview}
-                  disabled={!address}
-                  className="h-8"
-                >
-                  <Unlock className="h-3 w-3 mr-1" />
-                  Decrypt
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Decryption Progress - Compact */}
+          {/* Decryption Progress */}
           {isDecrypting && (
-            <div className="p-3 border rounded-lg bg-gray-50">
+            <div className="p-3 border rounded-lg bg-primary/5 border-primary/20">
               <div className="flex items-center gap-2 mb-2">
-                <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
-                <span className="text-sm text-gray-700">Decrypting...</span>
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-sm text-foreground">Decrypting file...</span>
               </div>
               <Progress value={decryptProgress} className="h-1" />
             </div>
@@ -484,17 +463,29 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
           {!isLoading && !error && !isDecrypting && (fileContent || previewUrl || decryptedFile) && (
             <Card className="p-0 overflow-hidden">
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2 p-3 border-b bg-gray-50">
-                <Button onClick={handleDownload} variant="ghost" size="sm" className="h-8">
-                  <Download className="w-3 h-3 mr-1" />
-                  Download
-                </Button>
-                {!file.encrypted && (
-                  <Button onClick={handleOpenExternal} variant="ghost" size="sm" className="h-8">
-                    <ExternalLink className="w-3 h-3 mr-1" />
-                    Open
-                  </Button>
+              <div className="flex items-center justify-between gap-2 p-3 border-b bg-muted/30">
+                {/* Decrypted Badge */}
+                {decryptedFile && (
+                  <Badge variant="outline">
+                    <Key className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium text-primary">Decrypted</span>
+                  </Badge>
                 )}
+                {!decryptedFile && <div />}
+                
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2">
+                  <Button onClick={handleDownload} variant="ghost" size="sm" className="h-8">
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
+                  {!file.encrypted && (
+                    <Button onClick={handleOpenExternal} variant="ghost" size="sm" className="h-8">
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Open
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {/* Text Content */}
@@ -578,14 +569,29 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
           {/* Waiting for Decrypt - Show when encrypted and not decrypted yet */}
           {!isLoading && !error && !isDecrypting && file.encrypted && !decryptedFile && (
-            <div className="p-8 border rounded-lg text-center bg-gray-50">
-              <Shield className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-3">File is encrypted</p>
-              <Button onClick={handleDecryptAndPreview} disabled={!address} size="sm">
-                <Unlock className="w-3 h-3 mr-1" />
-                Decrypt to preview
+            <Card className="p-12 text-center border-primary/20 bg-primary/5">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                <LockKeyhole className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-base mb-2">Encrypted File</h3>
+              <p className="text-xs font-light text-muted-foreground mb-6 max-w-md mx-auto">
+                This file is encrypted with Lit Protocol. Decrypt it to view the contents.
+              </p>
+              <Button 
+                onClick={handleDecryptAndPreview} 
+                disabled={!address}
+                size="lg"
+                className="gap-2"
+              >
+                <Unlock className="w-4 h-4" />
+                Decrypt & Preview
               </Button>
-            </div>
+              {!address && (
+                <p className="text-xs text-muted-foreground mt-3">
+                  Please connect your wallet to decrypt
+                </p>
+              )}
+            </Card>
           )}
 
           {/* Connect Wallet Prompt */}

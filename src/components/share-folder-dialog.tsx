@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { Share, Users, Eye, Edit, X } from "lucide-react";
+import { Share, Users, Eye, Edit, X, Lock, Globe, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { useShareFolder, useFolderSharees, useRevokeShare } from "@/hooks/useContract";
+import { useShareFolder, useFolderSharees, useRevokeShare, useFolderData } from "@/hooks/useContract";
+
+// Format USDFC (6 decimals) to readable string
+const formatUSDFC = (amount: bigint) => {
+  const value = Number(amount) / 1_000_000; // 6 decimals
+  return value.toFixed(2);
+};
 
 interface ShareFolderDialogProps {
   children: React.ReactNode;
@@ -35,6 +41,7 @@ export default function ShareFolderDialog({ children, folderId, folderName }: Sh
   const shareFolder = useShareFolder();
   const revokeShare = useRevokeShare();
   const { data: sharees } = useFolderSharees(folderId);
+  const { data: folderData } = useFolderData(folderId);
 
   const handleShare = async () => {
     if (!granteeAddress.trim()) {
@@ -98,58 +105,118 @@ export default function ShareFolderDialog({ children, folderId, folderName }: Sh
             Share Folder
           </DialogTitle>
           <DialogDescription>
-            Share &quot;{folderName}&quot; with another user by entering their wallet address.
+            Manage access to &quot;{folderName}&quot;
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* Current Sharees Section */}
-          {sharees && sharees.sharees.length > 0 && (
+          {/* Who Has Access Section */}
+          <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+            <Label className="flex items-center gap-2 text-xs font-medium">
+              <Users className="w-4 h-4" />
+              Who Has Access
+            </Label>
+            
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Shared With ({sharees.sharees.length})
-              </Label>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {sharees.sharees.map((sharee, index) => (
-                  <div
-                    key={sharees.shareIds[index]}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm"
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="font-mono text-xs truncate">
-                        {sharee.slice(0, 6)}...{sharee.slice(-4)}
-                      </span>
-                      <div className="flex gap-1">
-                        {sharees.canReadList[index] && (
-                          <Badge variant="outline" className="text-xs px-1 py-0">
-                            <Eye className="w-3 h-3" />
-                          </Badge>
-                        )}
-                        {sharees.canWriteList[index] && (
-                          <Badge variant="outline" className="text-xs px-1 py-0">
-                            <Edit className="w-3 h-3" />
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
-                      onClick={() => handleRevokeShare(sharees.shareIds[index])}
+              {/* Owner */}
+              {folderData && (
+                <div className="flex items-center justify-between p-2 bg-background rounded-md">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-3 h-3 text-primary" />
+                    <span 
+                      className="font-mono text-xs cursor-help" 
+                      title={folderData.owner}
                     >
-                      <X className="w-3 h-3" />
-                    </Button>
+                      {folderData.owner.slice(0, 6)}...{folderData.owner.slice(-4)}
+                    </span>
+                    <Badge variant="secondary" className="text-xs">Owner</Badge>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Public Access */}
+              {folderData?.isPublic && (
+                <div className="flex items-center justify-between p-2 bg-background rounded-md">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-3 h-3 text-secondary" />
+                    <span className="text-xs">Public Access</span>
+                    {folderData.viewingPrice > 0 ? (
+                      <Badge variant="outline" className="text-xs">
+                        ${formatUSDFC(folderData.viewingPrice)} USDFC
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">Free</Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Private Access */}
+              {folderData && !folderData.isPublic && (
+                <div className="flex items-center justify-between p-2 bg-background rounded-md">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Private Folder</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Shared Users */}
+              {sharees && sharees.sharees.length > 0 && (
+                <>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground mb-2">Shared with {sharees.sharees.length} user{sharees.sharees.length > 1 ? 's' : ''}</p>
+                  </div>
+                  {sharees.sharees.map((sharee, index) => (
+                    <div
+                      key={sharees.shareIds[index]}
+                      className="flex items-center justify-between p-2 bg-background rounded-md"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span 
+                          className="font-mono text-xs truncate cursor-help"
+                          title={sharee}
+                        >
+                          {sharee.slice(0, 6)}...{sharee.slice(-4)}
+                        </span>
+                        <div className="flex gap-1">
+                          {sharees.canReadList[index] && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">
+                              <Eye className="w-3 h-3" />
+                            </Badge>
+                          )}
+                          {sharees.canWriteList[index] && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">
+                              <Edit className="w-3 h-3" />
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => handleRevokeShare(sharees.shareIds[index])}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* No shared users */}
+              {(!sharees || sharees.sharees.length === 0) && folderData && !folderData.isPublic && (
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-muted-foreground">Not shared with anyone yet</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Add New Share Section */}
           <div className="space-y-2">
-            <Label htmlFor="grantee">Add New User</Label>
+            <Label htmlFor="grantee">Share with</Label>
             <Input
               id="grantee"
               type="text"
@@ -192,32 +259,6 @@ export default function ShareFolderDialog({ children, folderId, folderName }: Sh
                   Can add and modify files
                 </Label>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 p-3 rounded-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-900">Permission Summary</span>
-            </div>
-            <div className="flex gap-2">
-              {canRead && (
-                <Badge variant="secondary" className="text-xs">
-                  <Eye className="w-3 h-3 mr-1" />
-                  Read
-                </Badge>
-              )}
-              {canWrite && (
-                <Badge variant="secondary" className="text-xs">
-                  <Edit className="w-3 h-3 mr-1" />
-                  Write
-                </Badge>
-              )}
-              {!canRead && !canWrite && (
-                <Badge variant="outline" className="text-xs">
-                  No permissions
-                </Badge>
-              )}
             </div>
           </div>
 

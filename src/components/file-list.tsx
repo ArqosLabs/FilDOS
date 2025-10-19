@@ -232,7 +232,7 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                                 >
                                   <div className="flex items-center cursor-pointer p-1 font-light">
                                     <DollarSign className="w-4 h-4 mr-2" />
-                                    Set Price
+                                    Update Price
                                   </div>
                                 </UpdatePriceDialog>
                               </DropdownMenuItem>

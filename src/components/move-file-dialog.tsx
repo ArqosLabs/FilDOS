@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FolderIcon, MoveIcon, Check } from "lucide-react";
+import { MoveIcon, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -88,7 +88,6 @@ export default function MoveFileDialog({
             </div>
           ) : availableFolders.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <FolderIcon className="w-12 h-12 text-gray-300 mb-2" />
               <p className="text-sm text-gray-500">
                 No other folders available
               </p>
@@ -122,9 +121,8 @@ export default function MoveFileDialog({
                           <Check className="w-3 h-3 text-white" />
                         )}
                       </div>
-                      <FolderIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
                       <div className="flex flex-col flex-1 min-w-0">
-                        <span className="font-medium truncate">{folder.name}</span>
+                        <span className="font-medium truncate text-sm">{folder.name}</span>
                         <span className="text-xs text-gray-500">
                           {folder.folderType}
                           {folder.isPublic && " • Public"}

@@ -184,7 +184,7 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                             >
                               <div className="flex items-center cursor-pointer font-light p-1">
                                 <DollarSign className="w-4 h-4 mr-2" />
-                                Set Price
+                                Update Price
                               </div>
                             </UpdatePriceDialog>
                           </DropdownMenuItem>

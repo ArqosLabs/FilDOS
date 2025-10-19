@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useAccount } from "wagmi";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAddFile } from "@/hooks/useContract";
@@ -23,11 +23,7 @@ import {
   CheckCircle, 
   XCircle, 
   RefreshCw,
-  FileText,
-  Hash,
-  HardDrive,
-  Lock,
-  Shield
+  Lock
 } from "lucide-react";
 
 interface UploadDialogProps {
@@ -228,12 +224,31 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
     }
   }, []);
 
+  const handleOpenChange = (newOpen: boolean) => {
+    // Prevent closing while uploading or adding to contract
+    if (!newOpen && (isLoading || isAddingToContract)) {
+      return;
+    }
+    
+    setOpen(newOpen);
+    
+    // Clear all state when closing the dialog
+    if (!newOpen) {
+      handleReset();
+      setFile(null);
+      setIsAddingToContract(false);
+      setContractAddError(null);
+      setProcessedUploadId(null);
+      setEncryptFile(false);
+    }
+  };
+
   if (!mounted || !isConnected) {
     return null;
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
@@ -345,26 +360,23 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
 
           {/* Encryption Option */}
           {file && !uploadedInfo && (
-            <Card className="border-blue-200 bg-blue-50/50">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <Checkbox 
-                    id="encrypt"
-                    checked={encryptFile}
-                    onCheckedChange={(checked) => setEncryptFile(checked as boolean)}
-                    disabled={isLoading || isAddingToContract}
-                  />
-                  <div className="flex-1">
-                    <Label 
-                      htmlFor="encrypt" 
-                      className="flex items-center gap-2 text-light cursor-pointer"
-                    >
-                      Encrypt with Lit Protocol
-                    </Label>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex items-center justify-start py-2 gap-3">
+              <Label 
+                htmlFor="encrypt" 
+                className="text-sm font-base cursor-pointer"
+              >
+                Encrypt
+              </Label>
+              <Switch 
+                id="encrypt"
+                checked={encryptFile}
+                onCheckedChange={setEncryptFile}
+                disabled={isLoading || isAddingToContract}
+              />
+              <p className="text-xs text-muted-foreground font-light">
+                using Lit Protocol for enhanced privacy
+              </p>
+            </div>
           )}
 
           <div className="flex gap-3">
@@ -379,22 +391,22 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
             >
               {isLoading ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
                   Uploading...
                 </>
               ) : isAddingToContract ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
                   Adding to folder...
                 </>
               ) : !uploadedInfo ? (
                 <>
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="h-3 w-3 mr-2" />
                   Upload File
                 </>
               ) : (
                 <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <CheckCircle className="h-3 w-3 mr-2" />
                   Complete
                 </>
               )}
@@ -412,120 +424,90 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
               disabled={!file || isLoading || isAddingToContract}
               size="lg"
             >
-              <XCircle className="h-4 w-4 mr-2" />
+              <XCircle className="h-3 w-3 mr-2" />
               Reset
             </Button>
           </div>
 
           {/* Status and Progress */}
           {(status || isAddingToContract || contractAddError) && (
-            <Card className={
-              status?.includes("❌") || contractAddError
-                ? "border-red-200 bg-red-50"
-                : status?.includes("✅") || status?.includes("🎉")
-                  ? "border-green-200 bg-green-50"
-                  : "border-blue-200 bg-blue-50"
-            }>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2">
-                  {status?.includes("❌") || contractAddError ? (
-                    <XCircle className="h-5 w-5 text-red-600" />
-                  ) : status?.includes("✅") || status?.includes("🎉") ? (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
+            <div className="space-y-2">
+              {isLoading && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="h-3 w-3 text-primary animate-spin" />
+                      <span className="text-foreground font-base">
+                        {contractAddError 
+                          ? contractAddError
+                          : isAddingToContract 
+                            ? "Adding file to folder..." 
+                            : status?.replace(/[❌✅🎉]/g, '').trim()
+                        }
+                      </span>
+                    </div>
+                    <span className="text-muted-foreground">{progress}%</span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                </div>
+              )}
+              {!isLoading && (contractAddError || status) && (
+                <div className="flex items-center gap-2 text-sm">
+                  {contractAddError || status?.includes("failed") || status?.includes("error") ? (
+                    <XCircle className="h-4 w-4 text-destructive" />
                   ) : (
-                    <RefreshCw className="h-5 w-5 text-blue-600 animate-spin" />
+                    <CheckCircle className="h-4 w-4 text-secondary" />
                   )}
-                  <p className={`text-sm font-medium ${
-                    status?.includes("❌") || contractAddError
-                      ? "text-red-700"
-                      : status?.includes("✅") || status?.includes("🎉")
-                        ? "text-green-700"
-                        : "text-blue-700"
-                  }`}>
+                  <span className={contractAddError || status?.includes("failed") || status?.includes("error") ? "text-destructive" : "text-foreground"}>
                     {contractAddError 
-                      ? `Failed to add to folder: ${contractAddError}`
+                      ? contractAddError
                       : isAddingToContract 
                         ? "Adding file to folder..." 
                         : status
                     }
-                  </p>
+                  </span>
                 </div>
-                {isLoading && (
-                  <div className="mt-3">
-                    <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                      <span>Upload Progress</span>
-                      <span>{progress}%</span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              )}
+            </div>
           )}
           {/* Upload Success Details */}
           {uploadedInfo && !isLoading && !contractAddError && (
-            <Card>
-              <CardContent className="pt-6">
-                
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-green-700">
-                    {isAddingToContract ? "Uploading & Adding to Folder..." : "File Successfully Uploaded & Added to Folder"}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">File Name</p>
-                        <p className="text-muted-foreground truncate">{uploadedInfo.fileName}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <HardDrive className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Size</p>
-                        <p className="text-muted-foreground">{uploadedInfo.fileSize?.toLocaleString() || "N/A"} bytes</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">CommP</p>
-                        <p className="text-muted-foreground truncate">{uploadedInfo.pieceCid?.slice(0,10) + "..."}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">TX Hash</p>
-                        <p className="text-muted-foreground truncate">{uploadedInfo.txHash?.slice(0, 10)}...</p>
-                      </div>
-                    </div>
-                    {uploadedInfo.encrypted && (
-                      <div className="flex items-center gap-2">
-                        <Lock className="h-4 w-4 text-blue-600" />
-                        <div>
-                          <p className="font-medium text-blue-700">Encrypted</p>
-                          <p className="text-muted-foreground">Lit Protocol</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  {uploadedInfo.encrypted && uploadedInfo.encryptedMetadata && (
-                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-xs font-medium text-blue-900 mb-2 flex items-center gap-1">
-                        <Shield className="h-3 w-3" />
-                        Encryption Details
-                      </p>
-                      <div className="space-y-1 text-xs text-blue-800">
-                        <p>Original: {uploadedInfo.encryptedMetadata.originalFileName}</p>
-                        <p>Hash: {uploadedInfo.encryptedMetadata.dataToEncryptHash.slice(0, 20)}...</p>
-                        <p>Encrypted: {new Date(uploadedInfo.encryptedMetadata.encryptedAt).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  )}
+            <div className="space-y-3 p-4 border rounded-lg">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-secondary" />
+                <p className="text-sm font-base">
+                  {isAddingToContract ? "Processing..." : "Upload Complete"}
+                </p>
+              </div>
+              
+              <div className="grid gap-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">File:</span>
+                  <span className="font-base truncate ml-2 max-w-[200px]">{uploadedInfo.fileName}</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Size:</span>
+                  <span className="font-base">{(uploadedInfo.fileSize! / 1024 / 1024).toFixed(2)} MB</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">CommP:</span>
+                  <span className="font-mono text-[10px]">{uploadedInfo.pieceCid?.slice(0,16)}...</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">TX Hash:</span>
+                  <span className="font-mono text-[10px]">{uploadedInfo.txHash?.slice(0, 16)}...</span>
+                </div>
+                {uploadedInfo.encrypted && (
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="flex items-center gap-1.5">
+                      <Lock className="h-3 w-3 text-primary" />
+                      <span className="text-primary font-base">Encrypted</span>
+                    </div>
+                    <span className="text-muted-foreground">Lit Protocol</span>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </DialogContent>

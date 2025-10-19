@@ -109,7 +109,7 @@ export default function MakePublicDialog({
                     <Globe className="w-3 h-3 mr-1" />
                     Public
                   </Badge>
-                  <span className="text-sm text-gray-600">Anyone can view this folder</span>
+                  <span className="text-xs text-gray-600">Anyone can view this folder on marketplace</span>
                 </>
               ) : (
                 <>
@@ -121,35 +121,6 @@ export default function MakePublicDialog({
                 </>
               )}
             </div>
-          </div>
-
-          {/* What will change */}
-          <div className={`p-3 rounded-sm ${isCurrentlyPublic ? 'bg-orange-50' : 'bg-blue-50'}`}>
-            <div className="flex items-center gap-2 mb-2">
-              {isCurrentlyPublic ? (
-                <AlertTriangle className="w-4 h-4 text-orange-600" />
-              ) : (
-                <Eye className="w-4 h-4 text-blue-600" />
-              )}
-              <span className={`text-sm font-medium ${isCurrentlyPublic ? 'text-orange-900' : 'text-blue-900'}`}>
-                {isCurrentlyPublic ? 'Making this folder private will:' : 'Making this folder public will:'}
-              </span>
-            </div>
-            <ul className={`text-sm space-y-1 ${isCurrentlyPublic ? 'text-orange-700' : 'text-blue-700'}`}>
-              {isCurrentlyPublic ? (
-                <>
-                  <li>• Hide the folder from public discovery</li>
-                  <li>• Restrict access to only you and shared users</li>
-                  <li>• Remove it from public folder listings</li>
-                </>
-              ) : (
-                <>
-                  <li>• Allow anyone to view the folder and its content</li>
-                  <li>• Make it discoverable in public folder listings</li>
-                  <li>• Enable access without explicit sharing</li>
-                </>
-              )}
-            </ul>
           </div>
 
           {/* Pricing Options - Only show when making public */}
@@ -175,9 +146,6 @@ export default function MakePublicDialog({
 
               {!isFree && (
                 <div className="space-y-2">
-                  <Label htmlFor="viewing-price" className="text-sm">
-                    Viewing Price (USDFC)
-                  </Label>
                   <Input
                     id="viewing-price"
                     type="number"
@@ -188,9 +156,6 @@ export default function MakePublicDialog({
                     placeholder="Enter price in USDFC"
                     required={!isFree}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Users will need to pay this amount to view the folder
-                  </p>
                 </div>
               )}
             </div>
@@ -208,7 +173,7 @@ export default function MakePublicDialog({
                     <Globe className="w-3 h-3 mr-1" />
                     Public
                   </Badge>
-                  <span className="text-sm text-gray-600">Anyone can view this folder</span>
+                  <span className="text-xs text-gray-600">Anyone can view this folder on marketplace</span>
                 </>
               ) : (
                 <>
