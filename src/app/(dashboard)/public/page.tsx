@@ -2,14 +2,12 @@
 
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
-import { Store, Lock, LockOpen, User, Calendar, DollarSign } from "lucide-react";
+import { Store, User, Calendar } from "lucide-react";
 import { usePublicFolders } from "@/hooks/useContract";
 import { useFolderList } from "@/hooks/useFolderList";
 import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import Image from "next/image";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
