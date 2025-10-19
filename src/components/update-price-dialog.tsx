@@ -39,7 +39,7 @@ export default function UpdatePriceDialog({
   // Initialize form with current price
   useEffect(() => {
     if (currentPrice !== undefined) {
-      // currentPrice is already in USDC units (6 decimals)
+      // currentPrice is already in USDFC units (6 decimals)
       const priceValue = Number(currentPrice) / 1_000_000; // Convert from 6 decimals to decimal
       setIsFree(priceValue === 0);
       setViewingPrice(priceValue > 0 ? priceValue.toString() : "");

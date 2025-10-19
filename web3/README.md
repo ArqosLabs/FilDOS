@@ -41,7 +41,7 @@ ERC-721 NFTs represent folders. Each folder stores file metadata, access permiss
 - `canWrite(tokenId, user)` - Check write permission
 
 ### Paid Viewing
-- `setViewingPrice(tokenId, price)` - Update price for public folder (USDC, 6 decimals)
+- `setViewingPrice(tokenId, price)` - Update price for public folder (USDFC, 6 decimals)
 - `payForViewAccess(tokenId)` - Pay to gain read access (requires ERC20 approval)
 - `hasPaidViewAccess(tokenId, viewer)` - Check if user has paid
 - `getViewingPrice(tokenId)` - Get folder price
@@ -50,7 +50,7 @@ ERC-721 NFTs represent folders. Each folder stores file metadata, access permiss
 
 **Private Folder**: Only owner + shared users can access  
 **Public Free (price=0)**: Anyone can view  
-**Public Paid (price>0)**: Must pay USDC to owner for access  
+**Public Paid (price>0)**: Must pay USDFC to owner for access  
 **Selective Sharing**: Grant read/write to specific addresses  
 
 Owner always has full access. Shares don't apply to public folders—use pricing instead.

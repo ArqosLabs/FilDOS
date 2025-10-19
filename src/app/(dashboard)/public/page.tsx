@@ -19,10 +19,10 @@ const formatDate = (timestamp: bigint) => {
 };
 
 const formatPrice = (price: bigint) => {
-  // USDC/USDFC has 6 decimals
-  const priceInUSDC = Number(price) / 1_000_000;
-  return priceInUSDC.toFixed(2);
-};
+  // USDFC has 6 decimals
+  const priceInUSDFC = Number(price) / 1_000_000;
+  return priceInUSDFC.toFixed(2);
+};  
 
 export default function Marketplace() {
   const router = useRouter();
@@ -130,8 +130,8 @@ export default function Marketplace() {
                             
                               <div className="flex items-center justify-between p-2 bg-gray-50 rounded-sm">
                                 <span className="text-xs font-medium text-gray-600">Price</span>
-                                <div className="flex items-center gap-1 text-gray-900 font-medium text-sm">
-                                  <span>{!isFree ? `$${formatPrice(folderData?.viewingPrice || BigInt(0))}` : "Free"}</span>
+                                <div className="flex items-center gap-1 text-gray-900 font-base text-sm">
+                                  <span>{!isFree ? `${formatPrice(folderData?.viewingPrice || BigInt(0))} USDFC` : "Free"}</span>
                                 </div>
                               </div>
 

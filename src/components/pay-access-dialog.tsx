@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DollarSign, Lock, AlertCircle } from "lucide-react";
+import { Lock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,9 +25,9 @@ interface PayAccessDialogProps {
 }
 
 const formatPrice = (price: bigint) => {
-  // USDC/USDFC has 6 decimals
-  const priceInUSDC = Number(price) / 1_000_000;
-  return priceInUSDC.toFixed(2);
+  // USDFC has 6 decimals
+  const priceInUSDFC = Number(price) / 1_000_000;
+  return priceInUSDFC.toFixed(2);
 };
 
 export default function PayAccessDialog({ 
@@ -109,7 +109,7 @@ export default function PayAccessDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5 text-blue-600" />
+            <Lock className="w-5 h-5 text-primary" />
             Pay for Access
           </DialogTitle>
           <DialogDescription>
@@ -127,14 +127,13 @@ export default function PayAccessDialog({
           </div>
 
           {/* Price Info */}
-          <div className="p-4 bg-blue-50 rounded-md border border-blue-200">
+          <div className="p-4 bg-primary/5 rounded-md border border-primary/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-blue-600" />
                 <span className="font-medium text-gray-700">Access Price</span>
               </div>
-              <div className="text-xl font-bold text-blue-600">
-                ${formatPrice(viewingPrice)} USDC
+              <div className="text-md text-primary font-semibold">
+                {formatPrice(viewingPrice)} USDFC
               </div>
             </div>
           </div>
@@ -143,12 +142,12 @@ export default function PayAccessDialog({
           <div className="space-y-2">
             <div className="text-sm font-medium text-gray-700">Payment Process:</div>
             <div className="space-y-1 text-sm text-gray-600">
-              <div className={`flex items-center gap-2 ${isApproving ? "text-blue-600" : ""}`}>
-                <div className={`w-2 h-2 rounded-full ${isApproving ? "bg-blue-600" : "bg-gray-300"}`} />
+              <div className={`flex items-center gap-2 ${isApproving ? "text-primary" : ""}`}>
+                <div className={`w-2 h-2 rounded-full ${isApproving ? "bg-primary" : "bg-gray-300"}`} />
                 Step 1: Approve token transfer
               </div>
-              <div className={`flex items-center gap-2 ${isPaying ? "text-blue-600" : ""}`}>
-                <div className={`w-2 h-2 rounded-full ${isPaying ? "bg-blue-600" : "bg-gray-300"}`} />
+              <div className={`flex items-center gap-2 ${isPaying ? "text-primary" : ""}`}>
+                <div className={`w-2 h-2 rounded-full ${isPaying ? "bg-primary" : "bg-gray-300"}`} />
                 Step 2: Process payment
               </div>
             </div>
@@ -163,9 +162,9 @@ export default function PayAccessDialog({
           )}
 
           {/* Info message */}
-          <Alert className="border-blue-200 bg-blue-50">
-            <AlertCircle className="w-4 h-4 text-blue-600" />
-            <div className="ml-2 text-sm text-blue-800">
+          <Alert>
+            <AlertCircle className="w-4 h-4 text-primary" />
+            <div className="ml-2 text-xs font-light text-foreground">
               After payment, you will have permanent read access to this folder and its contents.
             </div>
           </Alert>
@@ -184,7 +183,7 @@ export default function PayAccessDialog({
               disabled={isProcessing}
               className="min-w-[120px]"
             >
-              {isApproving ? "Approving..." : isPaying ? "Processing..." : `Pay $${formatPrice(viewingPrice)}`}
+              {isApproving ? "Approving..." : isPaying ? "Processing..." : `Pay ${formatPrice(viewingPrice)}`}
             </Button>
           </div>
         </div>
