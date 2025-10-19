@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -17,6 +18,9 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         uint256 timestamp;
         address owner;
         string[] tags;
+        bool encrypted;
+        string dataToEncryptHash;
+        string fileType;
     }
 
     struct Share {
@@ -32,6 +36,7 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         bool isPublic;
         address owner;
         uint256 createdAt;
+        uint256 viewingPrice;
     }
 
     // Folder → set of file CIDs (using bytes32 hashes for EnumerableSet)
@@ -45,6 +50,12 @@ contract FolderNFT is ERC721Enumerable, Ownable {
     uint256 private _nextShareId = 1;
     mapping(uint256 => Share) private _shares;
     mapping(address => uint256[]) private _sharesByGrantee;
+    mapping(uint256 => uint256[]) private _sharesByFolder;
+    
+    // Paid access tracking: folderId => viewer => hasPaid
+    mapping(uint256 => mapping(address => bool)) private _paidViewers;
+    
+    IERC20 public paymentToken;
 
     /* ────────────── ERRORS ────────────── */
     error NotFolderOwner(uint256 tokenId);
@@ -53,6 +64,9 @@ contract FolderNFT is ERC721Enumerable, Ownable {
     error InvalidCID(string cid);
     error ShareNotFound(uint256 shareId);
     error NotShareOwner(uint256 shareId);
+    error InsufficientPayment(uint256 required, uint256 provided);
+    error ViewingPriceNotSet(uint256 tokenId);
+    error InvalidPaymentToken();
 
     /* ────────────── EVENTS ────────────── */
     event FolderMinted(uint256 indexed tokenId, address indexed owner, string name, string folderType);
@@ -61,7 +75,10 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         string cid,
         string filename,
         address indexed owner,
-        string[] tags
+        string[] tags,
+        bool encrypted,
+        string dataToEncryptHash,
+        string fileType
     );
     event FileRemoved(
         uint256 indexed tokenId,
@@ -74,7 +91,10 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         uint256 indexed toTokenId,
         string cid,
         string filename,
-        address indexed mover
+        address indexed mover,
+        bool encrypted,
+        string dataToEncryptHash,
+        string fileType
     );
     event FolderTypeChanged(uint256 indexed tokenId, string newType);
     event FolderPublicityChanged(uint256 indexed tokenId, bool isPublic);
@@ -92,9 +112,15 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         string tag,
         uint256 resultsCount
     );
+    event ViewingPriceSet(uint256 indexed tokenId, uint256 price);
+    event ViewAccessPurchased(uint256 indexed tokenId, address indexed viewer, uint256 amount);
+    event PaymentTokenSet(address indexed token);
 
     /* ────────────── CONSTRUCTOR ────────────── */
-    constructor() ERC721("FolderNFT", "FDR") Ownable(msg.sender) {
+    constructor(address _paymentToken) ERC721("FolderNFT", "FDR") Ownable(msg.sender) {
+        if (_paymentToken == address(0)) revert InvalidPaymentToken();
+        paymentToken = IERC20(_paymentToken);
+        emit PaymentTokenSet(_paymentToken);
     }
 
     /* ────────────── MINTING ────────────── */
@@ -103,13 +129,13 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         uint256 newId = totalSupply() + 1;
         _safeMint(to, newId);
         
-        // Set folder metadata
         _folderInfo[newId] = FolderInfo({
             name: name,
             folderType: folderType,
             isPublic: false,
             owner: to,
-            createdAt: block.timestamp
+            createdAt: block.timestamp,
+            viewingPrice: 0
         });
         
         emit FolderMinted(newId, to, name, folderType);
@@ -137,7 +163,10 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         uint256 tokenId,
         string calldata cid,
         string calldata filename,
-        string[] calldata tags
+        string[] calldata tags,
+        bool encrypted,
+        string calldata dataToEncryptHash,
+        string calldata fileType
     ) external {
         if (!_tokenExists(tokenId)) revert FolderDoesNotExist(tokenId);
         if (!canWrite(tokenId, msg.sender)) revert NotFolderAccess(tokenId);
@@ -147,7 +176,9 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         bytes32 cidHash = keccak256(bytes(cid));
         
         // Check if file already exists in this folder
-        require(!_folderFileCIDs[tokenId].contains(cidHash), "File already exists in folder");
+        EnumerableSet.Bytes32Set storage fileSet = _folderFileCIDs[tokenId];
+        bool alreadyExists = fileSet.contains(cidHash);
+        require(!alreadyExists, "File already exists in folder");
 
         // Store file details
         _fileDetails[cidHash] = FileEntry({
@@ -155,13 +186,16 @@ contract FolderNFT is ERC721Enumerable, Ownable {
             filename: filename,
             timestamp: block.timestamp,
             owner: msg.sender,
-            tags: tags
+            tags: tags,
+            encrypted: encrypted,
+            dataToEncryptHash: dataToEncryptHash,
+            fileType: fileType
         });
 
         // Add to folder's file set
         _folderFileCIDs[tokenId].add(cidHash);
 
-        emit FileAdded(tokenId, cid, filename, msg.sender, tags);
+        emit FileAdded(tokenId, cid, filename, msg.sender, tags, encrypted, dataToEncryptHash, fileType);
     }
 
     /* ────────────── FILE MANAGEMENT ────────────── */
@@ -179,28 +213,40 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         bytes32 cidHash = keccak256(bytes(cid));
         
         // Check if file exists in source folder
-        require(_folderFileCIDs[fromTokenId].contains(cidHash), "File not found in source folder");
+        EnumerableSet.Bytes32Set storage sourceSet = _folderFileCIDs[fromTokenId];
+        bool existsInSource = sourceSet.contains(cidHash);
+        require(existsInSource, "File not found in source folder");
         
         // Check if file already exists in destination folder
-        require(!_folderFileCIDs[toTokenId].contains(cidHash), "File already exists in destination folder");
+        EnumerableSet.Bytes32Set storage destSet = _folderFileCIDs[toTokenId];
+        bool existsInDest = destSet.contains(cidHash);
+        require(!existsInDest, "File already exists in destination folder");
         
         // Get file details for the event
         FileEntry memory fileToMove = _fileDetails[cidHash];
+        sourceSet.remove(cidHash);
+        destSet.add(cidHash);
         
-        // Remove file from source folder
-        _folderFileCIDs[fromTokenId].remove(cidHash);
-        
-        // Add file to destination folder
-        _folderFileCIDs[toTokenId].add(cidHash);
-        
-        emit FileMoved(fromTokenId, toTokenId, cid, fileToMove.filename, msg.sender);
+        emit FileMoved(fromTokenId, toTokenId, cid, fileToMove.filename, msg.sender, fileToMove.encrypted, fileToMove.dataToEncryptHash, fileToMove.fileType);
     }
 
-    function setFolderPublic(uint256 tokenId, bool isPublic) external {
+    /// @notice Set folder public/private status and optionally set viewing price
+    /// @param tokenId The folder NFT ID
+    /// @param isPublic Whether the folder should be public
+    /// @param viewingPrice Price in payment tokens (only relevant if isPublic=true, 0=free)
+    function setFolderPublic(uint256 tokenId, bool isPublic, uint256 viewingPrice) external {
         if (!_tokenExists(tokenId)) revert FolderDoesNotExist(tokenId);
         if (ownerOf(tokenId) != msg.sender) revert NotFolderAccess(tokenId);
         
         _folderInfo[tokenId].isPublic = isPublic;
+        
+        if (isPublic) {
+            _folderInfo[tokenId].viewingPrice = viewingPrice;
+            emit ViewingPriceSet(tokenId, viewingPrice);
+        } else {
+            _folderInfo[tokenId].viewingPrice = 0;
+        }
+        
         emit FolderPublicityChanged(tokenId, isPublic);
     }
 
@@ -225,6 +271,7 @@ contract FolderNFT is ERC721Enumerable, Ownable {
             canWrite: canWrite_
         });
         _sharesByGrantee[grantee].push(shareId);
+        _sharesByFolder[tokenId].push(shareId);
 
         emit ShareCreated(shareId, tokenId, grantee, canRead_, canWrite_);
         return shareId;
@@ -247,9 +294,65 @@ contract FolderNFT is ERC721Enumerable, Ownable {
             }
         }
         
+        // Remove from folder's share list
+        uint256[] storage folderShares = _sharesByFolder[s.folderId];
+        for (uint i = 0; i < folderShares.length; i++) {
+            if (folderShares[i] == shareId) {
+                folderShares[i] = folderShares[folderShares.length - 1];
+                folderShares.pop();
+                break;
+            }
+        }
+        
         // Delete the share
         delete _shares[shareId];
         emit ShareRevoked(shareId);
+    }
+
+    /* ────────────── PAID VIEW ACCESS (EIP-3009) ────────────── */
+
+    /// @notice Update the viewing price for an already-public folder (owner only)
+    /// @param tokenId The folder NFT ID
+    /// @param price Price in payment tokens (0 = free public viewing)
+    function setViewingPrice(uint256 tokenId, uint256 price) external {
+        if (!_tokenExists(tokenId)) revert FolderDoesNotExist(tokenId);
+        if (ownerOf(tokenId) != msg.sender) revert NotFolderOwner(tokenId);
+        
+        // Only allow setting price for public folders
+        require(_folderInfo[tokenId].isPublic, "Can only set price for public folders");
+        
+        _folderInfo[tokenId].viewingPrice = price;
+        emit ViewingPriceSet(tokenId, price);
+    }
+
+    /// @notice Pay for view access (requires prior approval)
+    /// @param tokenId The folder to gain access to
+    function payForViewAccess(uint256 tokenId) external {
+        if (!_tokenExists(tokenId)) revert FolderDoesNotExist(tokenId);
+        
+        uint256 price = _folderInfo[tokenId].viewingPrice;
+        if (price == 0) revert ViewingPriceNotSet(tokenId);
+        
+        // Check if viewer already has access
+        require(!_paidViewers[tokenId][msg.sender], "Already has paid access");
+        
+        address folderOwner = ownerOf(tokenId);
+        
+        // Transfer tokens from viewer to folder owner
+        require(
+            IERC20(address(paymentToken)).transferFrom(msg.sender, folderOwner, price),
+            "Payment transfer failed"
+        );
+        
+        // Grant paid view access
+        _paidViewers[tokenId][msg.sender] = true;
+        
+        emit ViewAccessPurchased(tokenId, msg.sender, price);
+    }
+
+    /// @notice Check if an address has paid for view access
+    function hasPaidViewAccess(uint256 tokenId, address viewer) public view returns (bool) {
+        return _paidViewers[tokenId][viewer];
     }
 
 
@@ -258,10 +361,11 @@ contract FolderNFT is ERC721Enumerable, Ownable {
 
     function canRead(uint256 tokenId, address user) public view returns (bool) {
         if (!_tokenExists(tokenId)) revert FolderDoesNotExist(tokenId);
-        if (_folderInfo[tokenId].isPublic) return true;
+        
+        // Owner always has access
         if (ownerOf(tokenId) == user) return true;
-
-        // check active shares
+        
+        // Check active shares (for private/selectively shared folders)
         uint256[] storage shares_ = _sharesByGrantee[user];
         for (uint i = 0; i < shares_.length; ++i) {
             Share storage s = _shares[shares_[i]];
@@ -269,6 +373,17 @@ contract FolderNFT is ERC721Enumerable, Ownable {
                 return true;
             }
         }
+        
+        // For public folders
+        if (_folderInfo[tokenId].isPublic) {
+            // If no price set (price = 0), it's freely accessible
+            if (_folderInfo[tokenId].viewingPrice == 0) {
+                return true;
+            }
+            // If price is set, user must have paid
+            return _paidViewers[tokenId][user];
+        }
+        
         return false;
     }
 
@@ -321,7 +436,9 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         if (!_tokenExists(tokenId)) revert FolderDoesNotExist(tokenId);
         require(canRead(tokenId, msg.sender) || _folderInfo[tokenId].isPublic, "Unauthorized");
         bytes32 cidHash = keccak256(bytes(cid));
-        return _folderFileCIDs[tokenId].contains(cidHash);
+        // Refactored for stack depth
+        EnumerableSet.Bytes32Set storage fileSet = _folderFileCIDs[tokenId];
+        return fileSet.contains(cidHash);
     }
 
     /// @notice Remove a file from a folder
@@ -330,13 +447,16 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         if (!canWrite(tokenId, msg.sender)) revert NotFolderAccess(tokenId);
         
         bytes32 cidHash = keccak256(bytes(cid));
-        require(_folderFileCIDs[tokenId].contains(cidHash), "File not found in folder");
+        // Refactored for stack depth
+        EnumerableSet.Bytes32Set storage fileSet = _folderFileCIDs[tokenId];
+        bool exists = fileSet.contains(cidHash);
+        require(exists, "File not found in folder");
         
         // Get file details for the event before deletion
         FileEntry memory fileToRemove = _fileDetails[cidHash];
         
-        // Remove from folder
-        _folderFileCIDs[tokenId].remove(cidHash);
+        // Remove from folder (reuse storage reference)
+        fileSet.remove(cidHash);
         
         // Clean up file details if not referenced by any other folder
         delete _fileDetails[cidHash];
@@ -607,12 +727,14 @@ contract FolderNFT is ERC721Enumerable, Ownable {
 
     /// @notice Get all public folders
     function getPublicFolders() external view returns (uint256[] memory) {
-        uint256[] memory publicFolders = new uint256[](totalSupply());
+        uint256 supply = totalSupply();
+        uint256[] memory publicFolders = new uint256[](supply);
         uint256 publicCount = 0;
         
-        for (uint256 i = 1; i <= totalSupply(); i++) {
-            if (_folderInfo[i].isPublic) {
-                publicFolders[publicCount++] = i;
+        for (uint256 i = 0; i < supply; i++) {
+            uint256 tokenId = tokenByIndex(i);
+            if (_tokenExists(tokenId) && _folderInfo[tokenId].isPublic) {
+                publicFolders[publicCount++] = tokenId;
             }
         }
         
@@ -631,7 +753,7 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         
         for (uint256 i = 0; i < userShares.length; i++) {
             Share storage s = _shares[userShares[i]];
-            if (s.folderId != 0) {
+            if (s.folderId != 0 && _tokenExists(s.folderId)) {
                 // Check if folder is already in the list (avoid duplicates)
                 bool exists = false;
                 for (uint256 j = 0; j < folderCount; j++) {
@@ -652,6 +774,68 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         }
         
         return sharedFolders;
+    }
+
+    /// @notice Get viewing price for a folder
+    function getViewingPrice(uint256 tokenId) external view returns (uint256) {
+        if (!_tokenExists(tokenId)) revert FolderDoesNotExist(tokenId);
+        return _folderInfo[tokenId].viewingPrice;
+    }
+
+    /// @notice Get all sharees (users with share access) for a folder
+    /// @param tokenId The folder NFT ID
+    /// @return shareIds Array of share IDs for this folder
+    /// @return sharees Array of addresses that have been granted shares
+    /// @return canReadList Array of booleans indicating read permission for each sharee
+    /// @return canWriteList Array of booleans indicating write permission for each sharee
+    function getFolderSharees(uint256 tokenId) external view returns (
+        uint256[] memory shareIds,
+        address[] memory sharees,
+        bool[] memory canReadList,
+        bool[] memory canWriteList
+    ) {
+        if (!_tokenExists(tokenId)) revert FolderDoesNotExist(tokenId);
+        
+        uint256[] storage folderShareIds = _sharesByFolder[tokenId];
+        uint256 shareCount = folderShareIds.length;
+        
+        // Count valid shares (non-revoked)
+        uint256 validCount = 0;
+        for (uint256 i = 0; i < shareCount; i++) {
+            Share storage s = _shares[folderShareIds[i]];
+            if (s.folderId != 0) {
+                validCount++;
+            }
+        }
+        
+        // Allocate arrays
+        shareIds = new uint256[](validCount);
+        sharees = new address[](validCount);
+        canReadList = new bool[](validCount);
+        canWriteList = new bool[](validCount);
+        
+        // Populate arrays
+        uint256 index = 0;
+        for (uint256 i = 0; i < shareCount; i++) {
+            Share storage s = _shares[folderShareIds[i]];
+            if (s.folderId != 0) {
+                shareIds[index] = folderShareIds[i];
+                sharees[index] = s.grantee;
+                canReadList[index] = s.canRead;
+                canWriteList[index] = s.canWrite;
+                index++;
+            }
+        }
+        
+        return (shareIds, sharees, canReadList, canWriteList);
+    }
+
+    /// @notice Update payment token address (owner only)
+    /// @dev Allows contract owner to change the payment token if needed
+    function setPaymentToken(address _paymentToken) external onlyOwner {
+        if (_paymentToken == address(0)) revert InvalidPaymentToken();
+        paymentToken = IERC20(_paymentToken);
+        emit PaymentTokenSet(_paymentToken);
     }
 
 }

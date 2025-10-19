@@ -3,17 +3,18 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { Upload, ArrowLeft, Search } from "lucide-react";
+import { Upload, ArrowLeft, Search, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import UploadDialog from "@/components/upload-dialog";
 import Header from "@/components/header";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
-import { useFiles, useFolderData } from "@/hooks/useContract";
-import { FileItem } from "../../page";
+import { useFiles, useFolderData, useCanRead } from "@/hooks/useContract";
 import EmbeddingDialog from "@/components/embedding-dialog";
 import SearchDialog from "@/components/search-dialog";
+import PayAccessDialog from "@/components/pay-access-dialog";
+import { FileItem } from "@/types";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -72,9 +73,10 @@ export default function FolderPage() {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { data: folderFiles, isLoading: filesLoading, error: filesError } = useFiles(folderId, true);
   const { data: folderData, isLoading: folderDataLoading, error: folderDataError } = useFolderData(folderId);
+  const { data: canRead, isLoading: canReadLoading } = useCanRead(folderId, address);
 
   // Prevent hydration mismatches by ensuring client-side rendering
   useEffect(() => {
@@ -89,10 +91,13 @@ export default function FolderPage() {
     folderType: "",
     modified: formatDate(file.timestamp),
     owner: file.owner,
-    starred: false,
     shared: false,
     cid: file.cid,
     tags: file.tags,
+    encrypted: file.encrypted,
+    dataToEncryptHash: file.dataToEncryptHash,
+    fileType: file.fileType,
+    tokenId: Array.isArray(params.id) ? params.id[0] : params.id, // Add tokenId so preview modal can fetch metadata
   })) : [];
 
   const toggleFileSelection = (fileId: string) => {
@@ -121,7 +126,7 @@ export default function FolderPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -134,6 +139,92 @@ export default function FolderPage() {
         <div className="text-center">
           <h2 className="text-2xl font-medium mb-4">Connect Your Wallet</h2>
           <p className="text-gray-600">Please connect your wallet to access your folders and files.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user has access to this folder
+  const isOwner = folderData?.owner?.toLowerCase() === address?.toLowerCase();
+  const needsPayment = folderData?.isPublic && 
+                      folderData?.viewingPrice && 
+                      folderData.viewingPrice > BigInt(0) && 
+                      !canRead &&
+                      !isOwner;
+
+  // Show payment required screen for paid folders without access
+  if (!canReadLoading && needsPayment && folderData) {
+    return (
+      <div>
+        <Header isFilePage={true} viewMode={viewMode} setViewMode={setViewMode} />
+        <div className="flex flex-1 overflow-hidden">
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex flex-col items-center justify-center p-12 text-center min-h-[60vh]">
+              <Lock className="w-20 h-20 text-gray-400 mb-4" />
+              <h3 className="text-2xl font-semibold text-gray-900 mb-2">Payment Required</h3>
+              <p className="text-gray-600 mb-1">
+                This folder requires a one-time payment to access.
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                After payment, you&apos;ll have permanent read access to all contents.
+              </p>
+              
+              <div className="bg-gray-50 p-6 rounded-lg border max-w-md w-full mb-6">
+                <div className="text-sm text-gray-600 mb-2">Dataset</div>
+                <div className="text-lg font-semibold mb-4">{folderData.name}</div>
+                <div className="text-sm text-gray-600 mb-1">Owner</div>
+                <div className="font-mono text-sm text-gray-900 mb-4">
+                  {folderData.owner.slice(0, 6)}...{folderData.owner.slice(-4)}
+                </div>
+              </div>
+
+              <PayAccessDialog
+                folderId={folderId}
+                folderName={folderData.name}
+                viewingPrice={folderData.viewingPrice}
+                onSuccess={() => window.location.reload()}
+              >
+                <Button size="lg" className="min-w-[200px]">
+                  Pay to Access
+                </Button>
+              </PayAccessDialog>
+              
+              <Button 
+                variant="ghost" 
+                className="mt-4"
+                onClick={handleBackToRoot}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to My Drive
+              </Button>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied for private folders
+  if (!canReadLoading && !canRead && !isOwner && folderData) {
+    return (
+      <div>
+        <Header isFilePage={true} viewMode={viewMode} setViewMode={setViewMode} />
+        <div className="flex flex-1 overflow-hidden">
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex flex-col items-center justify-center p-12 text-center min-h-[60vh]">
+              <Lock className="w-20 h-20 text-gray-400 mb-4" />
+              <h3 className="text-2xl font-semibold text-gray-900 mb-2">Access Denied</h3>
+              <p className="text-gray-600 mb-6">
+                You don&apos;t have permission to access this folder.
+              </p>
+              <Button 
+                onClick={handleBackToRoot}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to My Drive
+              </Button>
+            </div>
+          </main>
         </div>
       </div>
     );
@@ -181,7 +272,7 @@ export default function FolderPage() {
           <div className="p-4 border-b">
             <button
               onClick={handleBackToRoot}
-              className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+              className="text-primary hover:text-secondary-foreground text-sm flex items-center"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
               Back to My Drive
@@ -221,18 +312,7 @@ export default function FolderPage() {
           {isLoading && !hasError && (
             <div className="flex items-center justify-center p-8">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <div className="space-y-1">
-                  {filesLoading && (
-                    <p className="text-gray-600">Loading folder content...</p>
-                  )}
-                  {folderDataLoading && (
-                    <p className="text-gray-600">Loading folder details...</p>
-                  )}
-                  {!filesLoading && !folderDataLoading && (
-                    <p className="text-gray-600">Loading...</p>
-                  )}
-                </div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               </div>
             </div>
           )}
@@ -258,6 +338,7 @@ export default function FolderPage() {
                       selectedFiles={selectedFiles}
                       onToggleSelection={toggleFileSelection}
                       onFolderClick={handleFileClick}
+                      currentFolderId={Array.isArray(params.id) ? params.id[0] : params.id}
                     />
                   ) : (
                     <FileList
@@ -265,6 +346,7 @@ export default function FolderPage() {
                       selectedFiles={selectedFiles}
                       onToggleSelection={toggleFileSelection}
                       onFolderClick={handleFileClick}
+                      currentFolderId={Array.isArray(params.id) ? params.id[0] : params.id}
                     />
                   )}
                 </>

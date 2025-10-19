@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 
 interface CreateFolderDialogProps {
   children: React.ReactNode;
-  onCreateFolder: (name: string, folderType?: string) => Promise<void>;
+  onCreateFolder: (name: string, folderType?: string, viewingPrice?: string) => Promise<void>;
 }
 
 export default function CreateFolderDialog({ 
@@ -34,7 +34,11 @@ export default function CreateFolderDialog({
 
     setIsCreating(true);
     try {
-      await onCreateFolder(folderName.trim(), folderType);
+      await onCreateFolder(
+        folderName.trim(), 
+        folderType, 
+        "0"
+      );
       setOpen(false);
       setFolderName("");
       setFolderType("personal");
@@ -58,7 +62,7 @@ export default function CreateFolderDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 mx-auto">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 Name

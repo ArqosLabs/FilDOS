@@ -1,184 +1,133 @@
 # FilDOS Smart Contracts
 
-Smart contracts for the FilDOS decentralized storage platform, built on Filecoin FEVM (Filecoin Ethereum Virtual Machine).
+Decentralized file storage on Filecoin with NFT-based folder ownership, access control, and paid viewing.
 
 ## 🏗️ Overview
 
-FilDOS uses ERC-721 NFTs to represent folders in the decentralized storage system. Each folder NFT contains metadata, access controls, and embedding indexes, enabling true ownership and programmable access to decentralized storage.
+ERC-721 NFTs represent folders. Each folder stores file metadata, access permissions, and optional paid viewing for public folders.
 
-## 📄 Contracts
+## 📄 Contract: FILDOS.sol
 
-### FILDOS.sol
-The main contract implementing folder NFTs with the following features:
+### Core Features
 
-- **ERC-721 Compliance**: Standard NFT functionality
-- **Folder Management**: Create, manage, and transfer folder ownership
-- **Access Control**: Permission-based file access
-- **Metadata Storage**: On-chain folder metadata and indexes
-- **Programmable Sharing**: Smart contract-based sharing logic
+- **ERC-721 NFT**: Each folder is an NFT with transferable ownership
+- **File Indexing**: Store file metadata (CID, filename, tags, encryption info) on-chain
+- **Access Control**: Owner-only, selective sharing, or public with optional pricing
+- **Paid Public Access**: Set USDFC price for viewing public folders
+- **Encryption Support**: Lit Protocol integration for encrypted files
+- **Tag-Based Search**: Query files by tags across folders
 
-## 🛠️ Development Setup
+## 🗂️ Key Functions
 
-### Prerequisites
+### Folder Management
+- `mintFolder(name, type)` - Create new folder NFT
+- `setFolderPublic(tokenId, isPublic, viewingPrice)` - Make public with optional price
+- `getFolderData(tokenId)` - Get folder metadata
+- `getFoldersOwnedBy(owner)` - List user's folders
+- `getPublicFolders()` - List all public folders
 
-- Node.js 18+
-- npm or yarn
-- Hardhat development environment
+### File Operations
+- `addFile(tokenId, cid, filename, tags, encrypted, hash, fileType)` - Add file to folder
+- `getFiles(tokenId)` - Get all files in folder
+- `removeFile(tokenId, cid)` - Remove file
+- `moveFile(fromId, toId, cid)` - Move between folders
+- `searchFilesByTag(tokenId, tag)` - Search by tag
 
-### Installation
+### Access Control
+- `shareFolder(tokenId, grantee, canRead, canWrite)` - Grant selective access
+- `revokeShare(shareId)` - Revoke access
+- `getFolderSharees(tokenId)` - List users with access
+- `canRead(tokenId, user)` - Check read permission
+- `canWrite(tokenId, user)` - Check write permission
+
+### Paid Viewing
+- `setViewingPrice(tokenId, price)` - Update price for public folder (USDC, 6 decimals)
+- `payForViewAccess(tokenId)` - Pay to gain read access (requires ERC20 approval)
+- `hasPaidViewAccess(tokenId, viewer)` - Check if user has paid
+- `getViewingPrice(tokenId)` - Get folder price
+
+## 🔐 Access Logic
+
+**Private Folder**: Only owner + shared users can access  
+**Public Free (price=0)**: Anyone can view  
+**Public Paid (price>0)**: Must pay USDC to owner for access  
+**Selective Sharing**: Grant read/write to specific addresses  
+
+Owner always has full access. Shares don't apply to public folders—use pricing instead.
+
+## 🛠️ Development
 
 ```bash
-# Install dependencies
 npm install
-
-# Compile contracts
 npx hardhat compile
-
-
-
-## 🌐 Network Configuration
-
-### Filecoin Calibration Testnet
-
-- **Network Name**: Filecoin Calibration
-- **RPC URL**: https://api.calibration.node.glif.io/rpc/v1
-- **Chain ID**: 314159
-- **Currency**: tFIL
-- **Block Explorer**: https://calibration.filfox.info/
-
-### Hardhat Configuration
-
-```javascript
-// hardhat.config.ts
-networks: {
-  calibration: {
-    url: "https://api.calibration.node.glif.io/rpc/v1",
-    chainId: 314159,
-    accounts: [process.env.PRIVATE_KEY]
-  }
-}
+npx hardhat ignition deploy ignition/modules/FILDOS.ts --network calibration
 ```
 
-## 🚀 Deployment
+### Network: Filecoin Calibration
+- Chain ID: 314159
+- RPC: https://api.calibration.node.glif.io/rpc/v1
+- Explorer: https://calibration.filfox.info/
 
-### Deploy to Calibration Testnet
-
-```bash
-# Deploy contracts
-npx hardhat run scripts/deploy.js --network calibration
-
-# Verify contracts
-npx hardhat verify --network calibration DEPLOYED_CONTRACT_ADDRESS
-```
-
-### Environment Variables
-
-Create a `.env` file:
+### Environment
 ```env
-PRIVATE_KEY=your_private_key_here
+PRIVATE_KEY=your_private_key
 CALIBRATION_RPC_URL=https://api.calibration.node.glif.io/rpc/v1
 ```
 
-## 📊 Contract Features
-
-### Folder NFT Structure
+## 📊 Data Structures
 
 ```solidity
-struct Folder {
-    uint256 id;
+struct FolderInfo {
     string name;
-    string description;
-    string metadataURI;
+    string folderType;
+    bool isPublic;
     address owner;
     uint256 createdAt;
-    uint256 updatedAt;
-    bool isPublic;
-    mapping(address => bool) accessList;
+    uint256 viewingPrice;
+}
+
+struct FileEntry {
+    string cid;
+    string filename;
+    uint256 timestamp;
+    address owner;
+    string[] tags;
+    bool encrypted;
+    string dataToEncryptHash;
+    string fileType;
+}
+
+struct Share {
+    uint256 folderId;
+    address grantee;
+    bool canRead;
+    bool canWrite;
 }
 ```
 
-### Key Functions
+## 🎯 Use Cases
 
-- `createFolder(string name, string description)`: Create a new folder NFT
-- `setFolderMetadata(uint256 tokenId, string uri)`: Update folder metadata
-- `grantAccess(uint256 tokenId, address user)`: Grant access to a user
-- `revokeAccess(uint256 tokenId, address user)`: Revoke user access
-- `setPublic(uint256 tokenId, bool isPublic)`: Make folder public/private
+1. **Private Storage**: User-only folders with encrypted files
+2. **Team Collaboration**: Shared folders with read/write permissions
+3. **Public Dataset**: Free public folder (viewingPrice=0)
+4. **Premium Content**: Paid public access (viewingPrice>0 USDFC)
+5. **Encrypted Archives**: Lit Protocol encrypted files with access control
 
-## 🔐 Access Control
+## 🛠️ Tech Stack
 
-### Permission Levels
+- Solidity 0.8.20
+- OpenZeppelin (ERC721Enumerable, Ownable, EnumerableSet)
+- Hardhat + TypeScript
+- Filecoin FEVM
+- IERC20 (USDFC payment token)
 
-1. **Owner**: Full control over the folder
-2. **Granted Users**: Read/write access as determined by owner
-3. **Public**: Read-only access if folder is set to public
-
-### Access Patterns
+## 📈 Events
 
 ```solidity
-// Check if user has access to folder
-function hasAccess(uint256 tokenId, address user) public view returns (bool) {
-    return ownerOf(tokenId) == user || 
-           folders[tokenId].accessList[user] || 
-           folders[tokenId].isPublic;
-}
+event FolderMinted(uint256 tokenId, address owner, string name, string folderType)
+event FileAdded(uint256 tokenId, string cid, string filename, ...)
+event FolderPublicityChanged(uint256 tokenId, bool isPublic)
+event ViewingPriceSet(uint256 tokenId, uint256 price)
+event ViewAccessPurchased(uint256 tokenId, address viewer, uint256 amount)
+event ShareCreated(uint256 shareId, uint256 folderId, address grantee, ...)
 ```
-
-## 📁 Metadata Schema
-
-### Folder Metadata JSON
-```json
-{
-  "name": "My Documents",
-  "description": "Personal document storage",
-  "image": "ipfs://QmHash/folder-icon.png",
-  "attributes": [
-    {
-      "trait_type": "File Count",
-      "value": 42
-    },
-    {
-      "trait_type": "Size",
-      "value": "1.2 GB"
-    },
-    {
-      "trait_type": "Created",
-      "value": "2025-01-15"
-    }
-  ],
-  "external_url": "https://fildos.io/folder/123",
-  "animation_url": "ipfs://QmHash/embedding-index.pkl"
-}
-```
-
-
-
-## 📈 Monitoring
-
-### Contract Events
-
-```solidity
-event FolderCreated(uint256 indexed tokenId, address indexed owner, string name);
-event AccessGranted(uint256 indexed tokenId, address indexed user);
-event MetadataUpdated(uint256 indexed tokenId, string newURI);
-```
-
-### Indexing & Queries
-
-```javascript
-// Listen to events
-contract.on('FolderCreated', (tokenId, owner, name) => {
-    console.log(`New folder created: ${name} by ${owner}`)
-})
-
-// Query historical events
-const events = await contract.queryFilter('FolderCreated', fromBlock, toBlock)
-```
-
-
-## 📚 References
-
-- [Hardhat Documentation](https://hardhat.org/docs)
-- [Filecoin FEVM Documentation](https://docs.filecoin.io/smart-contracts/fundamentals/the-fevm)
-- [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts)
-- [ERC-721 Standard](https://eips.ethereum.org/EIPS/eip-721)

@@ -7,7 +7,7 @@ import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { AlertCircle, Search, Loader2, FileText, Image as ImageIcon } from "lucide-react";
 import { useAI, SearchResult } from "@/hooks/useAI";
-import { FileItem } from "@/app/(dashboard)/page";
+import { FileItem } from "@/types";
 import { Card, CardContent } from "./ui/card";
 
 interface SearchDialogProps {

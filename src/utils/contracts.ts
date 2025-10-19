@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import ContractABI from '../../web3/ignition/deployments/chain-314159/artifacts/FILDOSModule#FolderNFT.json';
 import ContractAddress from '../../web3/ignition/deployments/chain-314159/deployed_addresses.json';
 
-const CONTRACT_ADDRESS = ContractAddress["FILDOSModule#FolderNFT"];
+export const CONTRACT_ADDRESS = ContractAddress["FILDOSModule#FolderNFT"];
 
 type ContractSigner = 
     | ethers.Provider 

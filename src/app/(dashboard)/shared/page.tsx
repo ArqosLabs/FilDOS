@@ -9,7 +9,7 @@ import { useFolderList } from "@/hooks/useFolderList";
 import Header from "@/components/header";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
-import { FileItem } from "../page";
+import { FileItem } from "@/types";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -42,7 +42,6 @@ export default function SharedFolders() {
       folderType: folderData?.folderType || "",
       modified: isLoading ? "Loading..." : hasError ? "Unknown" : formatDate(folderData?.createdAt || BigInt(0)),
       owner: folderData?.owner || "Unknown",
-      starred: false,
       shared: true, // All folders in this view are shared
       tokenId,
       tags: [], // Add empty tags array

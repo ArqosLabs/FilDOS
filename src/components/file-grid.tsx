@@ -5,6 +5,8 @@ import {
   Share,
   Globe,
   Info,
+  DollarSign,
+  MoveIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +16,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FileItem } from "@/app/(dashboard)/page";
+import { FileItem } from "@/types";
 import ShareFolderDialog from "@/components/share-folder-dialog";
 import MakePublicDialog from "@/components/make-public-dialog";
 import DetailsModal from "@/components/details-modal";
 import FilePreviewModal from "@/components/preview-modal";
+import UpdatePriceDialog from "@/components/update-price-dialog";
+import MoveFileDialog from "@/components/move-file-dialog";
 import { useState } from "react";
 import Image from "next/image";
 
@@ -27,6 +31,7 @@ interface FileGridProps {
   selectedFiles: string[];
   onToggleSelection: (fileId: string) => void;
   onFolderClick?: (folderId?: string, url?: string) => void;
+  currentFolderId?: string; // Add current folder ID for move functionality
 }
 
 const getFileLogo = (type: FileItem["type"]) => {
@@ -53,7 +58,7 @@ const getFileLogo = (type: FileItem["type"]) => {
 };
 
 
-export default function FileGrid({ files, selectedFiles, onToggleSelection, onFolderClick }: FileGridProps) {
+export default function FileGrid({ files, selectedFiles, onToggleSelection, onFolderClick, currentFolderId }: FileGridProps) {
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -127,6 +132,23 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                           </div>
                         </DetailsModal>
                       </DropdownMenuItem>
+                      {file.type !== "folder" && currentFolderId && file.cid && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <MoveFileDialog
+                              fileName={file.name}
+                              fileCid={file.cid}
+                              currentFolderId={currentFolderId}
+                            >
+                              <div className="flex items-center cursor-pointer font-light p-1">
+                                <MoveIcon className="w-4 h-4 mr-2" />
+                                Move
+                              </div>
+                            </MoveFileDialog>
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       {file.type === "folder" && (
                         <>
                           <DropdownMenuSeparator />
@@ -153,6 +175,18 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                                 {file.shared ? "Make Private" : "Make Public"}
                               </div>
                             </MakePublicDialog>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <UpdatePriceDialog
+                              folderId={file.tokenId || file.id}
+                              folderName={file.name}
+                            >
+                              <div className="flex items-center cursor-pointer font-light p-1">
+                                <DollarSign className="w-4 h-4 mr-2" />
+                                Update Price
+                              </div>
+                            </UpdatePriceDialog>
                           </DropdownMenuItem>
                         </>
                       )}

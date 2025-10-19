@@ -9,7 +9,7 @@ import { AlertCircle, CheckCircle, Upload, Loader2 } from "lucide-react";
 import { useAI } from "@/hooks/useAI";
 import { useAddFile } from "@/hooks/useContract";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { FileItem } from "@/app/(dashboard)/page";
+import { FileItem } from "@/types";
 
 interface EmbeddingDialogProps {
   children: React.ReactNode;
@@ -95,7 +95,7 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
       resetUpload();
       
       // Upload the file using the same mechanism as regular file uploads
-      await uploadFile(file);
+      await uploadFile({ file, encrypt: false });
       
       // The upload completion will be handled by the useEffect watching uploadedInfo
     } catch (error) {

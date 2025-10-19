@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
-import { Folder } from "lucide-react";
+import { Folder, CheckCircle2, X, Loader2 } from "lucide-react";
 import { useOwnedFolders, useMintFolder } from "@/hooks/useContract";
 import { useFolderList } from "@/hooks/useFolderList";
 import Header from "@/components/header";
@@ -11,21 +11,7 @@ import CreateFolderDialog from "@/components/create-folder-dialog";
 import { Button } from "@/components/ui/button";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
-
-export interface FileItem {
-  id: string;
-  name: string;
-  folderType: string;
-  type: "folder" | "document" | "image" | "video" | "pdf" | "audio" | "audio" | "pdf" | "presentation" | "spreadsheet" | "other" | "embed";
-  size?: string;
-  modified: string;
-  owner: string;
-  starred: boolean;
-  shared: boolean;
-  tokenId?: string;
-  cid?: string;
-  tags?: string[];
-}
+import { FileItem } from "@/types";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -70,7 +56,6 @@ export default function MyDrive() {
       folderType: folderData?.folderType || "",
       modified: folderData ? formatDate(folderData.createdAt) : "Unknown",
       owner: address || "Unknown",
-      starred: false,
       shared: folderData?.isPublic || false,
       tokenId,
       tags: [], // Add empty tags array
@@ -92,7 +77,6 @@ export default function MyDrive() {
     }
 
     try {
-      console.log(`Creating folder "${name}" of type "${folderType}"...`);
       const result = await mintFolder.mutateAsync({ name, folderType });
       
       // Set success state
@@ -129,7 +113,7 @@ export default function MyDrive() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -169,30 +153,18 @@ export default function MyDrive() {
 
           {/* Success notification */}
           {lastCreatedFolder && (
-            <div className="bg-green-50 border-l-4 border-green-400 p-4 m-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-green-700">
-                    <strong>Folder created successfully!</strong> &ldquo;{lastCreatedFolder.name}&rdquo; (Token ID: {lastCreatedFolder.tokenId})
-                  </p>
-                </div>
-                <div className="ml-auto pl-3">
-                  <div className="-mx-1.5 -my-1.5">
-                    <button
-                      onClick={() => setLastCreatedFolder(null)}
-                      className="inline-flex bg-green-50 rounded-sm p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600"
-                    >
-                      <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+            <div className="bg-secondary/10 border-l-4 border-secondary p-4 m-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-secondary flex-shrink-0" />
+                <p className="text-xs text-foreground flex-1 font-light">
+                  Folder created successfully! &ldquo;{lastCreatedFolder.name}&rdquo; (Token ID: {lastCreatedFolder.tokenId})
+                </p>
+                <button
+                  onClick={() => setLastCreatedFolder(null)}
+                  className="rounded-sm p-1 text-secondary hover:bg-secondary/20 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             </div>
           )}
@@ -235,23 +207,7 @@ export default function MyDrive() {
           {isLoading && !hasError && (
             <div className="flex items-center justify-center p-8">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <div className="space-y-1">
-                  {foldersLoading && (
-                    <p className="text-gray-600">Loading your folders...</p>
-                  )}
-                  {folderDataLoading && totalCount > 0 && (
-                    <p className="text-gray-600">
-                      Loading folder details... ({successCount}/{totalCount})
-                    </p>
-                  )}
-                  {folderDataLoading && totalCount === 0 && (
-                    <p className="text-gray-600">Loading folder details...</p>
-                  )}
-                  {!foldersLoading && !folderDataLoading && (
-                    <p className="text-gray-600">Loading...</p>
-                  )}
-                </div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               </div>
             </div>
           )}
@@ -261,19 +217,12 @@ export default function MyDrive() {
             <>
               {/* Show partial loading indicator if some folders are still loading */}
               {folderDataLoading && successCount > 0 && totalCount > successCount && (
-                <div className="bg-blue-50 border-l-4 border-blue-400 p-4 m-4">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <svg className="animate-spin h-5 w-5 text-blue-400" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-blue-700">
-                        Loading folder details... ({successCount}/{totalCount} loaded)
-                      </p>
-                    </div>
+                <div className="bg-primary/10 border-l-4 border-primary p-4 m-4">
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="h-5 w-5 text-primary animate-spin flex-shrink-0" />
+                    <p className="text-sm text-foreground">
+                      Loading folder details... ({successCount}/{totalCount} loaded)
+                    </p>
                   </div>
                 </div>
               )}

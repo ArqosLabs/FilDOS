@@ -160,6 +160,9 @@ export interface FileEntry {
   timestamp: bigint;
   owner: string;
   tags: string[];
+  encrypted: boolean;
+  dataToEncryptHash: string;
+  fileType: string;
 }
 
 export interface FolderInfo {
@@ -168,6 +171,7 @@ export interface FolderInfo {
   isPublic: boolean;
   owner: string;
   createdAt: bigint;
+  viewingPrice: bigint; // Price in payment tokens to gain read access
 }
 
 export interface FolderAccess {
@@ -181,4 +185,21 @@ export interface Share {
   grantee: string;
   canRead: boolean;
   canWrite: boolean;
+}
+
+export interface FileItem {
+  id: string;
+  name: string;
+  folderType: string;
+  type: "folder" | "document" | "image" | "video" | "pdf" | "audio" | "audio" | "pdf" | "presentation" | "spreadsheet" | "other" | "embed";
+  size?: string;
+  modified: string;
+  owner: string;
+  shared: boolean;
+  tokenId?: string;
+  cid?: string;
+  tags?: string[];
+  encrypted?: boolean;
+  dataToEncryptHash?: string;
+  fileType?: string;
 }
