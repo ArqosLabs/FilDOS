@@ -107,7 +107,6 @@ export const useFileUpload = () => {
 
       // 6) Create storage service
       const storageService = await synapse.createStorage({
-        providerId: 16,
         withCDN: true,
         callbacks: {
           onDataSetResolved: (info) => {
@@ -163,7 +162,7 @@ export const useFileUpload = () => {
         },
         onPieceAdded: (transactionResponse) => {
           setStatus(
-            `Waiting for transaction to be confirmed on chain${
+            `Waiting for transaction to be confirmed on chain ${
               transactionResponse ? `(txHash: ${transactionResponse.hash.slice(0, 6)}...${transactionResponse.hash.slice(-4)})` : ""
             }`
           );
