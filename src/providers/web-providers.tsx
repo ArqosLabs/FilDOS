@@ -1,7 +1,7 @@
 "use client";
 
 import { WagmiProvider } from "wagmi";
-import { filecoin, filecoinCalibration } from "wagmi/chains";
+import { filecoinCalibration } from "wagmi/chains";
 import { http } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RainbowKitProvider, getDefaultConfig, lightTheme } from "@rainbow-me/rainbowkit";
@@ -11,9 +11,8 @@ const queryClient = new QueryClient();
 const config = getDefaultConfig({
   appName: 'FilDOS',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!, 
-  chains: [filecoinCalibration, filecoin],
+  chains: [filecoinCalibration],
   transports: {
-    [filecoin.id]: http(),
     [filecoinCalibration.id]: http(),
   },
   ssr: true,
@@ -30,6 +29,7 @@ export default function Web3Providers({
           <WagmiProvider config={config}>
             <RainbowKitProvider
               modalSize="compact"
+              initialChain={filecoinCalibration}
               theme={lightTheme({
                 accentColor: '#0295f6',
                 accentColorForeground: 'white',

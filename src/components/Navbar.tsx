@@ -4,6 +4,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Bell, Settings } from "lucide-react";
+import Link from "next/link";
 
 export default function Navbar() {
   return (
@@ -19,7 +20,7 @@ export default function Navbar() {
           />
           <div>
             <h1 className="text-lg font-medium text-foreground">FilDOS</h1>
-            <p className="text-xs text-muted-foreground">Filecoin Drive OS</p>
+            <p className="text-xs text-muted-foreground">powered by <Link className="hover:cursor-pointer" href="https://www.filecoin.services/">Filecoin Onchain Cloud</Link></p>
           </div>
         </div>
 

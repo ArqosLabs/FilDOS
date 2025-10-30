@@ -139,7 +139,7 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
                     className="h-8 w-8 p-0"
                   >
                     {copiedField === "owner" ? (
-                      <Check className="w-4 h-4 text-green-500" />
+                      <Check className="w-4 h-4 text-primary" />
                     ) : (
                       <Copy className="w-4 h-4" />
                     )}
@@ -187,7 +187,7 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
                       className="h-8 w-8 p-0"
                     >
                       {copiedField === "tokenId" ? (
-                        <Check className="w-4 h-4 text-green-500" />
+                        <Check className="w-4 h-4 text-primary" />
                       ) : (
                         <Copy className="w-4 h-4" />
                       )}
@@ -210,7 +210,7 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
                       className="h-8 w-8 p-0"
                     >
                       {copiedField === "cid" ? (
-                        <Check className="w-4 h-4 text-green-500" />
+                        <Check className="w-4 h-4 text-primary" />
                       ) : (
                         <Copy className="w-4 h-4" />
                       )}
@@ -241,7 +241,7 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
                       className="h-8 w-8 p-0"
                     >
                       {copiedField === "url" ? (
-                        <Check className="w-4 h-4 text-green-500" />
+                        <Check className="w-4 h-4 text-primary" />
                       ) : (
                         <Copy className="w-4 h-4" />
                       )}

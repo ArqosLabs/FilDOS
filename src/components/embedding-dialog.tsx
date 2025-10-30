@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
 import { Badge } from "./ui/badge";
 import { AlertCircle, CheckCircle, Upload, Loader2 } from "lucide-react";
 import { useAI } from "@/hooks/useAI";
-import { useAddFile } from "@/hooks/useContract";
-import { useFileUpload } from "@/hooks/useFileUpload";
 import { FileItem } from "@/types";
 
 interface EmbeddingDialogProps {
@@ -27,24 +25,19 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
     isCreatingEmbeddings,
     embeddingsProgress,
     embeddingsStatus,
-    embedFileUrl,
+    embedResult,
     embeddingsError,
     resetEmbeddings,
-    isServerHealthy,
-    serverHealthError,
+    isServerHealthy
   } = useAI();
 
-  const { mutate: addFile } = useAddFile();
-  const { uploadFileMutation, uploadedInfo, handleReset: resetUpload } = useFileUpload();
-  const { mutateAsync: uploadFile } = uploadFileMutation;
-
   // Filter files that can be embedded (images and documents)
-  const embeddableFiles = files.filter(file => 
-    file.type === 'image' || file.type === 'document' || file.type === 'pdf'
+  const embeddableFiles = files.filter(file =>
+    (file.type === 'image' || file.type === 'document' || file.type === 'pdf') && !file.encrypted
   );
 
   // Convert CIDs to URLs
-  const fileUrls = embeddableFiles.map(file => 
+  const fileUrls = embeddableFiles.map(file =>
     `https://${file.owner}.calibration.filcdn.io/${file.cid}`
   );
 
@@ -63,46 +56,15 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
 
     setStep('preparing');
     resetEmbeddings();
-    
+
     setTimeout(() => {
       setStep('embedding');
-      createEmbeddings(fileUrls);
+      createEmbeddings({
+        fileUrls,
+        collection_name: `Folder${folderId}`,
+      });
     }, 1000);
   };
-
-  const handleSaveEmbedding = useCallback(async () => {
-    if (!embedFileUrl) {
-      setStep('error');
-      setErrorMessage('No embedding file available to save.');
-      return;
-    }
-
-    setStep('saving');
-
-    try {
-      // Convert blob URL to actual file
-      const response = await fetch(embedFileUrl);
-      const blob = await response.blob();
-      
-      // Create a unique filename
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `embeddings-${timestamp}.pkl`;
-      
-      // Create a File object from the blob
-      const file = new File([blob], filename, { type: 'application/octet-stream' });
-      
-      // Reset any previous upload state
-      resetUpload();
-      
-      // Upload the file using the same mechanism as regular file uploads
-      await uploadFile({ file, encrypt: false });
-      
-      // The upload completion will be handled by the useEffect watching uploadedInfo
-    } catch (error) {
-      setStep('error');
-      setErrorMessage(`Failed to process embedding file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }, [embedFileUrl, uploadFile, resetUpload]);
 
   const handleClose = () => {
     setOpen(false);
@@ -134,10 +96,15 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
 
   // Watch for embedding completion
   useEffect(() => {
-    if (step === 'embedding' && embedFileUrl && !isCreatingEmbeddings) {
-      handleSaveEmbedding();
+    if (step === 'embedding') {
+      if (embedResult) {
+        setStep('complete');
+      } else if (embeddingsError) {
+        setStep('error');
+        setErrorMessage(embeddingsError.message);
+      }
     }
-  }, [step, embedFileUrl, isCreatingEmbeddings, handleSaveEmbedding]);
+  }, [step, embedResult, isCreatingEmbeddings, embeddingsError]);
 
   // Watch for embedding errors
   useEffect(() => {
@@ -146,27 +113,6 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
       setErrorMessage(embeddingsError.message);
     }
   }, [embeddingsError]);
-
-  // Watch for upload completion and add file to contract
-  useEffect(() => {
-    if (step === 'saving' && uploadedInfo && uploadedInfo.pieceCid && uploadedInfo.fileName) {
-      // Add the embedding file to the folder with the actual CID
-      addFile({
-        tokenId: folderId,
-        cid: uploadedInfo.pieceCid,
-        filename: uploadedInfo.fileName,
-        tags: ['embed'],
-      }, {
-        onSuccess: () => {
-          setStep('complete');
-        },
-        onError: (error) => {
-          setStep('error');
-          setErrorMessage(`Failed to save embedding file: ${error.message}`);
-        },
-      });
-    }
-  }, [step, uploadedInfo, folderId, addFile]);
 
   const stepStatus = getStepStatus(step);
 
@@ -185,20 +131,8 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
             Create AI embeddings for semantic search across your folder files
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4">
-          {/* Server Status */}
-          <div className="flex items-center justify-between p-3 rounded-md border">
-            <div className="flex items-center gap-2">
-              <div className="text-sm font-medium">AI Server Status:</div>
-              <Badge variant={isServerHealthy ? 'default' : 'destructive'}>
-                {isServerHealthy ? 'Healthy' : 'Offline'}
-              </Badge>
-            </div>
-            {serverHealthError && (
-              <AlertCircle className="w-4 h-4 text-red-500" />
-            )}
-          </div>
 
           {/* Files Summary */}
           <div className="p-3 rounded-md border">
@@ -206,13 +140,8 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
             <div className="text-sm text-gray-600">
               {embeddableFiles.length} embeddable files out of {files.length} total files
             </div>
-            {embeddableFiles.length > 0 && (
-              <div className="text-xs text-gray-500 mt-1">
-                {embeddableFiles.map(f => f.name).join(', ')}
-              </div>
-            )}
             <div className="text-xs text-gray-500 mt-1">
-              Supported: Images, Documents, PDFs
+              Supported: Images, Documents, PDFs (non-encrypted files)
             </div>
           </div>
 
@@ -244,9 +173,9 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
             )}
 
             {step === 'complete' && (
-              <div className="flex items-start gap-2 p-3 rounded-md bg-green-50 border border-green-200">
-                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-green-700">
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-primary">
                   Embeddings created and saved successfully! You can now use semantic search on your files.
                 </div>
               </div>
@@ -258,11 +187,11 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
             <Button
               variant="outline"
               onClick={handleClose}
-              disabled={step === 'embedding' || step === 'saving'}
+              disabled={step === 'embedding'}
             >
               {step === 'complete' ? 'Close' : 'Cancel'}
             </Button>
-            
+
             {step === 'check' && (
               <Button
                 onClick={handleStartEmbedding}
@@ -272,12 +201,11 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
               </Button>
             )}
 
-            {(step === 'preparing' || step === 'embedding' || step === 'saving') && (
+            {(step === 'preparing' || step === 'embedding') && (
               <Button disabled>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 {step === 'preparing' && 'Preparing...'}
                 {step === 'embedding' && 'Creating...'}
-                {step === 'saving' && 'Saving...'}
               </Button>
             )}
 

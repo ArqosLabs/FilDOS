@@ -5,17 +5,19 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { AlertCircle, Search, Loader2, FileText, Image as ImageIcon } from "lucide-react";
-import { useAI, SearchResult } from "@/hooks/useAI";
-import { FileItem } from "@/types";
+import { AlertCircle, Search, Loader2, CheckCircle, BrainCircuit } from "lucide-react";
+import Image from "next/image";
+import { useAI } from "@/hooks/useAI";
+
+type ResultType = "image" | "pdf" | "document" | "audio" | "video" | "spreadsheet" | "presentation" | "other" | "text";
 import { Card, CardContent } from "./ui/card";
 
 interface SearchDialogProps {
   children: React.ReactNode;
-  files: FileItem[];
+  folderId: string;
 }
 
-export default function SearchDialog({ children, files }: SearchDialogProps) {
+export default function SearchDialog({ children, folderId }: SearchDialogProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -27,49 +29,45 @@ export default function SearchDialog({ children, files }: SearchDialogProps) {
     searchError,
     resetSearch,
     isServerHealthy,
-    serverHealthError,
   } = useAI();
 
-const latestEmbedFile = useMemo(() => {
-    const embedFiles = files.filter(file => file.type === 'embed');
-    if (embedFiles.length === 0) return null;
-    
-    return embedFiles.sort((a: FileItem, b: FileItem) => {
-        return b.name.localeCompare(a.name);
-    })[0];
-}, [files]);
+  const collection_name = useMemo(() => `Folder${folderId}`, [folderId]);
 
-  // Construct the embed file URL
-  const embedFileUrl = latestEmbedFile 
-    ? `https://${latestEmbedFile.owner}.calibration.filcdn.io/${latestEmbedFile.cid}`
-    : null;
-    
+  // Use collections hook to check if collection exists
+  const { getCollectionDetails } = useAI();
+  const {
+    data: collectionDetails,
+    isLoading: isCollectionLoading,
+  } = getCollectionDetails(collection_name, { enabled: open });
+
+  const collectionExists = collectionDetails?.exists;
 
   const handleSearch = async () => {
-    if (!query.trim() || !embedFileUrl) return;
-
+    if (!query.trim() || !collectionExists) return;
     searchEmbeddings({
       query: query.trim(),
-      embed_file_url: embedFileUrl
+      collection_name,
     });
   };
 
-  const handleClose = () => {
-    setOpen(false);
-    setTimeout(() => {
-      setQuery("");
-      resetSearch();
-    }, 300);
-  };
-
-  const getResultIcon = (type: SearchResult['type']) => {
+  const getLogoSrc = (type: ResultType) => {
     switch (type) {
       case 'image':
-        return ImageIcon;
-      case 'text':
-        return FileText;
+        return '/logos/image.png';
+      case 'pdf':
+        return '/logos/pdf.png';
+      case 'document':
+        return '/logos/document.png';
+      case 'audio':
+        return '/logos/audio.png';
+      case 'video':
+        return '/logos/video.png';
+      case 'spreadsheet':
+        return '/logos/spreadsheet.png';
+      case 'presentation':
+        return '/logos/presentation.png';
       default:
-        return FileText;
+        return '/logos/other.png';
     }
   };
 
@@ -77,7 +75,7 @@ const latestEmbedFile = useMemo(() => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const canSearch = isServerHealthy && latestEmbedFile && query.trim();
+  const canSearch = isServerHealthy && query.trim();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -87,52 +85,49 @@ const latestEmbedFile = useMemo(() => {
       <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Search className="w-5 h-5" />
+            <BrainCircuit className="w-5 h-5" />
             Semantic Search
           </DialogTitle>
           <DialogDescription>
             Search through your folder files using natural language
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="flex-1 overflow-y-auto space-y-4 p-2">
           {/* Server and Embed File Status */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-md border">
+            {isCollectionLoading ? (
               <div className="flex items-center gap-2">
-                <div className="text-sm font-medium">AI Server Status:</div>
-                <Badge variant={isServerHealthy ? 'default' : 'destructive'}>
-                  {isServerHealthy ? 'Healthy' : 'Offline'}
+                <Badge variant="secondary" className="text-xs">
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  Checking Collection...
                 </Badge>
               </div>
-              {serverHealthError && (
-                <AlertCircle className="w-4 h-4 text-red-500" />
-              )}
-            </div>
-
-            <div className="p-3 rounded-md border">
-              {latestEmbedFile ? (
-                <div className="space-y-1">
-                  <div className="text-sm text-primary">
-                    Found: {latestEmbedFile.name}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Created: {latestEmbedFile.modified}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-sm text-orange-700">
-                  ⚠️ No embedding files found. Create embeddings first.
-                </div>
-              )}
-            </div>
+            ) : collectionExists ? (
+              <div className="flex items-center gap-2">
+                <Badge variant="default" className="text-xs">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Embeddings Found
+                </Badge>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Badge variant="destructive" className="text-xs">
+                  <AlertCircle className="w-3 h-3 mr-1" />
+                  No Embeddings
+                </Badge>
+                <span className="text-xs text-gray-600 font-light">
+                  Please embed for your folder files to enable semantic search.
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Search Input */}
           <div className="space-y-3">
             <div className="space-y-2">
               <Input
-                placeholder="Search for files (e.g., 'documents about cats', 'red car images', 'contract files')"
+                placeholder="Enter prompt to search your file"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && canSearch && handleSearch()}
@@ -143,7 +138,7 @@ const latestEmbedFile = useMemo(() => {
             <div className="flex gap-2">
               <Button
                 onClick={handleSearch}
-                disabled={!canSearch || isSearching}
+                disabled={!canSearch || !collectionExists || isCollectionLoading || isSearching}
                 className="flex-1"
               >
                 {isSearching ? (
@@ -158,7 +153,13 @@ const latestEmbedFile = useMemo(() => {
                   </>
                 )}
               </Button>
-              <Button variant="outline" onClick={resetSearch}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  resetSearch();
+                  setQuery("");
+                }}
+              >
                 Clear
               </Button>
             </div>
@@ -189,54 +190,47 @@ const latestEmbedFile = useMemo(() => {
                   Search Results ({searchResults.results.length})
                 </h3>
                 <Badge variant="secondary" className="text-xs">
-                  {searchResults.total_embeddings} files indexed
+                  {searchResults.total_results} files indexed
                 </Badge>
               </div>
-              
+
               <div className="space-y-2 max-h-80 overflow-y-auto">
-                {searchResults.results.map((result, index) => {
-                  const ResultIcon = getResultIcon(result.type);
-                  return (
-                    <Card 
-                      key={index} 
-                      className="cursor-pointer hover:shadow-sm transition-shadow"
-                      onClick={() => handleResultClick(result.url)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0">
-                            <ResultIcon className={`w-5 h-5 ${
-                              result.type === 'image' ? 'text-green-500' : 'text-blue-500'
-                            }`} />
+                {searchResults.results.map((result, index) => (
+                  <Card
+                    key={index}
+                    className="cursor-pointer hover:bg-primary/10 hover:shadow-sm transition-shadow"
+                    onClick={() => handleResultClick(result.url)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex flex-row items-center gap-3">
+                        <div className="flex flex-row items-center justify-center gap-1">
+                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-xs text-gray-700 font-medium">
+                            {index + 1}
                           </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-medium truncate">
-                                {result.filename}
-                              </span>
-                              <Badge 
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                {result.type}
-                              </Badge>
-                              <Badge className="text-xs">
-                                {(result.score * 100).toFixed(1)}%
-                              </Badge>
-                            </div>
-                            
-                            {result.excerpt && (
-                              <p className="text-xs text-gray-600 mb-2 line-clamp-2">
-                                {result.excerpt}
-                              </p>
-                            )}
-                          </div>
+                          <Image
+                            src={getLogoSrc(result.type)}
+                            alt={result.type}
+                            width={28}
+                            height={28}
+                            className="mt-1 object-contain my-auto items-center"
+                          />
                         </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-light truncate">
+                              {result.filename}
+                            </span>
+
+                          {result.excerpt && (
+                            <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                              {result.excerpt}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
           )}
@@ -249,26 +243,6 @@ const latestEmbedFile = useMemo(() => {
               <p className="text-xs mt-1">Try different keywords or check your embeddings</p>
             </div>
           )}
-
-          {/* Helper Text */}
-          {!latestEmbedFile && (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-yellow-800">
-                  <div className="font-medium mb-1">No embeddings found</div>
-                  <div>Create embeddings first using the Embed button to enable semantic search.</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={handleClose}>
-            Close
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

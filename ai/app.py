@@ -125,28 +125,9 @@ except Exception as e:
 
 print("All models loaded successfully!")
 
-# Create Weaviate schema/collection
-def sanitize_collection_name(name):
-    """Sanitize collection name to meet Weaviate requirements"""
-    # Weaviate class names must start with uppercase letter and contain only alphanumeric characters
-    import re
-    # Remove special characters and spaces
-    sanitized = re.sub(r'[^a-zA-Z0-9]', '', name)
-    # Ensure it starts with uppercase letter
-    if not sanitized:
-        sanitized = "Folder"
-    elif not sanitized[0].isupper():
-        sanitized = sanitized.capitalize()
-    # Prefix with Collection if it starts with a number
-    if sanitized[0].isdigit():
-        sanitized = "Folder" + sanitized
-    return sanitized
-
 def create_weaviate_collection(collection_name):
     """Create a Weaviate collection for storing embeddings"""
     try:
-        # Sanitize collection name
-        collection_name = sanitize_collection_name(collection_name)
         
         if weaviate_client and not weaviate_client.collections.exists(collection_name):
             from weaviate.classes.config import Property, DataType, Configure
@@ -434,9 +415,9 @@ def embed_endpoint():
         if not file_urls:
             return jsonify({'error': 'file_urls array is required'}), 400
         
-        # Create collection if it doesn't exist and get sanitized name
-        sanitized_collection_name = create_weaviate_collection(collection_name)
-        if not sanitized_collection_name:
+        # Create collection if it doesn't exist
+        collection_name = create_weaviate_collection(collection_name)
+        if not collection_name:
             return jsonify({'error': 'Failed to create collection'}), 500
         
         # Create temp directory for this request
@@ -470,7 +451,7 @@ def embed_endpoint():
                     
                     # Embed and store the file
                     print(f"Embedding file: {filename}")
-                    result = embed_and_store_file(file_path, file_url, sanitized_collection_name)
+                    result = embed_and_store_file(file_path, file_url, collection_name)
                     if result == "skipped":
                         skipped_files.append({
                             'url': file_url,
@@ -501,8 +482,7 @@ def embed_endpoint():
             print(f"Processing complete: {len(processed_files)} successful, {len(skipped_files)} skipped, {len(failed_files)} failed")
             
             return jsonify({
-                'collection_name': sanitized_collection_name,
-                'original_collection_name': collection_name,
+                'collection_name': collection_name,
                 'processed_files': processed_files,
                 'skipped_files': skipped_files,
                 'failed_files': failed_files,
@@ -537,18 +517,14 @@ def search_endpoint():
         if not query:
             return jsonify({'error': 'query is required'}), 400
         
-        # Sanitize collection name for search
-        sanitized_collection_name = sanitize_collection_name(collection_name)
-        
         # Search Weaviate
-        results = search_weaviate(query, sanitized_collection_name, top_k)
+        results = search_weaviate(query, collection_name, top_k)
 
         print(f"Search completed. Found {len(results)} results for query: '{query}'")
         
         return jsonify({
             'query': query,
-            'collection_name': sanitized_collection_name,
-            'original_collection_name': collection_name,
+            'collection_name': collection_name,
             'results': results,
             'total_results': len(results)
         })
@@ -587,31 +563,27 @@ def manage_collection(collection_name):
         if not weaviate_client:
             return jsonify({'error': 'Weaviate client not initialized'}), 500
         
-        # Sanitize collection name
-        sanitized_name = sanitize_collection_name(collection_name)
-        
         if request.method == 'GET':
             # Get collection details
-            if not weaviate_client.collections.exists(sanitized_name):
-                return jsonify({'error': f'Collection {sanitized_name} not found'}), 404
-            
-            collection = weaviate_client.collections.get(sanitized_name)
+            if not weaviate_client.collections.exists(collection_name):
+                return jsonify({'error': f'Collection {collection_name} not found'}), 404
+
+            collection = weaviate_client.collections.get(collection_name)
             # Get object count
             response = collection.aggregate.over_all(total_count=True)
             count = response.total_count if response else 0
             
             return jsonify({
-                'name': sanitized_name,
-                'original_name': collection_name,
+                'name': collection_name,
                 'count': count,
                 'exists': True
             })
         
         elif request.method == 'DELETE':
             # Delete collection
-            weaviate_client.collections.delete(sanitized_name)
+            weaviate_client.collections.delete(collection_name)
             return jsonify({
-                'message': f'Collection {sanitized_name} deleted successfully'
+                'message': f'Collection {collection_name} deleted successfully'
             })
     except Exception as e:
         return jsonify({'error': f'Error managing collection: {str(e)}'}), 500

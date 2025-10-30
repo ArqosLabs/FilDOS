@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { Upload, ArrowLeft, Search, Lock } from "lucide-react";
+import { Upload, ArrowLeft, Lock, BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import UploadDialog from "@/components/upload-dialog";
@@ -240,11 +240,11 @@ export default function FolderPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-medium">Folder Content</h2>
               <div className="flex items-center space-x-2">
-                <SearchDialog files={files}>
+                <SearchDialog folderId={folderId}>
                   <Button
                     variant="outline"
                   >
-                    <Search className="w-4 h-4 mr-2" />
+                    <BrainCircuit className="w-4 h-4 mr-2" />
                     Search
                   </Button>
                 </SearchDialog>
@@ -287,9 +287,9 @@ export default function FolderPage() {
               <div className="text-sm text-gray-600 mt-1">
                 <Badge className="capitalize">{folderData.folderType}</Badge>
                 {folderData.isPublic && (
-                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                  <Badge variant="secondary" className="ml-2">
                     Public
-                  </span>
+                  </Badge>
                 )}
                 <span className="ml-2">Created {formatDate(folderData.createdAt)}</span>
               </div>
