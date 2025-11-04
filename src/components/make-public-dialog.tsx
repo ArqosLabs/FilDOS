@@ -41,7 +41,7 @@ export default function MakePublicDialog({
 
   // Generate QR code when folder is public
   useEffect(() => {
-    if (isCurrentlyPublic && open) {
+    if (isCurrentlyPublic && open && typeof window !== 'undefined') {
       const folderUrl = `${window.location.origin}/folder/${folderId}`;
       QRCode.toDataURL(folderUrl, {
         width: 256,
@@ -67,8 +67,11 @@ export default function MakePublicDialog({
     link.href = qrCodeUrl;
     link.download = `${folderName}-qr-code.png`;
     document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      link.click();
+    } finally {
+      document.body.removeChild(link);
+    }
   };
 
   const handleTogglePublic = async () => {
