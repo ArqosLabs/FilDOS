@@ -255,84 +255,75 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
   // Render minimized variant
   if (open && isMinimized) {
     return (
-      <>
-        <div style={{ display: 'none' }}>
-          <Dialog open={false}>
-            <DialogTrigger asChild>
-              {children}
-            </DialogTrigger>
-          </Dialog>
-        </div>
-        <div className="fixed bottom-4 right-4 z-50 w-80 bg-background border rounded-lg shadow-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              {isLoading || isAddingToContract ? (
-                <RefreshCw className="h-4 w-4 text-primary animate-spin" />
-              ) : uploadedInfo ? (
-                <CheckCircle className="h-4 w-4 text-secondary" />
-              ) : (
-                <Upload className="h-4 w-4 text-primary" />
-              )}
-              <span className="text-sm font-medium">Upload Progress</span>
-            </div>
-            <div className="flex items-center gap-1">
+      <div className="fixed bottom-4 right-4 z-50 w-80 bg-background border rounded-lg shadow-lg p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            {isLoading || isAddingToContract ? (
+              <RefreshCw className="h-4 w-4 text-primary animate-spin" />
+            ) : uploadedInfo ? (
+              <CheckCircle className="h-4 w-4 text-secondary" />
+            ) : (
+              <Upload className="h-4 w-4 text-primary" />
+            )}
+            <span className="text-sm font-medium">Upload Progress</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setIsMinimized(false)}
+            >
+              <Maximize2 className="h-3 w-3" />
+            </Button>
+            {uploadedInfo && !isLoading && !isAddingToContract && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0"
-                onClick={() => setIsMinimized(false)}
+                onClick={() => handleOpenChange(false)}
               >
-                <Maximize2 className="h-3 w-3" />
+                <X className="h-3 w-3" />
               </Button>
-              {uploadedInfo && !isLoading && !isAddingToContract && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => handleOpenChange(false)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
+            )}
           </div>
-          
-          {file && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-sm truncate">{file.name}</span>
-              </div>
-              
-              {(isLoading || isAddingToContract) && (
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      {isAddingToContract ? "Adding to folder..." : "Uploading..."}
-                    </span>
-                    <span className="font-medium">{progress}%</span>
-                  </div>
-                  <Progress value={progress} className="h-1.5" />
-                </div>
-              )}
-              
-              {uploadedInfo && !isLoading && !isAddingToContract && (
-                <div className="flex items-center gap-2 text-xs text-secondary">
-                  <CheckCircle className="h-3 w-3" />
-                  <span>Upload complete</span>
-                </div>
-              )}
-              
-              {contractAddError && (
-                <div className="flex items-center gap-2 text-xs text-destructive">
-                  <XCircle className="h-3 w-3" />
-                  <span className="truncate">{contractAddError}</span>
-                </div>
-              )}
-            </div>
-          )}
         </div>
-      </>
+        
+        {file && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-sm truncate">{file.name}</span>
+            </div>
+            
+            {(isLoading || isAddingToContract) && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {isAddingToContract ? "Adding to folder..." : "Uploading..."}
+                  </span>
+                  <span className="font-medium">{progress}%</span>
+                </div>
+                <Progress value={progress} className="h-1.5" />
+              </div>
+            )}
+            
+            {uploadedInfo && !isLoading && !isAddingToContract && (
+              <div className="flex items-center gap-2 text-xs text-secondary">
+                <CheckCircle className="h-3 w-3" />
+                <span>Upload complete</span>
+              </div>
+            )}
+            
+            {contractAddError && (
+              <div className="flex items-center gap-2 text-xs text-destructive">
+                <XCircle className="h-3 w-3" />
+                <span className="truncate">{contractAddError}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     );
   }
 
