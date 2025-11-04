@@ -3,6 +3,11 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Home, FileQuestion, Sparkles } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Page Not Found'
+}
 
 export default function NotFound() {
   return (

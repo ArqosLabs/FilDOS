@@ -4,11 +4,20 @@ import "@rainbow-me/rainbowkit/styles.css"
 import { Analytics } from "@vercel/analytics/next"
 import { SynapseProvider } from "@/providers/SynapseProvider";
 import { Inter } from 'next/font/google'
+import type { Metadata } from 'next'
 
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',   // optional: prevents layout shift
 })
+
+export const metadata: Metadata = {
+  title: {
+    default: 'FilDOS - AI-Native Decentralized Storage',
+    template: '%s | FilDOS'
+  },
+  description: 'A Secure, AI-Native, Meaning-First Decentralized Drive built on Filecoin',
+}
 
 export default function RootLayout({
   children,
