@@ -6,7 +6,7 @@ export async function generateMetadata(
   const { tag } = await params;
   
   return {
-    title: `Tagged: ${decodeURIComponent(tag)}`
+    title: decodeURIComponent(tag)
   }
 }
 
