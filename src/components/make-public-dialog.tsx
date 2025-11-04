@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Globe, Lock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Globe, Lock, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useSetFolderPublic } from "@/hooks/useContract";
+import * as QRCode from "qrcode";
 
 interface MakePublicDialogProps {
   children: React.ReactNode;
@@ -34,8 +35,41 @@ export default function MakePublicDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFree, setIsFree] = useState(true);
   const [viewingPrice, setViewingPrice] = useState("");
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
 
   const setFolderPublic = useSetFolderPublic();
+
+  // Generate QR code when folder is public
+  useEffect(() => {
+    if (isCurrentlyPublic && open) {
+      const folderUrl = `${window.location.origin}/folder/${folderId}`;
+      QRCode.toDataURL(folderUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      })
+        .then((url: string) => {
+          setQrCodeUrl(url);
+        })
+        .catch((err: Error) => {
+          console.error('Error generating QR code:', err);
+        });
+    }
+  }, [isCurrentlyPublic, open, folderId]);
+
+  const handleDownloadQR = () => {
+    if (!qrCodeUrl) return;
+    
+    const link = document.createElement('a');
+    link.href = qrCodeUrl;
+    link.download = `${folderName}-qr-code.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleTogglePublic = async () => {
     if (!isCurrentlyPublic && !isFree && (!viewingPrice || parseFloat(viewingPrice) <= 0)) {
@@ -122,6 +156,34 @@ export default function MakePublicDialog({
               )}
             </div>
           </div>
+
+          {/* QR Code - Only show when folder is public */}
+          {isCurrentlyPublic && qrCodeUrl && (
+            <div className="bg-gray-50 p-4 rounded-sm space-y-3">
+              <div className="text-sm font-medium text-gray-900">Share via QR Code</div>
+              <div className="flex flex-col items-center space-y-3">
+                <div className="bg-white p-3 rounded-sm border-2 border-gray-200">
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="QR Code for folder" 
+                    className="w-48 h-48"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadQR}
+                  className="w-full"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download QR Code
+                </Button>
+                <p className="text-xs text-center text-gray-600">
+                  Scan this code to access the folder directly
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Pricing Options - Only show when making public */}
           {!isCurrentlyPublic && (
