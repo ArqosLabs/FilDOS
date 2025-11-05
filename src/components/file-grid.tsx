@@ -61,6 +61,8 @@ const getFileLogo = (type: FileItem["type"]) => {
 export default function FileGrid({ files, selectedFiles, onToggleSelection, onFolderClick, currentFolderId }: FileGridProps) {
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [clickCount, setClickCount] = useState(0);
 
   const handleFileClick = (file: FileItem) => {
     if (file.type === "folder" && onFolderClick && file.tokenId) {
@@ -68,6 +70,34 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
     } else if (file.type !== "folder") {
       setPreviewFile(file);
       setIsPreviewOpen(true);
+    }
+  };
+
+  const handleItemClick = (file: FileItem, e: React.MouseEvent | React.TouchEvent) => {
+    // Don't handle click if it's on a button or dropdown menu
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="menu"]')) {
+      return;
+    }
+    
+    e.stopPropagation();
+    if (clickTimeout) {
+      clearTimeout(clickTimeout);
+      setClickTimeout(null);
+    }
+
+    const newClickCount = clickCount + 1;
+    setClickCount(newClickCount);
+
+    if (newClickCount === 1) {
+      const timeout = setTimeout(() => {
+        onToggleSelection(file.id);
+        setClickCount(0);
+      }, 300);
+      setClickTimeout(timeout);
+    } else if (newClickCount === 2) {
+      setClickCount(0);
+      handleFileClick(file);
     }
   };
 
@@ -85,8 +115,8 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                 className={`group relative bg-background border border-gray-200 rounded-md p-4 hover:shadow-sm transition-all cursor-pointer select-none ${
                   isSelected ? "ring-2 ring-primary bg-blue-50" : ""
                 }`}
-                onClick={() => onToggleSelection(file.id)}
-                onDoubleClick={() => handleFileClick(file)}
+                onClick={(e) => handleItemClick(file, e)}
+                onTouchEnd={(e) => handleItemClick(file, e)}
               >
                 {/* File Icon */}
                 <div className="flex flex-col items-center text-center">
@@ -111,7 +141,11 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                 </div>
 
                 {/* Action Buttons */}
-                <div className="absolute top-2 right-2 flex gap-1 group-hover:opacity-100 transition-opacity">
+                <div 
+                  className="absolute top-2 right-2 flex gap-1 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => e.stopPropagation()}
+                >
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button

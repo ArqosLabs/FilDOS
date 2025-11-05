@@ -71,6 +71,9 @@ const getFileLogo = (type: FileItem["type"]) => {
 export default function FileList({ files, selectedFiles, onToggleSelection, onFolderClick, currentFolderId }: FileListProps) {
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [clickCount, setClickCount] = useState(0);
+  const [lastClickedId, setLastClickedId] = useState<string | null>(null);
   const allSelected = files.length > 0 && selectedFiles.length === files.length;
 
   const handleFileClick = (file: FileItem) => {
@@ -79,6 +82,51 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
     } else if (file.type !== "folder") {
       setPreviewFile(file);
       setIsPreviewOpen(true);
+    }
+  };
+
+  const handleRowClick = (file: FileItem, e: React.MouseEvent | React.TouchEvent) => {
+    // Don't handle click if it's on a button or dropdown menu
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="menu"]')) {
+      return;
+    }
+    
+    e.stopPropagation();
+    
+    // Reset if clicking a different file
+    if (lastClickedId !== file.id) {
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+        setClickTimeout(null);
+      }
+      setClickCount(0);
+      setLastClickedId(file.id);
+    }
+
+    // Clear existing timeout
+    if (clickTimeout) {
+      clearTimeout(clickTimeout);
+      setClickTimeout(null);
+    }
+
+    const newClickCount = clickCount + 1;
+    setClickCount(newClickCount);
+
+    if (newClickCount === 1) {
+      // First click - wait to see if there's a second click
+      const timeout = setTimeout(() => {
+        // Single click - toggle selection
+        onToggleSelection(file.id);
+        setClickCount(0);
+        setLastClickedId(null);
+      }, 300); // 300ms delay to detect double click
+      setClickTimeout(timeout);
+    } else if (newClickCount === 2) {
+      // Double click - open file/folder
+      setClickCount(0);
+      setLastClickedId(null);
+      handleFileClick(file);
     }
   };
 
@@ -130,8 +178,8 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                     className={`hover:bg-gray-50 cursor-pointer select-none ${
                       isSelected ? "bg-blue-50" : ""
                     }`}
-                    onClick={() => onToggleSelection(file.id)}
-                    onDoubleClick={() => handleFileClick(file)}
+                    onClick={(e) => handleRowClick(file, e)}
+                    onTouchEnd={(e) => handleRowClick(file, e)}
                   >
                     <TableCell>
                       <Checkbox
@@ -159,7 +207,7 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                     <TableCell className="text-sm text-gray-400">
                       {file.modified}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button

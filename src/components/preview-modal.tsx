@@ -403,27 +403,27 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Image 
               src={getFileLogo(file.name)} 
               alt="file icon" 
-              width={20} 
-              height={20}
-              className="text-gray-600"
+              width={16} 
+              height={16}
+              className="text-gray-600 sm:w-5 sm:h-5 flex-shrink-0"
             />
-            <span className="truncate">{file.name}</span>
+            <span className="break-all line-clamp-2 text-sm sm:text-base">{file.name}</span>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* Decryption Progress */}
           {isDecrypting && (
-            <div className="p-3 border rounded-lg bg-primary/5 border-primary/20">
+            <div className="p-2 sm:p-3 border rounded-lg bg-primary/5 border-primary/20">
               <div className="flex items-center gap-2 mb-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span className="text-sm text-foreground">Decrypting file...</span>
+                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-primary flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-foreground">Decrypting file...</span>
               </div>
               <Progress value={decryptProgress} className="h-1" />
             </div>
@@ -431,19 +431,19 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
           {/* Loading State */}
           {isLoading && (
-            <Card className="p-8 text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-              <p className="text-gray-600">Loading file...</p>
+            <Card className="p-6 sm:p-8 text-center">
+              <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin mx-auto mb-3 sm:mb-4 text-blue-500" />
+              <p className="text-sm sm:text-base text-gray-600">Loading file...</p>
             </Card>
           )}
 
           {/* Error State - Compact */}
           {error && (
-            <div className="p-3 border border-red-200 rounded-lg bg-red-50">
+            <div className="p-2 sm:p-3 border border-red-200 rounded-lg bg-red-50">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-red-700">{error}</p>
+                  <p className="text-xs sm:text-sm text-red-700 break-words">{error}</p>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                   <Button 
@@ -463,26 +463,26 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
           {!isLoading && !error && !isDecrypting && (fileContent || previewUrl || decryptedFile) && (
             <Card className="p-0 overflow-hidden">
               {/* Action Buttons */}
-              <div className="flex items-center justify-between gap-2 p-3 border-b bg-muted/30">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2 sm:p-3 border-b bg-muted/30">
                 {/* Decrypted Badge */}
                 {decryptedFile && (
-                  <Badge variant="outline">
-                    <Key className="h-3 w-3 text-primary" />
-                    <span className="text-xs font-medium text-primary">Decrypted</span>
+                  <Badge variant="outline" className="text-xs">
+                    <Key className="h-3 w-3 text-primary flex-shrink-0" />
+                    <span className="font-medium text-primary">Decrypted</span>
                   </Badge>
                 )}
-                {!decryptedFile && <div />}
+                {!decryptedFile && <div className="hidden sm:block" />}
                 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-2">
-                  <Button onClick={handleDownload} variant="ghost" size="sm" className="h-8">
-                    <Download className="w-3 h-3 mr-1" />
-                    Download
+                <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">
+                  <Button onClick={handleDownload} variant="ghost" size="sm" className="h-7 sm:h-8 text-xs flex-1 sm:flex-none">
+                    <Download className="w-3 h-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Download</span>
                   </Button>
                   {!file.encrypted && (
-                    <Button onClick={handleOpenExternal} variant="ghost" size="sm" className="h-8">
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      Open
+                    <Button onClick={handleOpenExternal} variant="ghost" size="sm" className="h-7 sm:h-8 text-xs flex-1 sm:flex-none">
+                      <ExternalLink className="w-3 h-3 sm:mr-1" />
+                      <span className="hidden sm:inline">Open</span>
                     </Button>
                   )}
                 </div>
@@ -490,8 +490,8 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* Text Content */}
               {fileContent && (
-                <div className="p-4 max-h-[500px] overflow-y-auto">
-                  <pre className="text-xs text-gray-800 whitespace-pre-wrap break-words font-mono">
+                <div className="p-3 sm:p-4 max-h-[400px] sm:max-h-[500px] overflow-y-auto">
+                  <pre className="text-[10px] sm:text-xs text-gray-800 whitespace-pre-wrap break-words font-mono">
                     {fileContent}
                   </pre>
                 </div>
@@ -499,14 +499,14 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* Image Preview */}
               {previewUrl && fileType.startsWith('image/') && !imageLoadError && (
-                <div className="p-4 bg-gray-50">
+                <div className="p-3 sm:p-4 bg-gray-50">
                   <div className="relative w-full flex justify-center">
                     <Image
                       src={previewUrl}
                       alt={file.name}
                       width={800}
                       height={600}
-                      className="object-contain rounded max-h-[500px]"
+                      className="object-contain rounded max-h-[400px] sm:max-h-[500px] w-full"
                       style={{ maxHeight: '500px' }}
                       unoptimized
                       onError={() => setImageLoadError(true)}
@@ -518,10 +518,10 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* Video Preview */}
               {previewUrl && fileType.startsWith('video/') && (
-                <div className="p-4 bg-gray-50">
+                <div className="p-3 sm:p-4 bg-gray-50">
                   <video 
                     controls 
-                    className="max-w-full max-h-[500px] rounded mx-auto"
+                    className="max-w-full max-h-[400px] sm:max-h-[500px] rounded mx-auto"
                     src={previewUrl}
                   >
                     Your browser does not support video playback.
@@ -531,7 +531,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* Audio Preview */}
               {previewUrl && fileType.startsWith('audio/') && (
-                <div className="p-4">
+                <div className="p-3 sm:p-4">
                   <audio 
                     controls 
                     className="w-full"
@@ -544,10 +544,10 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* PDF Preview */}
               {previewUrl && fileType === 'application/pdf' && (
-                <div className="p-4 bg-gray-50">
+                <div className="p-3 sm:p-4 bg-gray-50">
                   <iframe
                     src={previewUrl}
-                    className="w-full h-[500px] rounded border"
+                    className="w-full h-[400px] sm:h-[500px] rounded border"
                     title={file.name}
                   />
                 </div>
@@ -557,10 +557,10 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
           {/* No Preview Available - Only show when decrypted but no preview */}
           {!isLoading && !error && !isDecrypting && decryptedFile && !fileContent && !previewUrl && (
-            <div className="p-8 border rounded-lg text-center bg-gray-50">
-              <Eye className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-3">Preview not available</p>
-              <Button onClick={handleDownload} size="sm">
+            <div className="p-6 sm:p-8 border rounded-lg text-center bg-gray-50">
+              <Eye className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mx-auto mb-2" />
+              <p className="text-xs sm:text-sm text-gray-600 mb-3">Preview not available</p>
+              <Button onClick={handleDownload} size="sm" className="text-xs sm:text-sm">
                 <Download className="w-3 h-3 mr-1" />
                 Download
               </Button>
@@ -569,19 +569,19 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
           {/* Waiting for Decrypt - Show when encrypted and not decrypted yet */}
           {!isLoading && !error && !isDecrypting && file.encrypted && !decryptedFile && (
-            <Card className="p-12 text-center border-primary/20 bg-primary/5">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                <LockKeyhole className="w-8 h-8 text-primary" />
+            <Card className="p-8 sm:p-12 text-center border-primary/20 bg-primary/5">
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 mb-3 sm:mb-4">
+                <LockKeyhole className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
               </div>
-              <h3 className="text-lg font-base mb-2">Encrypted File</h3>
-              <p className="text-xs font-light text-muted-foreground mb-6 max-w-md mx-auto">
+              <h3 className="text-base sm:text-lg font-base mb-2">Encrypted File</h3>
+              <p className="text-xs font-light text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto px-4">
                 This file is encrypted with Lit Protocol. Decrypt it to view the contents.
               </p>
               <Button 
                 onClick={handleDecryptAndPreview} 
                 disabled={!address}
                 size="lg"
-                className="gap-2"
+                className="gap-2 text-sm"
               >
                 <Unlock className="w-4 h-4" />
                 Decrypt & Preview
@@ -596,10 +596,10 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
           {/* Connect Wallet Prompt */}
           {!address && (
-            <Card className="p-6 text-center bg-amber-50 border-amber-200">
-              <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-              <h4 className="font-medium text-amber-800">Wallet Required</h4>
-              <p className="text-sm text-amber-700 mt-1">
+            <Card className="p-4 sm:p-6 text-center bg-amber-50 border-amber-200">
+              <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500 mx-auto mb-2" />
+              <h4 className="text-sm sm:text-base font-medium text-amber-800">Wallet Required</h4>
+              <p className="text-xs sm:text-sm text-amber-700 mt-1">
                 Please connect your wallet to view files.
               </p>
             </Card>

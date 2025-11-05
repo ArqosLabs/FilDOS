@@ -45,11 +45,13 @@ export default function WalletConnectButton() {
                 wallets={wallets}
             />
             <ChainProvider chain={filecoinCalibration}>
-                <ChainIcon
-                    client={client}
-                    className="h-auto w-6 rounded-full"
-                    loadingComponent={<span>...</span>}
-                />
+                <div className="hidden sm:block">
+                    <ChainIcon
+                        client={client}
+                        className="h-auto w-6 rounded-full"
+                        loadingComponent={<span>...</span>}
+                    />
+                </div>
             </ChainProvider>
         </>
     );

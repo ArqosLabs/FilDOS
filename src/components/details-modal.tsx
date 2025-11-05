@@ -77,43 +77,44 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
+          <DialogTitle className="flex items-center gap-2 sm:gap-3">
             <Image 
               src={logoSrc} 
               alt={file.type} 
-              width={24} 
-              height={24}
+              width={20} 
+              height={20}
+              className="sm:w-6 sm:h-6 flex-shrink-0"
             />
-            <span className="truncate">{file.name}</span>
+            <span className="break-all line-clamp-2 text-sm sm:text-base">{file.name}</span>
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* General Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">General Information</h3>
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-medium">General Information</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">Type</label>
-                <p className="text-sm bg-gray-50 p-2 rounded border capitalize">{file.type}</p>
+                <label className="text-xs sm:text-sm font-medium text-gray-600">Type</label>
+                <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border capitalize">{file.type}</p>
               </div>
               
               {file.size && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-600">Size</label>
-                  <p className="text-sm bg-gray-50 p-2 rounded border">{file.size}</p>
+                  <label className="text-xs sm:text-sm font-medium text-gray-600">Size</label>
+                  <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border">{file.size}</p>
                 </div>
               )}
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">Last Modified</label>
-                <p className="text-sm bg-gray-50 p-2 rounded border flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  {file.modified}
+                <label className="text-xs sm:text-sm font-medium text-gray-600">Last Modified</label>
+                <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border flex items-center gap-2">
+                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="truncate">{file.modified}</span>
                 </p>
               </div>
             </div>
@@ -122,21 +123,21 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
           <Separator />
 
           {/* Ownership & Permissions */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Ownership & Permissions</h3>
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-medium">Ownership & Permissions</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">Owner</label>
+                <label className="text-xs sm:text-sm font-medium text-gray-600">Owner</label>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm bg-gray-50 p-2 rounded border flex-1 ">
+                  <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border flex-1 break-all max-w-full">
                     {file.owner}
                   </p>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => copyToClipboard(file.owner, "owner")}
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 flex-shrink-0"
                   >
                     {copiedField === "owner" ? (
                       <Check className="w-4 h-4 text-primary" />
@@ -148,7 +149,7 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">Visibility</label>
+                <label className="text-xs sm:text-sm font-medium text-gray-600">Visibility</label>
                 <div className="flex items-center gap-2">
                   {file.shared ? (
                     <Badge variant="secondary" className="text-xs">
@@ -169,22 +170,22 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
           <Separator />
 
           {/* Blockchain Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Blockchain Information</h3>
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-medium">Blockchain Information</h3>
             
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4">
               {file.tokenId && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-600">Token ID</label>
+                  <label className="text-xs sm:text-sm font-medium text-gray-600">Token ID</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm bg-gray-50 p-2 rounded border flex-1 ">
+                    <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border flex-1 break-all max-w-full">
                       {file.tokenId}
                     </p>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => copyToClipboard(file.tokenId!, "tokenId")}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 flex-shrink-0"
                     >
                       {copiedField === "tokenId" ? (
                         <Check className="w-4 h-4 text-primary" />
@@ -198,16 +199,16 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
               
               {file.cid && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-600">Content ID (CID)</label>
+                  <label className="text-xs sm:text-sm font-medium text-gray-600">Content ID (CID)</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm bg-gray-50 p-2 rounded border flex-1  break-all">
+                    <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border flex-1 break-all max-w-full">
                       {file.cid}
                     </p>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => copyToClipboard(file.cid!, "cid")}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 flex-shrink-0"
                     >
                       {copiedField === "cid" ? (
                         <Check className="w-4 h-4 text-primary" />
@@ -225,20 +226,20 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
           {file.type !== "folder" && fileUrl && (
             <>
               <Separator />
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">File Access</h3>
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-medium">File Access</h3>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-600">IPFS/Filecoin URL</label>
+                  <label className="text-xs sm:text-sm font-medium text-gray-600">IPFS/Filecoin URL</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm bg-gray-50 p-2 rounded border flex-1  break-all">
+                    <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border flex-1 break-all max-w-full">
                       {fileUrl}
                     </p>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => copyToClipboard(fileUrl, "url")}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 flex-shrink-0"
                     >
                       {copiedField === "url" ? (
                         <Check className="w-4 h-4 text-primary" />
@@ -254,10 +255,10 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => window.open(fileUrl, "_blank")}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 text-xs sm:text-sm"
                   >
-                    <Link className="w-4 h-4" />
-                    Open File
+                    <Link className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span>Open File</span>
                   </Button>
                 </div>
               </div>
@@ -268,13 +269,13 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
           {file.tags && file.tags.length > 0 && (
             <>
               <Separator />
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Tags</h3>
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-base sm:text-lg font-medium">Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {file.tags.map((tag, index) => (
                     <Badge key={index} variant="outline" className="text-xs">
-                      <Tag className="w-3 h-3 mr-1" />
-                      {tag}
+                      <Tag className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span className="break-all">{tag}</span>
                     </Badge>
                   ))}
                 </div>

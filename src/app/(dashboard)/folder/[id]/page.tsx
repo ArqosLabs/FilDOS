@@ -27,7 +27,7 @@ const formatDate = (timestamp: bigint) => {
 };
 
 const getFileTypeFromExtension = (filename: string): FileItem['type'] => {
-  
+
   const ext = filename.split('.').pop()?.toLowerCase();
   switch (ext) {
     case 'pdf':
@@ -59,7 +59,7 @@ const getFileTypeFromExtension = (filename: string): FileItem['type'] => {
     case 'pptx':
       return 'presentation';
     case 'pdf':
-      return 'pdf';  
+      return 'pdf';
     default:
       return 'other';
   }
@@ -142,11 +142,11 @@ export default function FolderPage() {
 
   // Check if user has access to this folder
   const isOwner = folderData?.owner?.toLowerCase() === address?.toLowerCase();
-  const needsPayment = folderData?.isPublic && 
-                      folderData?.viewingPrice && 
-                      folderData.viewingPrice > BigInt(0) && 
-                      !canRead &&
-                      !isOwner;
+  const needsPayment = folderData?.isPublic &&
+    folderData?.viewingPrice &&
+    folderData.viewingPrice > BigInt(0) &&
+    !canRead &&
+    !isOwner;
 
   // Show payment required screen for paid folders without access
   if (!canReadLoading && needsPayment && folderData) {
@@ -155,20 +155,20 @@ export default function FolderPage() {
         <Header isFilePage={true} viewMode={viewMode} setViewMode={setViewMode} />
         <div className="flex flex-1 overflow-hidden">
           <main className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex flex-col items-center justify-center p-12 text-center min-h-[60vh]">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-2">Payment Required</h3>
-              <p className="text-gray-600 mb-1">
+            <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center min-h-[60vh]">
+              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Payment Required</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-1">
                 This folder requires a one-time payment to access.
               </p>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-xs sm:text-sm text-gray-500 mb-6">
                 After payment, you&apos;ll have permanent read access to all contents.
               </p>
-              
-              <div className="bg-gray-50 p-6 rounded-lg border max-w-md w-full mb-6">
-                <div className="text-sm text-gray-600 mb-2">Dataset</div>
-                <div className="text-lg font-semibold mb-4">{folderData.name}</div>
-                <div className="text-sm text-gray-600 mb-1">Owner</div>
-                <div className="font-mono text-sm text-gray-900 mb-4">
+
+              <div className="bg-gray-50 p-4 sm:p-6 rounded-lg border max-w-md w-full mb-6">
+                <div className="text-xs sm:text-sm text-gray-600 mb-2">Dataset</div>
+                <div className="text-base sm:text-lg font-semibold mb-4">{folderData.name}</div>
+                <div className="text-xs sm:text-sm text-gray-600 mb-1">Owner</div>
+                <div className="font-mono text-xs sm:text-sm text-gray-900 mb-4">
                   {folderData.owner.slice(0, 6)}...{folderData.owner.slice(-4)}
                 </div>
               </div>
@@ -179,14 +179,14 @@ export default function FolderPage() {
                 viewingPrice={folderData.viewingPrice}
                 onSuccess={() => window.location.reload()}
               >
-                <Button size="lg" className="min-w-[200px]">
+                <Button size="lg" className="min-w-[200px] w-full sm:w-auto">
                   Pay to Access
                 </Button>
               </PayAccessDialog>
-              
-              <Button 
-                variant="ghost" 
-                className="mt-4"
+
+              <Button
+                variant="ghost"
+                className="mt-4 w-full sm:w-auto"
                 onClick={handleBackToRoot}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -206,14 +206,15 @@ export default function FolderPage() {
         <Header isFilePage={true} viewMode={viewMode} setViewMode={setViewMode} />
         <div className="flex flex-1 overflow-hidden">
           <main className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex flex-col items-center justify-center p-12 text-center min-h-[60vh]">
-              <Lock className="w-20 h-20 text-gray-400 mb-4" />
-              <h3 className="text-2xl font-semibold text-gray-900 mb-2">Access Denied</h3>
-              <p className="text-gray-600 mb-6">
+            <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center min-h-[60vh]">
+              <Lock className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400 mb-4" />
+              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Access Denied</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-6">
                 You don&apos;t have permission to access this folder.
               </p>
-              <Button 
+              <Button
                 onClick={handleBackToRoot}
+                className="w-full sm:w-auto"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to My Drive
@@ -231,32 +232,37 @@ export default function FolderPage() {
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Upload Button - Always visible at the top */}
-          <div className="p-4 border-b bg-background">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Folder Content</h2>
-              <div className="flex items-center space-x-2">
+          <div className="p-3 sm:p-4 border-b bg-background">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h2 className="text-base sm:text-lg font-medium">Folder Content</h2>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
                 <SearchDialog folderId={folderId}>
                   <Button
                     variant="outline"
+                    size="sm"
+                    className="whitespace-nowrap"
                   >
-                    <BrainCircuit className="w-4 h-4 mr-2" />
-                    Search
+                    <BrainCircuit className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Search</span>
                   </Button>
                 </SearchDialog>
                 <EmbeddingDialog folderId={folderId} files={files}>
                   <Button
                     variant="secondary"
+                    size="sm"
+                    className="whitespace-nowrap"
                   >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Embed
+                    <Upload className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Embed</span>
                   </Button>
                 </EmbeddingDialog>
                 <UploadDialog folderId={folderId}>
                   <Button
-                    className="bg-primary hover:bg-secondary text-white"
+                    className="bg-primary hover:bg-secondary text-white whitespace-nowrap"
+                    size="sm"
                   >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Files
+                    <Upload className="w-4 h-4 sm:mr-2" />
+                    <span>Upload Files</span>
                   </Button>
                 </UploadDialog>
               </div>
@@ -264,39 +270,39 @@ export default function FolderPage() {
           </div>
 
           {/* Navigation breadcrumb */}
-          <div className="p-4 border-b">
+          <div className="p-3 sm:p-4 border-b">
             <button
               onClick={handleBackToRoot}
-              className="text-primary hover:text-secondary-foreground text-sm flex items-center"
+              className="text-primary hover:text-secondary-foreground text-xs sm:text-sm flex items-center"
             >
-              <ArrowLeft className="w-4 h-4 mr-1" />
+              <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
               Back to My Drive
             </button>
-            <h2 className="text-lg font-medium mt-2">
+            <h2 className="text-base sm:text-lg font-medium mt-2 break-words">
               {folderDataLoading
                 ? "Loading folder..."
                 : folderData?.name || `Folder ${folderId}`
               }
             </h2>
             {folderData && (
-              <div className="text-sm text-gray-600 mt-1">
-                <Badge className="capitalize">{folderData.folderType}</Badge>
+              <div className="text-xs sm:text-sm text-gray-600 mt-1 flex flex-wrap items-center gap-2">
+                <Badge className="capitalize text-xs">{folderData.folderType}</Badge>
                 {folderData.isPublic && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="text-xs">
                     Public
                   </Badge>
                 )}
-                <span className="ml-2">Created {formatDate(folderData.createdAt)}</span>
+                <span className="text-xs sm:text-sm">Created {formatDate(folderData.createdAt)}</span>
               </div>
             )}
           </div>
 
           {/* Error state */}
           {hasError && (
-            <div className="flex items-center justify-center p-8">
+            <div className="flex items-center justify-center p-6 sm:p-8">
               <div className="text-center">
-                <div className="text-red-600 mb-2">⚠️ Error</div>
-                <p className="text-gray-600">
+                <div className="text-red-600 mb-2 text-sm sm:text-base">⚠️ Error</div>
+                <p className="text-gray-600 text-sm">
                   {filesError?.message || folderDataError?.message || "Something went wrong"}
                 </p>
               </div>
@@ -305,7 +311,7 @@ export default function FolderPage() {
 
           {/* Loading state */}
           {isLoading && !hasError && (
-            <div className="flex items-center justify-center p-8">
+            <div className="flex items-center justify-center p-6 sm:p-8">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               </div>
@@ -316,12 +322,12 @@ export default function FolderPage() {
           {!isLoading && !hasError && (
             <>
               {files.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-12 text-center">
-                  <Upload className="w-16 h-16 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center">
+                  <Upload className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mb-4" />
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                     No files in this folder
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-sm sm:text-base text-gray-600 mb-4">
                     This folder is empty. Upload files to get started.
                   </p>
                 </div>
