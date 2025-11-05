@@ -155,23 +155,23 @@ export default function TaggedFilesPage() {
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Header with back button and tag info */}
-          <div className="p-4 border-b bg-gray-50">
-            <div className="flex items-center gap-4 mb-4">
+          <div className="p-3 sm:p-4 border-b bg-gray-50">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={handleBackClick}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 self-start"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {getTagIcon(tag)}
-                <h1 className="text-xl font-medium">Files tagged with</h1>
+                <h1 className="text-base sm:text-xl font-medium">Files tagged with</h1>
                 <Badge 
                   variant="outline" 
-                  className={`${getTagColor(tag)} text-sm font-medium`}
+                  className={`${getTagColor(tag)} text-xs sm:text-sm font-medium`}
                 >
                   {tag}
                 </Badge>
@@ -179,7 +179,7 @@ export default function TaggedFilesPage() {
             </div>
 
             {/* Search and filter bar */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -189,7 +189,7 @@ export default function TaggedFilesPage() {
                   className="pl-10"
                 />
               </div>
-              <Badge variant="secondary" className="whitespace-nowrap">
+              <Badge variant="secondary" className="whitespace-nowrap self-start sm:self-center text-xs">
                 {files.length} {files.length === 1 ? 'file' : 'files'}
               </Badge>
             </div>
@@ -197,10 +197,10 @@ export default function TaggedFilesPage() {
 
           {/* Related tags */}
           {allTags.length > 1 && (
-            <div className="p-4 border-b bg-background">
+            <div className="p-3 sm:p-4 border-b bg-background">
               <div className="flex items-center gap-2 mb-2">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">Related tags:</span>
+                <Filter className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700">Related tags:</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {allTags
@@ -214,8 +214,10 @@ export default function TaggedFilesPage() {
                       onClick={() => router.push(`/tagged/${encodeURIComponent(relatedTag)}`)}
                       className={`${getTagColor(relatedTag)} border text-xs hover:opacity-80`}
                     >
-                      {getTagIcon(relatedTag)}
-                      <span className="ml-1">{relatedTag}</span>
+                      <span className="flex items-center gap-1">
+                        {getTagIcon(relatedTag)}
+                        <span>{relatedTag}</span>
+                      </span>
                     </Button>
                   ))}
                 {allTags.length > 11 && (
@@ -229,26 +231,27 @@ export default function TaggedFilesPage() {
 
           {/* Loading state */}
           {searchLoading && (
-            <div className="flex items-center justify-center p-8">
+            <div className="flex items-center justify-center p-6 sm:p-8">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Searching files with tag &ldquo;{tag}&rdquo;...</p>
+                <p className="text-gray-600 text-sm sm:text-base">Searching files with tag &ldquo;{tag}&rdquo;...</p>
               </div>
             </div>
           )}
 
           {/* Error state */}
           {searchError && (
-            <div className="flex items-center justify-center p-8">
+            <div className="flex items-center justify-center p-6 sm:p-8">
               <div className="text-center">
-                <div className="text-red-600 mb-2">⚠️ Error</div>
-                <p className="text-gray-600">
+                <div className="text-red-600 mb-2 text-sm sm:text-base">⚠️ Error</div>
+                <p className="text-gray-600 text-sm">
                   Failed to search files: {searchError.message}
                 </p>
                 <Button 
                   variant="outline" 
                   onClick={() => window.location.reload()} 
                   className="mt-4"
+                  size="sm"
                 >
                   Try Again
                 </Button>
@@ -260,18 +263,18 @@ export default function TaggedFilesPage() {
           {!searchLoading && !searchError && (
             <>
               {files.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-12 text-center">
-                  <Tag className="w-16 h-16 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center">
+                  <Tag className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mb-4" />
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                     No files found with tag &ldquo;{tag}&rdquo;
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-sm sm:text-base text-gray-600 mb-4 px-4">
                     {searchQuery 
                       ? `No files match your search criteria within this tag.`
                       : `You don't have any files tagged with "${tag}" yet.`
                     }
                   </p>
-                  <Button onClick={handleBackClick} variant="outline">
+                  <Button onClick={handleBackClick} variant="outline" size="sm">
                     Go Back
                   </Button>
                 </div>

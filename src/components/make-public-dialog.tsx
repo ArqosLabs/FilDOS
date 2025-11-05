@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useSetFolderPublic } from "@/hooks/useContract";
 import * as QRCode from "qrcode";
+import Image from "next/image";
 
 interface MakePublicDialogProps {
   children: React.ReactNode;
@@ -166,10 +167,12 @@ export default function MakePublicDialog({
               <div className="text-sm font-medium text-gray-900">Share via QR Code</div>
               <div className="flex flex-col items-center space-y-3">
                 <div className="bg-white p-3 rounded-sm border-2 border-gray-200">
-                  <img 
+                  <Image 
                     src={qrCodeUrl} 
                     alt="QR Code for folder" 
                     className="w-48 h-48"
+                    width={192}
+                    height={192}
                   />
                 </div>
                 <Button

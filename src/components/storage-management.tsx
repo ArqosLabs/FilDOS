@@ -152,14 +152,14 @@ export const StorageManager = () => {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="max-w-7xl space-y-6 p-6">
+      <div className="max-w-7xl space-y-4 sm:space-y-6 p-3 sm:p-6">
         <StorageBalanceHeader
           config={config}
           onConfigSave={handleConfigSave}
           pricePerTiBPerMonth={pricePerTiBPerMonth}
         />
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
           <WalletBalancesSection
             balances={balances}
             isLoading={isBalanceLoading}
@@ -252,13 +252,13 @@ const AllowanceStatusSection = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Shield className="h-5 w-5" />
+        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+          <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
           Allowance Status
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2">
+      <CardContent className="space-y-4 sm:space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2">
           <AllowanceItem
             label="Rate Allowance"
             isSufficient={balances?.isRateSufficient}
@@ -318,11 +318,13 @@ const AllowanceStatusSection = ({
         )}
       </CardContent>
       <CardContent>
-        <div className="flex justify-end">
+        <div className="flex justify-start sm:justify-end">
           <Button
             variant="destructive"
             onClick={onRevoke}
             disabled={isLoading || isRevoking}
+            className="w-full sm:w-auto"
+            size="sm"
           >
             {isRevoking ? "Revoking..." : "Revoke Warm Storage Approval"}
           </Button>
@@ -569,17 +571,17 @@ const StorageBalanceHeader = ({
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div className="space-y-2">
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Database className="h-6 w-6" />
+            <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
+              <Database className="h-5 w-5 sm:h-6 sm:w-6" />
               Storage Management
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Monitor your storage usage and manage USDFC deposits for Filecoin storage
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <StorageConfigDialog
               currentConfig={{
                 storageCapacity: config.storageCapacity,
@@ -621,7 +623,7 @@ const StorageBalanceHeader = ({
           </div>
         </div>
         {pricePerTiBPerMonth && (
-          <div className="flex justify-end items-center">
+          <div className="flex justify-start sm:justify-end items-center mt-2">
             <Badge variant="outline" className="text-xs">
               Current Pricing:{" "} {pricePerTiBPerMonth} USDFC per TiB/month
             </Badge>
@@ -638,34 +640,34 @@ const StorageBalanceHeader = ({
 const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
   <Card>
     <CardHeader>
-      <CardTitle className="text-lg flex items-center gap-2">
-        <Wallet className="h-5 w-5" />
+      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+        <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
         Wallet Balances
       </CardTitle>
     </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="grid gap-4">
-        <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/50">
+    <CardContent className="space-y-3 sm:space-y-4">
+      <div className="grid gap-3 sm:gap-4">
+        <div className="flex items-center justify-between p-3 sm:p-4 rounded-sm border bg-muted/50">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">FIL Balance</span>
+            <span className="text-xs sm:text-sm font-medium">FIL Balance</span>
           </div>
-          <span className="text-sm">
+          <span className="text-xs sm:text-sm">
             {isLoading ? "..." : `${balances?.filBalanceFormatted?.toLocaleString()} FIL`}
           </span>
         </div>
-        <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/50">
+        <div className="flex items-center justify-between p-3 sm:p-4 rounded-sm border bg-muted/50">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">USDFC Balance</span>
+            <span className="text-xs sm:text-sm font-medium">USDFC Balance</span>
           </div>
-          <span className="text-sm">
+          <span className="text-xs sm:text-sm">
             {isLoading ? "..." : `${balances?.usdfcBalanceFormatted?.toLocaleString()} USDFC`}
           </span>
         </div>
-        <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/50">
+        <div className="flex items-center justify-between p-3 sm:p-4 rounded-sm border bg-muted/50">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Warm Storage Balance</span>
+            <span className="text-xs sm:text-sm font-medium">Warm Storage Balance</span>
           </div>
-          <span className="text-sm">
+          <span className="text-xs sm:text-sm">
             {isLoading ? "..." : `${balances?.warmStorageBalanceFormatted?.toLocaleString()} USDFC`}
           </span>
         </div>
@@ -688,16 +690,16 @@ const StorageStatusSection = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <HardDrive className="h-5 w-5" />
+        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+          <HardDrive className="h-4 w-4 sm:h-5 sm:w-5" />
           Storage Status
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6">
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Storage Usage</span>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs sm:text-sm font-medium">Storage Usage</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">
               {isLoading ? "..." : `${balances?.currentStorageGB?.toLocaleString()} GB / ${balances?.currentRateAllowanceGB?.toLocaleString()} GB`}
             </span>
           </div>
@@ -711,22 +713,22 @@ const StorageStatusSection = ({
 
         <Separator />
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div className="flex items-center justify-between p-3 rounded-sm border bg-muted/30">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Persistence (Max Usage)</span>
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              <span className="text-xs sm:text-sm">Persistence (Max Usage)</span>
             </div>
-            <Badge variant={balances?.persistenceDaysLeft && balances.persistenceDaysLeft > 7 ? "default" : "destructive"}>
+            <Badge variant={balances?.persistenceDaysLeft && balances.persistenceDaysLeft > 7 ? "default" : "destructive"} className="text-xs">
               {isLoading ? "..." : `${balances?.persistenceDaysLeft.toFixed(1)} days`}
             </Badge>
           </div>
           <div className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Persistence (Current Usage)</span>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              <span className="text-xs sm:text-sm">Persistence (Current Usage)</span>
             </div>
-            <Badge variant={balances?.persistenceDaysLeftAtCurrentRate && balances.persistenceDaysLeftAtCurrentRate > 7 ? "default" : "destructive"}>
+            <Badge variant={balances?.persistenceDaysLeftAtCurrentRate && balances.persistenceDaysLeftAtCurrentRate > 7 ? "default" : "destructive"} className="text-xs">
               {isLoading ? "..." : `${balances?.persistenceDaysLeftAtCurrentRate.toFixed(1)} days`}
             </Badge>
           </div>
@@ -743,22 +745,22 @@ const AllowanceItem = ({
   isSufficient,
   isLoading,
 }: AllowanceItemProps) => (
-  <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/30">
-    <span className="text-sm font-medium">{label}</span>
+  <div className="flex items-center justify-between p-3 sm:p-4 rounded-sm border bg-muted/30">
+    <span className="text-xs sm:text-sm font-medium">{label}</span>
     <div className="flex items-center gap-2">
       {isLoading ? (
-        <span className="text-sm text-muted-foreground">...</span>
+        <span className="text-xs sm:text-sm text-muted-foreground">...</span>
       ) : isSufficient ? (
         <>
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <Badge variant="outline">
+          <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+          <Badge variant="outline" className="text-xs">
             Sufficient
           </Badge>
         </>
       ) : (
         <>
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <Badge variant="destructive">
+          <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
+          <Badge variant="destructive" className="text-xs">
             Insufficient
           </Badge>
         </>
