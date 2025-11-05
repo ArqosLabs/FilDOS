@@ -1,20 +1,19 @@
 "use client";
-import { useAccount } from "wagmi";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import  Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, AlertTriangle, Info } from "lucide-react";
 import Link from "next/link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAccount } from "@/hooks/useAccount";
+import WalletConnectButton from "@/components/connect-button";
 
 export default function GetStarted() {
   const { isConnected, chainId } = useAccount();
 
   return (
     <div className="w-full flex flex-col h-screen bg-gray-50">
-      <Navbar />
+      {/* <Navbar /> */}
       <main className="flex flex-col items-center justify-center flex-1 py-10 px-6 w-full mx-auto">
         <div className="max-w-2xl w-full space-y-6">
           {/* Header */}
@@ -49,9 +48,9 @@ export default function GetStarted() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
-                <ConnectButton />
+                <WalletConnectButton />
                 <p className="text-sm text-gray-500 text-center">
-                  Make sure you&apos;re connected to the Filecoin Calibration network
+                  Connected to Filecoin Calibration network
                 </p>
               </CardContent>
             </Card>

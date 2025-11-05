@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
 import { decryptFileWithLit, initLitClient } from "@/lib/litClient";
+import { useAccount } from "./useAccount";
 
 export const useFileDecryption = () => {
   const [progress, setProgress] = useState(0);

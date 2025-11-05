@@ -1,4 +1,4 @@
-import { StorageManager } from "@/components/StorageManager";
+import { StorageManager } from "@/components/storage-management";
 
 export default function StoragePage() {
   return <StorageManager />;

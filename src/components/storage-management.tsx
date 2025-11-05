@@ -1,6 +1,5 @@
 "use client";
 
-import { useAccount } from "wagmi";
 import { useBalances } from "@/hooks/useBalances";
 import { usePayment, useRevokeService } from "@/hooks/usePayment";
 import { config as defaultConfig } from "@/config";
@@ -27,6 +26,8 @@ import { useSynapse } from "@/providers/SynapseProvider";
 import { StorageConfigDialog, StorageConfig } from "./storage-config-dialog";
 import { fetchWarmStorageCosts } from "@/utils/warmStorageUtils";
 import { getPricePerTBPerMonth } from "@/utils";
+import { useAccount } from "@/hooks/useAccount";
+import ConnectWalletPrompt from "./not-connected";
 
 const STORAGE_CONFIG_KEY = "fildos_user_storage_config";
 
@@ -122,7 +123,9 @@ export const StorageManager = () => {
   };
 
   if (!isConnected) {
-    return null;
+    return <ConnectWalletPrompt 
+      description="Please connect your wallet to manage your storage settings and balances."
+    />;
   }
 
   const handleRevoke = async () => {
@@ -197,7 +200,7 @@ export const StorageManager = () => {
                 ? "text-red-700"
                 : status.includes("✅")
                   ? "text-green-700"
-                  : "text-blue-700"
+                  : "text-primary"
                 }`}>
                 {status}
               </p>
@@ -216,7 +219,7 @@ export const StorageManager = () => {
                 ? "text-red-700"
                 : revokeStatus.includes("✅")
                   ? "text-green-700"
-                  : "text-blue-700"
+                  : "text-primary"
                 }`}>
                 {revokeStatus}
               </p>

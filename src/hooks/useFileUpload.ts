@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
 import { preflightCheck } from "@/utils/preflightCheck";
 import { useSynapse } from "@/providers/SynapseProvider";
 import { encryptFileWithLit, initLitClient } from "@/lib/litClient";
+import { useAccount } from "./useAccount";
 
 export type UploadedInfo = {
   fileName?: string;
@@ -106,39 +106,50 @@ export const useFileUpload = () => {
       setProgress(encrypt ? 30 : 25);
 
       // 6) Create storage service
-      const storageService = await synapse.createStorage({
-        withCDN: true,
-        callbacks: {
-          onDataSetResolved: (info) => {
-            console.log("Dataset resolved:", info);
-            setStatus("Existing dataset found and resolved");
-            setProgress(encrypt ? 35 : 30);
+      let storageService;
+      try {
+        storageService = await synapse.createStorage({
+          withCDN: true,
+          callbacks: {
+            onDataSetResolved: (info) => {
+              console.log("Dataset resolved:", info);
+              setStatus("Existing dataset found and resolved");
+              setProgress(encrypt ? 35 : 30);
+            },
+            onDataSetCreationStarted: (transactionResponse, statusUrl) => {
+              console.log("Dataset creation started:", transactionResponse);
+              console.log("Dataset creation status URL:", statusUrl);
+              setStatus("Creating new dataset on blockchain...");
+              setProgress(encrypt ? 40 : 35);
+            },
+            onDataSetCreationProgress: (status) => {
+              console.log("Dataset creation progress:", status);
+              if (status.transactionSuccess) {
+                setStatus(`Dataset transaction confirmed on chain`);
+                setProgress(encrypt ? 50 : 45);
+              }
+              if (status.serverConfirmed) {
+                setStatus(
+                  `Dataset ready! (${Math.round(status.elapsedMs / 1000)}s)`
+                );
+                setProgress(encrypt ? 55 : 50);
+              }
+            },
+            onProviderSelected: (provider) => {
+              console.log("Storage provider selected:", provider);
+              setStatus(`Storage provider selected (${provider.name})`);
+            },
           },
-          onDataSetCreationStarted: (transactionResponse, statusUrl) => {
-            console.log("Dataset creation started:", transactionResponse);
-            console.log("Dataset creation status URL:", statusUrl);
-            setStatus("Creating new dataset on blockchain...");
-            setProgress(encrypt ? 40 : 35);
-          },
-          onDataSetCreationProgress: (status) => {
-            console.log("Dataset creation progress:", status);
-            if (status.transactionSuccess) {
-              setStatus(`Dataset transaction confirmed on chain`);
-              setProgress(encrypt ? 50 : 45);
-            }
-            if (status.serverConfirmed) {
-              setStatus(
-                `Dataset ready! (${Math.round(status.elapsedMs / 1000)}s)`
-              );
-              setProgress(encrypt ? 55 : 50);
-            }
-          },
-          onProviderSelected: (provider) => {
-            console.log("Storage provider selected:", provider);
-            setStatus(`Storage provider selected (${provider.name})`);
-          },
-        },
-      });
+        });
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes("recordKeeper address not allowed") || errorMessage.includes("403")) {
+          throw new Error(
+            "Storage not set up. Please visit the Storage Manager to buy storage capacity before uploading files."
+          );
+        }
+        throw error;
+      }
 
       setStatus("Uploading file to storage provider...");
       setProgress(encrypt ? 60 : 55);

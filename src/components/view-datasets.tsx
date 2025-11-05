@@ -1,12 +1,11 @@
-// components/ViewProofSets.tsx
 "use client";
 
-import { useAccount } from "wagmi";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { useDatasets } from "@/hooks/useDatasets";
 import { DataSet } from "@/types";
 import { DataSetPieceData } from "@filoz/synapse-sdk";
+import { useAccount } from "@/hooks/useAccount";
 
 export const ViewDataSets = () => {
   const { isConnected } = useAccount();
@@ -20,7 +19,7 @@ export const ViewDataSets = () => {
     <div className="p-6 bg-background overflow-y-auto">
       <div className="flex justify-between items-center pb-4 border-b">
         <div className="sticky top-0 bg-background z-10">
-          <h3 className="text-xl font-medium text-gray-900">Proof Sets</h3>
+          <h3 className="text-xl font-medium text-gray-900">Data Sets</h3>
           <p className="text-sm text-gray-500 mt-1">
             View and manage your storage data sets
           </p>

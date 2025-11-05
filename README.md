@@ -49,12 +49,9 @@ FilDOS is a revolutionary decentralized storage platform built on Filecoin that 
 
 3. **Configure environment variables**
    ```bash
-   cp env.example .env.local
+   cp env.example .env
    ```
-   
-   Then edit `.env.local` and set:
-   - `NEXT_PUBLIC_AI_SERVER_URL`: Your AI server URL (default: http://localhost:5001)
-   - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`: Get Project ID from [WalletConnect Cloud](https://cloud.walletconnect.com)
+   Then edit `.env`
 
 4. **Set up the AI service**
    ```bash

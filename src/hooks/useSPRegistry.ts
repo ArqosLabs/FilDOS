@@ -7,7 +7,7 @@ import {
   type ProductType
 } from "@filoz/synapse-sdk/sp-registry";
 import { useSynapse } from "@/providers/SynapseProvider";
-import { useAccount } from "wagmi";
+import { useAccount } from "./useAccount";
 
 /**
  * Hook to get all active storage providers

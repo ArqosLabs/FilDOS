@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import { Users, Share } from "lucide-react";
 import { useSharedFolders } from "@/hooks/useContract";
@@ -10,6 +9,8 @@ import Header from "@/components/header";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
 import { FileItem } from "@/types";
+import { useAccount } from "@/hooks/useAccount";
+import { ConnectWalletPrompt } from "@/components/not-connected";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -69,14 +70,9 @@ export default function SharedFolders() {
   const hasError = foldersError || folderDataError;
 
   if (!isConnected) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-medium mb-4">Connect Your Wallet</h2>
-          <p className="text-gray-600">Please connect your wallet to access shared folders.</p>
-        </div>
-      </div>
-    );
+    return <ConnectWalletPrompt 
+      description="Please connect your wallet to access folders shared with you by other users."
+    />;
   }
 
   return (

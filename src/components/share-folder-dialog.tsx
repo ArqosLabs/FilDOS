@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
 import { Share, Users, Eye, Edit, X, Lock, Globe, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useShareFolder, useFolderSharees, useRevokeShare, useFolderData } from "@/hooks/useContract";
+import { useAccount } from "@/hooks/useAccount";
 
 // Format USDFC (6 decimals) to readable string
 const formatUSDFC = (amount: bigint) => {

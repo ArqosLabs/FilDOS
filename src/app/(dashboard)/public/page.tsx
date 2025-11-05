@@ -1,6 +1,6 @@
 "use client";
 
-import { useAccount } from "wagmi";
+
 import { useRouter } from "next/navigation";
 import { Store, User, Calendar } from "lucide-react";
 import { usePublicFolders } from "@/hooks/useContract";
@@ -8,6 +8,8 @@ import { useFolderList } from "@/hooks/useFolderList";
 import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useAccount } from "@/hooks/useAccount";
+import { ConnectWalletPrompt } from "@/components/not-connected";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -39,15 +41,9 @@ export default function Marketplace() {
   const hasError = foldersError || folderDataError;
 
   if (!isConnected) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Store className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-medium mb-2">Data Marketplace</h2>
-          <p className="text-gray-600">Please connect your wallet to browse public folders.</p>
-        </div>
-      </div>
-    );
+    return <ConnectWalletPrompt 
+      description="Please connect your wallet to browse public folders and discover datasets available in the marketplace."
+    />;
   }
 
   return (
