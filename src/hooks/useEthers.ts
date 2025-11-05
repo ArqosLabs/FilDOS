@@ -1,44 +1,68 @@
-import { BrowserProvider, JsonRpcSigner } from "ethers";
 import { useMemo } from "react";
-import type { Account, Chain, Client, Transport } from "viem";
-import { type Config, useConnectorClient } from "wagmi";
+import { useActiveWallet, useActiveAccount } from "thirdweb/react";
+import { ethers6Adapter } from "thirdweb/adapters/ethers6";
+import { client } from "@/utils/client";
 
-export const clientToSigner = (client: Client<Transport, Chain, Account>) => {
-  const { account, chain, transport } = client;
-  if (!chain) return null;
-  const network = {
-    chainId: chain.id,
-    name: chain.name,
-    ensAddress: chain.contracts?.ensRegistry?.address,
-  };
-  const provider = new BrowserProvider(transport, network);
-  provider.getSigner();
-  const signer = new JsonRpcSigner(provider, account.address);
-  return signer;
+/** Hook to get an ethers.js Signer from ThirdWeb wallet. */
+export const useEthersSigner = () => {
+  const wallet = useActiveWallet();
+  const account = useActiveAccount();
+
+  return useMemo(() => {
+    if (!wallet || !account) return undefined;
+
+    try {
+      const chain = wallet.getChain();
+      if (!chain) return undefined;
+
+      // Validate chain ID - only allow Filecoin chains
+      if (chain.id !== 314 && chain.id !== 314159) {
+        console.warn(`Unsupported chain ID: ${chain.id}. Only Filecoin Calibration (314159) and Mainnet (314) are supported.`);
+        return undefined;
+      }
+
+      // Convert ThirdWeb wallet to ethers signer
+      const signer = ethers6Adapter.signer.toEthers({
+        client,
+        chain,
+        account,
+      });
+
+      return signer;
+    } catch (error) {
+      console.error("Failed to create ethers signer:", error);
+      return undefined;
+    }
+  }, [wallet, account]);
 };
 
-export const clientToProvider = (client: Client<Transport, Chain, Account>) => {
-  const { chain, transport } = client;
-  if (!chain) return null;
-  const network = {
-    chainId: chain.id,
-    name: chain.name,
-    ensAddress: chain.contracts?.ensRegistry?.address,
-  };
-  const provider = new BrowserProvider(transport, network);
-  return provider;
-};
+/** Hook to get an ethers.js Provider from ThirdWeb wallet. */
+export const useEthersProvider = () => {
+  const wallet = useActiveWallet();
 
-/** Hook to convert a viem Wallet Client to an ethers.js Signer. */
-export const useEthersSigner = ({ chainId }: { chainId?: number } = {}) => {
-  const { data: client } = useConnectorClient<Config>({ chainId });
-  return useMemo(() => (client ? clientToSigner(client) : undefined), [client]);
-};
-/** Hook to convert a viem Wallet Client to an ethers.js Provider. */
-export const useEthersProvider = ({ chainId }: { chainId?: number } = {}) => {
-  const { data: client } = useConnectorClient<Config>({ chainId });
-  return useMemo(
-    () => (client ? clientToProvider(client) : undefined),
-    [client]
-  );
+  return useMemo(() => {
+    if (!wallet) return undefined;
+
+    try {
+      const chain = wallet.getChain();
+      if (!chain) return undefined;
+
+      // Validate chain ID - only allow Filecoin chains
+      if (chain.id !== 314 && chain.id !== 314159) {
+        console.warn(`Unsupported chain ID: ${chain.id}. Only Filecoin Calibration (314159) and Mainnet (314) are supported.`);
+        return undefined;
+      }
+
+      // Convert ThirdWeb wallet to ethers provider
+      const provider = ethers6Adapter.provider.toEthers({
+        client,
+        chain,
+      });
+
+      return provider;
+    } catch (error) {
+      console.error("Failed to create ethers provider:", error);
+      return undefined;
+    }
+  }, [wallet]);
 };

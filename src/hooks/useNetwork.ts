@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
+import { useActiveWallet } from "thirdweb/react";
 
 const getNetwork = async (chainId: number) => {
   const network =
@@ -8,7 +8,9 @@ const getNetwork = async (chainId: number) => {
 };
 
 export const useNetwork = () => {
-  const { chainId } = useAccount();
+  const wallet = useActiveWallet();
+  const chainId = wallet?.getChain()?.id;
+  
   return useQuery({
     queryKey: ["network", chainId],
     queryFn: () => {
@@ -17,5 +19,6 @@ export const useNetwork = () => {
       if (!network) throw new Error("Unsupported network");
       return network;
     },
+    enabled: !!chainId,
   });
 };

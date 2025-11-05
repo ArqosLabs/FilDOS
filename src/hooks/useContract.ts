@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { useAccount } from "wagmi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getContract } from "@/utils/contracts";
 import { useEthersSigner, useEthersProvider } from "@/hooks/useEthers";
 import type { FileEntry, FolderAccess } from "@/types";
+import { useAccount } from "./useAccount";
 
 
 /**
@@ -12,14 +12,37 @@ import type { FileEntry, FolderAccess } from "@/types";
 export const useContract = () => {
   const signer = useEthersSigner();
   const provider = useEthersProvider();
-  const { address } = useAccount();
+  const { address, chainId, isConnected } = useAccount();
   const queryClient = useQueryClient();
 
-  // Get contract instance
-  const contract = useMemo(() => {
-    if (!signer && !provider) return null;
-    return getContract(signer || provider!);
-  }, [signer, provider]);
+  // Get read-only contract instance (for queries)
+  const readContract = useMemo(() => {
+    if (!provider) return null;
+    return getContract(provider);
+  }, [provider]);
+
+  // Get write contract instance (for mutations)
+  const writeContract = useMemo(() => {
+    if (!signer) return null;
+    return getContract(signer);
+  }, [signer]);
+
+  // Use write contract if available, otherwise use read contract
+  const contract = writeContract || readContract;
+
+  // Helper to ensure write contract is available for mutations
+  const ensureWriteContract = () => {
+    if (!isConnected) {
+      throw new Error("Please connect your wallet to perform this action");
+    }
+    if (chainId !== 314159 && chainId !== 314) {
+      throw new Error(`Please switch to Filecoin Calibration network. Current chain: ${chainId}`);
+    }
+    if (!writeContract) {
+      throw new Error("Signer is not ready. Please wait a moment and try again.");
+    }
+    return writeContract;
+  };
 
   // Read-only queries
   const queries = {
@@ -351,7 +374,7 @@ export const useContract = () => {
     // Mint a new folder
     mintFolder: useMutation({
       mutationFn: async ({ name, folderType }: { name: string; folderType: string }) => {
-        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const contract = ensureWriteContract();
         const tx = await contract.mintFolder(name, folderType);
         const receipt = await tx.wait();
         
@@ -399,7 +422,7 @@ export const useContract = () => {
         dataToEncryptHash?: string;
         fileType?: string;
       }) => {
-        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const contract = ensureWriteContract();
         const transaction = await contract.addFile(
           tokenId, 
           cid, 
@@ -430,7 +453,7 @@ export const useContract = () => {
         toTokenId: string | number;
         cid: string;
       }) => {
-        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const contract = ensureWriteContract();
         const tx = await contract.moveFile(fromTokenId, toTokenId, cid);
         return await tx.wait();
       },
@@ -452,7 +475,7 @@ export const useContract = () => {
         isPublic: boolean;
         viewingPrice?: bigint | number;
       }) => {
-        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const contract = ensureWriteContract();
         const tx = await contract.setFolderPublic(tokenId, isPublic, viewingPrice);
         return await tx.wait();
       },
@@ -479,7 +502,7 @@ export const useContract = () => {
         canRead: boolean;
         canWrite: boolean;
       }) => {
-        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const contract = ensureWriteContract();
         const tx = await contract.shareFolder(tokenId, grantee, canRead, canWrite);
         const receipt = await tx.wait();
         
@@ -513,7 +536,7 @@ export const useContract = () => {
     // Revoke a share
     revokeShare: useMutation({
       mutationFn: async ({ shareId }: { shareId: string | number }) => {
-        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const contract = ensureWriteContract();
         const tx = await contract.revokeShare(shareId);
         return await tx.wait();
       },
@@ -535,7 +558,7 @@ export const useContract = () => {
         tokenId: string | number;
         cid: string;
       }) => {
-        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const contract = ensureWriteContract();
         const tx = await contract.removeFile(tokenId, cid);
         return await tx.wait();
       },
@@ -557,7 +580,7 @@ export const useContract = () => {
         tokenId: string | number;
         price: bigint | string;
       }) => {
-        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const contract = ensureWriteContract();
         const tx = await contract.setViewingPrice(tokenId, price);
         return await tx.wait();
       },
@@ -574,7 +597,7 @@ export const useContract = () => {
       }: {
         tokenId: string | number;
       }) => {
-        if (!contract || !signer) throw new Error("Contract or signer not initialized");
+        const contract = ensureWriteContract();
         const tx = await contract.payForViewAccess(tokenId);
         return await tx.wait();
       },

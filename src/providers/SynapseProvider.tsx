@@ -1,14 +1,10 @@
 "use client";
 
-import {
-  RPC_URLS,
-  Synapse,
-  WarmStorageService,
-} from "@filoz/synapse-sdk";
+import { RPC_URLS, Synapse, WarmStorageService } from "@filoz/synapse-sdk";
 import { createContext, useState, useEffect, useContext, useRef } from "react";
-import { useEthersSigner } from "@/hooks/useEthers";
 import { config } from "@/config";
-import { useAccount } from "wagmi";
+import { useEthersSigner } from "@/hooks/useEthers";
+import { useAccount } from "@/hooks/useAccount";
 
 export const SynapseContext = createContext<{
   synapse: Synapse | null;
@@ -21,11 +17,11 @@ export const SynapseProvider = ({
   children: React.ReactNode;
 }) => {
   const [synapse, setSynapse] = useState<Synapse | null>(null);
-
   const [warmStorageService, setWarmStorageService] =
     useState<WarmStorageService | null>(null);
-  const signer = useEthersSigner();
-  const { chainId } = useAccount();
+
+  const { isConnected, chainId } = useAccount();
+  const ethersSigner = useEthersSigner();
   const synapseRef = useRef<Synapse | null>(null);
 
   const destroyProvider = async (maybeProvider: unknown) => {
@@ -43,7 +39,8 @@ export const SynapseProvider = ({
     let cancelled = false;
 
     const init = async () => {
-      if (!signer) {
+      // Check if wallet is connected and signer is available
+      if (!isConnected || !ethersSigner) {
         if (synapseRef.current) {
           await destroyProvider(synapseRef.current.getProvider());
         }
@@ -55,33 +52,53 @@ export const SynapseProvider = ({
         return;
       }
 
-      if (synapseRef.current) {
-        await destroyProvider(synapseRef.current.getProvider());
+      // Validate chain ID
+      if (chainId !== 314 && chainId !== 314159) {
+        console.error(`Invalid chain ID: ${chainId}. Please connect to Filecoin Calibration (314159) or Mainnet (314).`);
+        if (!cancelled) {
+          synapseRef.current = null;
+          setSynapse(null);
+          setWarmStorageService(null);
+        }
+        return;
       }
 
-      // Determine the correct RPC URL based on the current chain
-      const rpcURL = chainId === 314 
-        ? RPC_URLS.mainnet.websocket 
-        : RPC_URLS.calibration.websocket;
+      try {
+        if (synapseRef.current) {
+          await destroyProvider(synapseRef.current.getProvider());
+        }
 
-      const synapse = await Synapse.create({
-        signer,
-        withCDN: config.withCDN,
-        disableNonceManager: false,
-        rpcURL,
-      });
+        // Determine the correct RPC URL based on the current chain
+        const rpcURL = chainId === 314
+            ? RPC_URLS.mainnet.websocket
+            : RPC_URLS.calibration.websocket;
 
-      const wss = await WarmStorageService.create(
-        synapse.getProvider(),
-        synapse.getWarmStorageAddress()
-      );
+        const synapse = await Synapse.create({
+          signer: ethersSigner,
+          withCDN: config.withCDN,
+          disableNonceManager: false,
+          rpcURL,
+        });
 
-      if (!cancelled) {
-        synapseRef.current = synapse;
-        setSynapse(synapse);
-        setWarmStorageService(wss);
-      } else {
-        await destroyProvider(synapse.getProvider());
+        const wss = await WarmStorageService.create(
+          synapse.getProvider(),
+          synapse.getWarmStorageAddress()
+        );
+
+        if (!cancelled) {
+          synapseRef.current = synapse;
+          setSynapse(synapse);
+          setWarmStorageService(wss);
+        } else {
+          await destroyProvider(synapse.getProvider());
+        }
+      } catch (error) {
+        console.error("SynapseProvider: Failed to initialize", error);
+        if (!cancelled) {
+          synapseRef.current = null;
+          setSynapse(null);
+          setWarmStorageService(null);
+        }
       }
     };
 
@@ -96,7 +113,7 @@ export const SynapseProvider = ({
         synapseRef.current = null;
       })();
     };
-  }, [signer, chainId]);
+  }, [isConnected, ethersSigner, chainId]);
 
   return (
     <SynapseContext.Provider value={{ synapse, warmStorageService }}>

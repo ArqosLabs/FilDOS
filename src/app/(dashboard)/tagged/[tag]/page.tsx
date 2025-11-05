@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useAccount } from "wagmi";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Tag, Search, Filter, FileText, Image as ImageIcon, Video, Archive, Code } from "lucide-react";
 import { useSearchMyFilesByTag } from "@/hooks/useContract";
@@ -12,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
 import type { FileEntry } from "@/types";
+import { useAccount } from "@/hooks/useAccount";
+import { ConnectWalletPrompt } from "@/components/not-connected";
 
 // Convert FileEntry to FileItem format for compatibility with existing components
 interface FileItem {
@@ -143,14 +144,9 @@ export default function TaggedFilesPage() {
   };
 
   if (!isConnected) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-medium mb-4">Connect Your Wallet</h2>
-          <p className="text-gray-600">Please connect your wallet to search your files.</p>
-        </div>
-      </div>
-    );
+    return <ConnectWalletPrompt 
+      description="Please connect your wallet to search and view your tagged files."
+    />;
   }
 
   return (

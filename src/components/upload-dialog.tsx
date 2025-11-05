@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useAccount } from "wagmi";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useAddFile } from "@/hooks/useContract";
 import { 
@@ -25,6 +24,7 @@ import {
   RefreshCw,
   Lock
 } from "lucide-react";
+import { useAccount } from "@/hooks/useAccount";
 
 interface UploadDialogProps {
   children: React.ReactNode;

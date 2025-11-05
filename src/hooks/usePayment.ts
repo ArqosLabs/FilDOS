@@ -2,9 +2,9 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { TOKENS, TIME_CONSTANTS } from "@filoz/synapse-sdk";
 import { DATA_SET_CREATION_FEE, MAX_UINT256 } from "@/utils";
-import { useAccount } from "wagmi";
 import { config } from "@/config";
 import { useSynapse } from "@/providers/SynapseProvider";
+import { useAccount } from "./useAccount";
 
 /**
  * Hook to handle payment for storage

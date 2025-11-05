@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
 import { Upload, ArrowLeft, Lock, BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,8 @@ import EmbeddingDialog from "@/components/embedding-dialog";
 import SearchDialog from "@/components/search-dialog";
 import PayAccessDialog from "@/components/pay-access-dialog";
 import { FileItem } from "@/types";
+import { useAccount } from "@/hooks/useAccount";
+import { ConnectWalletPrompt } from "@/components/not-connected";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -134,14 +135,9 @@ export default function FolderPage() {
   }
 
   if (!isConnected) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-medium mb-4">Connect Your Wallet</h2>
-          <p className="text-gray-600">Please connect your wallet to access your folders and files.</p>
-        </div>
-      </div>
-    );
+    return <ConnectWalletPrompt
+      description="Please connect your wallet to access your folders and files."
+    />;
   }
 
   // Check if user has access to this folder
@@ -160,7 +156,6 @@ export default function FolderPage() {
         <div className="flex flex-1 overflow-hidden">
           <main className="flex-1 flex flex-col overflow-hidden">
             <div className="flex flex-col items-center justify-center p-12 text-center min-h-[60vh]">
-              <Lock className="w-20 h-20 text-gray-400 mb-4" />
               <h3 className="text-2xl font-semibold text-gray-900 mb-2">Payment Required</h3>
               <p className="text-gray-600 mb-1">
                 This folder requires a one-time payment to access.

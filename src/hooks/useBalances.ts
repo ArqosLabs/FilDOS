@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { TOKENS, SIZE_CONSTANTS } from "@filoz/synapse-sdk";
-import { useAccount } from "wagmi";
 import { calculateStorageMetrics } from "@/utils/calculateStorageMetrics";
 import { formatUnits } from "viem";
 import { defaultBalances, UseBalancesResponse } from "@/types";
 import { useSynapse } from "@/providers/SynapseProvider";
+import { useAccount } from "./useAccount";
 
 /**
  * Hook to fetch and format wallet balances and storage metrics
@@ -18,15 +18,14 @@ export const useBalances = (
   minDaysThreshold?: number
 ) => {
   const { synapse } = useSynapse();
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
 
   const query = useQuery({
-    queryKey: ["balances", address, storageCapacity, persistencePeriod, minDaysThreshold],
+    queryKey: ["balances", address, chainId, storageCapacity, persistencePeriod, minDaysThreshold],
     enabled: !!synapse && !!address,
     queryFn: async (): Promise<UseBalancesResponse> => {
       if (!synapse) throw new Error("Synapse not found");
 
-      // Fetch raw balances
       const [filRaw, usdfcRaw, paymentsRaw] = await Promise.all([
         synapse.payments.walletBalance(),
         synapse.payments.walletBalance(TOKENS.USDFC),

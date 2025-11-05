@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useAccount } from 'wagmi';
 import Image from 'next/image';
 import { 
   Download, 
@@ -21,6 +20,7 @@ import { useFileDecryption } from '@/hooks/useFileDecryption';
 import { useFiles } from '@/hooks/useContract';
 import { FileItem, FileEntry } from '@/types';
 import { Badge } from './ui/badge';
+import { useAccount } from '@/hooks/useAccount';
 
 interface FilePreviewModalProps {
   file: FileItem | null;

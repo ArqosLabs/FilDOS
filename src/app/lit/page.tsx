@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -19,6 +18,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { encryptFileWithLit, decryptFileWithLit, initLitClient } from "@/lib/litClient";
+import { useAccount } from "@/hooks/useAccount";
 
 export default function LitTestPage() {
   const { address, isConnected } = useAccount();
