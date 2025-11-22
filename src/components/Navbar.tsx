@@ -1,10 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Bell, Settings } from "lucide-react";
 import WalletConnectButton from "./connect-button";
-import { ThemeToggle } from "./theme-toggle";
 
 export default function Navbar() {
   return (
@@ -26,13 +23,6 @@ export default function Navbar() {
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <ThemeToggle />
-          <Button variant="ghost" size="icon" className="h-9 w-9 hidden sm:flex">
-            <Bell className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 hidden sm:flex">
-            <Settings className="h-4 w-4" />
-          </Button>
           <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
           <WalletConnectButton />
         </div>

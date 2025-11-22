@@ -15,6 +15,8 @@ import {
   Store,
   ChevronLeft,
   ChevronRight,
+  Bell,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +24,7 @@ import { useBalances } from "@/hooks/useBalances";
 import { Progress } from "./ui/progress";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
+import { ThemeToggle } from "./theme-toggle";
 
 const sidebarItems = [
   { icon: HardDrive, label: "My Drive", route: null },
@@ -66,10 +69,9 @@ export default function Sidebar() {
     : 0;
 
   return (
-    <aside 
-      className={`bg-background border-r border-sidebar-border flex flex-col transition-all duration-300 ease-in-out relative ${
-        isCollapsed ? "w-18" : "w-64"
-      }`}
+    <aside
+      className={`bg-background border-r border-sidebar-border flex flex-col transition-all duration-300 ease-in-out relative ${isCollapsed ? "w-18" : "w-64"
+        }`}
     >
       {/* Toggle Button */}
       <button
@@ -84,27 +86,25 @@ export default function Sidebar() {
         )}
       </button>
 
-      <div className="p-4 flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-4">
         {/* Navigation Items */}
         <nav className="space-y-1">
           {sidebarItems.map((item) => {
-            const isActive = segment === (item.route || "(root)" );
+            const isActive = segment === (item.route || "(root)");
             const href = item.route ? `/${item.route}` : '/';
-            
+
             return (
               <Link key={item.label} href={href}>
                 <Button
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start h-10 transition-all ${
-                    isCollapsed ? "px-2" : "px-3"
-                  }`}
+                  className={`w-full justify-start h-10 transition-all ${isCollapsed ? "px-2" : "px-3"
+                    }`}
                   title={isCollapsed ? item.label : undefined}
                 >
                   <item.icon className={`w-4 h-4 ${isCollapsed ? "" : "mr-3"} flex-shrink-0`} />
-                  <span 
-                    className={`flex-1 text-left transition-all duration-300 ${
-                      isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
-                    }`}
+                  <span
+                    className={`flex-1 text-left transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
+                      }`}
                   >
                     {item.label}
                   </span>
@@ -118,57 +118,55 @@ export default function Sidebar() {
 
         {/* Storage Section */}
         <div className="space-y-1">
-            <Link href="/storage">
-              <Button
-                variant={segment === "storage" ? "default" : "ghost"}
-                className={`w-full justify-start h-10 transition-all ${
-                  isCollapsed ? "px-2" : "px-3"
+          <Link href="/storage">
+            <Button
+              variant={segment === "storage" ? "default" : "ghost"}
+              className={`w-full justify-start h-10 transition-all ${isCollapsed ? "px-2" : "px-3"
                 }`}
-                title={isCollapsed ? "Storage" : undefined}
-              >
-                <Cloud className={`w-4 h-4 ${isCollapsed ? "" : "mr-3"} flex-shrink-0`} />
-                <span 
-                  className={`flex-1 text-left transition-all duration-300 ${
-                    isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
+              title={isCollapsed ? "Storage" : undefined}
+            >
+              <Cloud className={`w-4 h-4 ${isCollapsed ? "" : "mr-3"} flex-shrink-0`} />
+              <span
+                className={`flex-1 text-left transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
                   }`}
-                >
-                  Storage
-                </span>
-              </Button>
-            </Link>
+              >
+                Storage
+              </span>
+            </Button>
+          </Link>
 
           {/* Storage Usage */}
           {!isCollapsed && (
-          <div className="px-3 py-2">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">
-                  {isBalanceLoading ? (
-                    <span className="flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Loading...
-                    </span>
-                  ) : (
-                    `${balances?.currentStorageGB?.toLocaleString()} GB of ${balances?.currentRateAllowanceGB?.toLocaleString()} GB used`
-                  )}
-                </span>
-                <button
-                  onClick={() => refetch()}
-                  disabled={isBalanceLoading || isRefetching}
-                  className="p-1 hover:bg-sidebar-accent rounded disabled:opacity-50 disabled:cursor-none transition-colors"
-                  title="Refresh storage data"
-                >
-                  <RefreshCw className={`h-3 w-3 text-muted-foreground ${isRefetching ? 'animate-spin' : ''}`} />
-                </button>
+            <div className="px-3 py-2">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">
+                    {isBalanceLoading ? (
+                      <span className="flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Loading...
+                      </span>
+                    ) : (
+                      `${balances?.currentStorageGB?.toLocaleString()} GB of ${balances?.currentRateAllowanceGB?.toLocaleString()} GB used`
+                    )}
+                  </span>
+                  <button
+                    onClick={() => refetch()}
+                    disabled={isBalanceLoading || isRefetching}
+                    className="p-1 hover:bg-sidebar-accent rounded disabled:opacity-50 disabled:cursor-none transition-colors"
+                    title="Refresh storage data"
+                  >
+                    <RefreshCw className={`h-3 w-3 text-muted-foreground ${isRefetching ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+                {!isBalanceLoading && (
+                  <Progress value={storageUsagePercent} className="h-2" />
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {isBalanceLoading ? "..." : `${storageUsagePercent.toFixed(1)}% of allocated storage used`}
+                </p>
               </div>
-              {!isBalanceLoading && (
-                <Progress value={storageUsagePercent} className="h-2" />
-              )}
-              <p className="text-xs text-muted-foreground">
-                {isBalanceLoading ? "..." : `${storageUsagePercent.toFixed(1)}% of allocated storage used`}
-              </p>
             </div>
-          </div>
           )}
         </div>
 
@@ -177,28 +175,26 @@ export default function Sidebar() {
         {/* File Types */}
         <div className="space-y-1">
           {!isCollapsed && (
-          <div className="px-3 py-2">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">File Types</h3>
-          </div>
+            <div className="px-3 py-2">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">File Types</h3>
+            </div>
           )}
           {fileTypes.map((item) => {
             const isActive = segment === item.route;
             const href = `/${item.route}`;
-            
+
             return (
               <Link key={item.label} href={href}>
                 <Button
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start h-9 text-sm transition-all ${
-                    isCollapsed ? "px-2" : "px-3"
-                  }`}
+                  className={`w-full justify-start h-9 text-sm transition-all ${isCollapsed ? "px-2" : "px-3"
+                    }`}
                   title={isCollapsed ? item.label : undefined}
                 >
                   <item.icon className={`w-4 h-4 ${isCollapsed ? "" : "mr-3"} flex-shrink-0`} />
-                  <span 
-                    className={`flex-1 text-left transition-all duration-300 ${
-                      isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
-                    }`}
+                  <span
+                    className={`flex-1 text-left transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
+                      }`}
                   >
                     {item.label}
                   </span>
@@ -207,6 +203,18 @@ export default function Sidebar() {
             );
           })}
         </div>
+      </div>
+
+      <div className={`p-3 border-t border-sidebar-border ${isCollapsed ? "flex flex-col items-center gap-4" : "flex items-center justify-between"}`}>
+          <ThemeToggle />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Bell className="h-6 w-6" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Settings className="h-6 w-6" />
+            </Button>
+          </div>
       </div>
     </aside>
   );
