@@ -79,8 +79,8 @@ export const StorageManager = () => {
         try {
           const storageCosts = await fetchWarmStorageCosts(synapse);
           const pricePerTiB = getPricePerTBPerMonth(storageCosts);
-          const priceInUSDFC = Number(formatUnits(pricePerTiB, 18));
-          setPricePerTiBPerMonth(priceInUSDFC.toFixed(2));
+            const priceInUSDFC = Number(formatUnits(pricePerTiB, 18));
+            setPricePerTiBPerMonth(priceInUSDFC.toFixed(2));
         } catch (error) {
           console.error("Failed to fetch storage pricing:", error);
         }
@@ -190,16 +190,16 @@ export const StorageManager = () => {
 
         {status && (
           <Card className={`${status.includes("❌")
-            ? "border-red-200 bg-red-50"
+            ? "border-destructive/50 bg-destructive/10"
             : status.includes("✅")
-              ? "border-green-200 bg-green-50"
-              : "border-blue-200 bg-blue-50"
+              ? "border-green-500/50 bg-green-500/10"
+              : "border-blue-500/50 bg-blue-500/10"
             }`}>
             <CardContent className="pt-6">
               <p className={`text-sm ${status.includes("❌")
-                ? "text-red-700"
+                ? "text-destructive"
                 : status.includes("✅")
-                  ? "text-green-700"
+                  ? "text-green-700 dark:text-green-400"
                   : "text-primary"
                 }`}>
                 {status}
@@ -209,16 +209,16 @@ export const StorageManager = () => {
         )}
         {revokeStatus && (
           <Card className={`${revokeStatus.includes("❌")
-            ? "border-red-200 bg-red-50"
+            ? "border-destructive/50 bg-destructive/10"
             : revokeStatus.includes("✅")
-              ? "border-green-200 bg-green-50"
-              : "border-blue-200 bg-blue-50"
+              ? "border-green-500/50 bg-green-500/10"
+              : "border-blue-500/50 bg-blue-500/10"
             }`}>
             <CardContent className="pt-6">
               <p className={`text-sm ${revokeStatus.includes("❌")
-                ? "text-red-700"
+                ? "text-destructive"
                 : revokeStatus.includes("✅")
-                  ? "text-green-700"
+                  ? "text-green-700 dark:text-green-400"
                   : "text-primary"
                 }`}>
                 {revokeStatus}
@@ -272,19 +272,19 @@ const AllowanceStatusSection = ({
         </div>
 
         {!isLoading && !balances?.isRateSufficient && (
-          <Card className="border-amber-200 bg-amber-50">
+          <Card className="border-amber-500/50 bg-amber-500/10">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
                 <div className="space-y-2">
-                  <p className="text-amber-800 font-medium">
+                  <p className="text-amber-800 dark:text-amber-200 font-medium">
                     Storage Rate Insufficient
                   </p>
-                  <p className="text-sm text-amber-700">
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
                     Max configured storage is {config.storageCapacity} GB. Your current covered storage is{" "}
                     {balances?.currentRateAllowanceGB?.toLocaleString()} GB.
                   </p>
-                  <p className="text-xs text-amber-600">
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
                     Currently using {balances?.currentStorageGB?.toLocaleString()} GB.
                   </p>
                 </div>
@@ -294,19 +294,19 @@ const AllowanceStatusSection = ({
         )}
 
         {!isLoading && !balances?.isLockupSufficient && (
-          <Card className="border-amber-200 bg-amber-50">
+          <Card className="border-amber-500/50 bg-amber-500/10">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
                 <div className="space-y-2">
-                  <p className="text-amber-800 font-medium">
+                  <p className="text-amber-800 dark:text-amber-200 font-medium">
                     Lockup Period Insufficient
                   </p>
-                  <p className="text-sm text-amber-700">
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
                     Max configured lockup is {config.persistencePeriod} days. Your current covered lockup is{" "}
                     {balances?.persistenceDaysLeft.toFixed(1)} days, which is less than the notice period of {config.minDaysThreshold} days.
                   </p>
-                  <p className="text-xs text-amber-600">
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
                     Currently using {balances?.currentStorageGB?.toLocaleString()} GB.
                     Deposit {depositNeededFormatted} USDFC to extend lockup for{" "}
                     {(config.persistencePeriod - (balances?.persistenceDaysLeft ?? 0)).toFixed(1)} more days.
@@ -349,13 +349,13 @@ const ActionSection = ({
 
   if (balances.isSufficient) {
     return (
-      <Card className="border-green-200 bg-green-50">
+      <Card className="border-green-500/50 bg-green-500/10">
         <CardContent className="pt-6">
           <div className="flex items-center gap-3">
-            <CheckCircle className="h-5 w-5 text-green-600" />
+            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
             <div>
-              <p className="text-green-800 font-medium">Storage Balance Sufficient</p>
-              <p className="text-sm text-green-700">
+              <p className="text-green-800 dark:text-green-300 font-medium">Storage Balance Sufficient</p>
+              <p className="text-sm text-green-700 dark:text-green-400">
                 Your storage balance supports {config.storageCapacity}GB for {balances.persistenceDaysLeft.toFixed(1)} days.
               </p>
             </div>
@@ -373,13 +373,13 @@ const ActionSection = ({
     return (
       <div className="space-y-4">
         {balances.filBalance === BigInt(0) && (
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-destructive/50 bg-destructive/10">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <AlertTriangle className="h-5 w-5 text-destructive" />
                 <div>
-                  <p className="text-red-800 font-medium">FIL Tokens Required</p>
-                  <p className="text-sm text-red-700">
+                  <p className="text-destructive font-medium">FIL Tokens Required</p>
+                  <p className="text-sm text-destructive/90">
                     You need FIL tokens to pay for transaction fees. Please deposit FIL tokens to your wallet.
                   </p>
                 </div>
@@ -388,13 +388,13 @@ const ActionSection = ({
           </Card>
         )}
         {balances.usdfcBalance === BigInt(0) && (
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-destructive/50 bg-destructive/10">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <AlertTriangle className="h-5 w-5 text-destructive" />
                 <div>
-                  <p className="text-red-800 font-medium">USDFC Tokens Required</p>
-                  <p className="text-sm text-red-700">
+                  <p className="text-destructive font-medium">USDFC Tokens Required</p>
+                  <p className="text-sm text-destructive/90">
                     You need USDFC tokens to pay for storage. Please deposit USDFC tokens to your wallet.
                   </p>
                 </div>
@@ -428,13 +428,13 @@ const ActionSection = ({
         />
       )}
       {!balances.isRateSufficient && !balances.isLockupSufficient && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/50 bg-destructive/10">
           <CardContent className="pt-6 space-y-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
               <div>
-                <p className="text-red-800 font-medium">Insufficient Storage Balance</p>
-                <p className="text-sm text-red-700">
+                <p className="text-destructive font-medium">Insufficient Storage Balance</p>
+                <p className="text-sm text-destructive/90">
                   You need to deposit {depositNeededFormatted} USDFC & increase your rate allowance to meet your storage needs.
                 </p>
               </div>
@@ -479,13 +479,13 @@ const LockupIncreaseAction = ({
   ).toFixed(3);
 
   return (
-    <Card className="border-amber-200 bg-amber-50">
+    <Card className="border-amber-500/50 bg-amber-500/10">
       <CardContent className="pt-6 space-y-4">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+          <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
           <div>
-            <p className="text-amber-800 font-medium">Additional USDFC Required</p>
-            <p className="text-sm text-amber-700">
+            <p className="text-amber-800 dark:text-amber-200 font-medium">Additional USDFC Required</p>
+            <p className="text-sm text-amber-700 dark:text-amber-300">
               Deposit {depositNeededFormatted} USDFC to extend storage lockup period.
             </p>
           </div>
@@ -523,13 +523,13 @@ const RateIncreaseAction = ({
   if (!currentLockupAllowance || !rateNeeded) return null;
 
   return (
-    <Card className="border-amber-200 bg-amber-50">
+    <Card className="border-amber-500/50 bg-amber-500/10">
       <CardContent className="pt-6 space-y-4">
         <div className="flex items-start gap-3">
-          <TrendingUp className="h-5 w-5 text-amber-600 mt-0.5" />
+          <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
           <div>
-            <p className="text-amber-800 font-medium">Rate Allowance Increase Required</p>
-            <p className="text-sm text-amber-700">
+            <p className="text-amber-800 dark:text-amber-200 font-medium">Rate Allowance Increase Required</p>
+            <p className="text-sm text-amber-700 dark:text-amber-300">
               Increase your rate allowance to meet your storage capacity needs.
             </p>
           </div>
@@ -752,14 +752,14 @@ const AllowanceItem = ({
         <span className="text-xs sm:text-sm text-muted-foreground">...</span>
       ) : isSufficient ? (
         <>
-          <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+          <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400" />
           <Badge variant="outline" className="text-xs">
             Sufficient
           </Badge>
         </>
       ) : (
         <>
-          <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
+          <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
           <Badge variant="destructive" className="text-xs">
             Insufficient
           </Badge>

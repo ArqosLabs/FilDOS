@@ -135,12 +135,12 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
         <div className="space-y-4">
 
           {/* Files Summary */}
-          <div className="p-3 rounded-md border">
+          <div className="p-3 rounded-md border border-border">
             <div className="text-sm font-medium mb-2">Files to embed:</div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {embeddableFiles.length} embeddable files out of {files.length} total files
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               Supported: Images, Documents, PDFs (non-encrypted files)
             </div>
           </div>
@@ -157,16 +157,16 @@ export default function EmbeddingDialog({ children, folderId, files }: Embedding
             {step === 'embedding' && (
               <div className="space-y-2">
                 <Progress value={embeddingsProgress} className="h-2" />
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-muted-foreground">
                   {embeddingsStatus}
                 </div>
               </div>
             )}
 
             {step === 'error' && (
-              <div className="flex items-start gap-2 p-3 rounded-md bg-red-50 border border-red-200">
-                <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-red-700">
+              <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                <AlertCircle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-destructive">
                   {errorMessage}
                 </div>
               </div>

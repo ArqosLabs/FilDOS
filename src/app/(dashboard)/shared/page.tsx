@@ -81,13 +81,13 @@ export default function SharedFolders() {
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="p-3 sm:p-4 border-b bg-gray-50">
+          <div className="p-3 sm:p-4 border-b bg-muted/30">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Share className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                <Share className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 <h2 className="text-base sm:text-lg font-medium">Shared With Me</h2>
               </div>
-              <div className="text-xs sm:text-sm text-gray-600">
+              <div className="text-xs sm:text-sm text-muted-foreground">
                 {files.length} folder{files.length !== 1 ? 's' : ''} shared with you
               </div>
             </div>
@@ -97,8 +97,8 @@ export default function SharedFolders() {
           {hasError && (
             <div className="flex items-center justify-center p-6 sm:p-8">
               <div className="text-center">
-                <div className="text-red-600 mb-2 text-sm sm:text-base">⚠️ Error</div>
-                <p className="text-gray-600 text-sm">
+                <div className="text-destructive mb-2 text-sm sm:text-base">⚠️ Error</div>
+                <p className="text-muted-foreground text-sm">
                   {foldersError?.message || "Something went wrong loading shared folders"}
                 </p>
               </div>
@@ -109,16 +109,16 @@ export default function SharedFolders() {
           {isLoading && !hasError && (
             <div className="flex items-center justify-center p-6 sm:p-8">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
                 <div className="space-y-1">
                   {foldersLoading && (
-                    <p className="text-gray-600 text-sm">Loading shared folders...</p>
+                    <p className="text-muted-foreground text-sm">Loading shared folders...</p>
                   )}
                   {folderDataLoading && (
-                    <p className="text-gray-600 text-sm">Loading folder details...</p>
+                    <p className="text-muted-foreground text-sm">Loading folder details...</p>
                   )}
                   {!foldersLoading && !folderDataLoading && (
-                    <p className="text-gray-600 text-sm">Loading...</p>
+                    <p className="text-muted-foreground text-sm">Loading...</p>
                   )}
                 </div>
               </div>
@@ -130,14 +130,14 @@ export default function SharedFolders() {
             <>
               {files.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center">
-                  <Users className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mb-4" />
-                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No shared folders yet</h3>
-                  <p className="text-sm sm:text-base text-gray-600 mb-4">
+                  <Users className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground mb-4" />
+                  <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">No shared folders yet</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4">
                     Folders that others share with you will appear here.
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 max-w-full px-4">
+                  <p className="text-xs sm:text-sm text-muted-foreground max-w-full px-4">
                     Ask others to share their folders with your wallet address:<br />
-                    <code className="bg-gray-100 px-2 py-1 rounded text-xs mt-2 inline-block break-all max-w-full">
+                    <code className="bg-muted px-2 py-1 rounded text-xs mt-2 inline-block break-all max-w-full">
                       {address}
                     </code>
                   </p>

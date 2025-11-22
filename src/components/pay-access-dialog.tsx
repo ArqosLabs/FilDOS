@@ -134,26 +134,26 @@ export default function PayAccessDialog({
         
         <div className="space-y-3">
           {/* Price Info - Compact */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-            <span className="text-sm font-medium text-gray-700">Access Price</span>
+          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border">
+            <span className="text-sm font-medium text-foreground">Access Price</span>
             <span className="text-lg font-semibold text-primary">
               {formatPrice(viewingPrice)} USDFC
             </span>
           </div>
 
           {/* Payment Steps - Compact */}
-          <div className="flex items-center gap-4 text-xs text-gray-600 px-1">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground px-1">
             <div className={`flex items-center gap-1.5 ${needsApproval && !isCheckingAllowance ? "text-primary font-medium" : needsApproval ? "" : "text-green-600"}`}>
               {!needsApproval ? (
                 <CheckCircle className="w-3.5 h-3.5" />
               ) : (
-                <div className={`w-1.5 h-1.5 rounded-full ${needsApproval && !isCheckingAllowance ? "bg-primary" : "bg-gray-300"}`} />
+                <div className={`w-1.5 h-1.5 rounded-full ${needsApproval && !isCheckingAllowance ? "bg-primary" : "bg-muted"}`} />
               )}
               <span>Approve</span>
             </div>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-border" />
             <div className={`flex items-center gap-1.5 ${!needsApproval && !isCheckingAllowance ? "text-primary font-medium" : ""}`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${!needsApproval && !isCheckingAllowance ? "bg-primary" : "bg-gray-300"}`} />
+              <div className={`w-1.5 h-1.5 rounded-full ${!needsApproval && !isCheckingAllowance ? "bg-primary" : "bg-muted"}`} />
               <span>Payment</span>
             </div>
           </div>
@@ -194,7 +194,7 @@ export default function PayAccessDialog({
 
           {/* Checking allowance */}
           {isCheckingAllowance && (
-            <div className="flex items-center gap-2 text-sm text-gray-600 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
               <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
               <span>Checking allowance...</span>
             </div>

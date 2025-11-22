@@ -1,6 +1,9 @@
+"use client";
+
+import { useTheme } from "next-themes";
 import { filecoinCalibration, supportedChains } from "@/utils/chains";
 import { client } from "@/utils/client";
-import { ChainIcon, ChainProvider, ConnectButton, lightTheme } from "thirdweb/react";
+import { ChainIcon, ChainProvider, ConnectButton, lightTheme, darkTheme } from "thirdweb/react";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 
 const wallets = [
@@ -24,8 +27,10 @@ const wallets = [
 ];
 
 export default function WalletConnectButton() {
+    const { resolvedTheme } = useTheme();
+
     return (
-        <>
+        <div className="gap-1 flex items-center">
             <ConnectButton
                 chain={filecoinCalibration}
                 client={client}
@@ -36,7 +41,7 @@ export default function WalletConnectButton() {
                     titleIcon:
                         "https://www.fildos.cloud/FILDOS.png",
                 }}
-                theme={lightTheme({
+                theme={(resolvedTheme === "dark" ? darkTheme : lightTheme)({
                     colors: {
                         accentText: "#0295f6",
                         primaryButtonBg: "#0295f6"
@@ -53,6 +58,6 @@ export default function WalletConnectButton() {
                     />
                 </div>
             </ChainProvider>
-        </>
+        </div>
     );
 }

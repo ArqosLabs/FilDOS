@@ -136,9 +136,9 @@ export default function MakePublicDialog({
         
         <div className="space-y-4">
           {/* Current Status */}
-          <div className="bg-gray-50 p-3 rounded-sm">
+          <div className="bg-muted/30 p-3 rounded-sm">
             <div className="flex items-center gap-2 mb-2">
-              <div className="text-sm font-medium text-gray-900">Current Status</div>
+              <div className="text-sm font-medium text-foreground">Current Status</div>
             </div>
             <div className="flex items-center gap-2">
               {isCurrentlyPublic ? (
@@ -147,7 +147,7 @@ export default function MakePublicDialog({
                     <Globe className="w-3 h-3 mr-1" />
                     Public
                   </Badge>
-                  <span className="text-xs text-gray-600">Anyone can view this folder on marketplace</span>
+                  <span className="text-xs text-muted-foreground">Anyone can view this folder on marketplace</span>
                 </>
               ) : (
                 <>
@@ -155,7 +155,7 @@ export default function MakePublicDialog({
                     <Lock className="w-3 h-3 mr-1" />
                     Private
                   </Badge>
-                  <span className="text-sm text-gray-600">Only you and shared users can view</span>
+                  <span className="text-sm text-muted-foreground">Only you and shared users can view</span>
                 </>
               )}
             </div>
@@ -163,10 +163,10 @@ export default function MakePublicDialog({
 
           {/* QR Code - Only show when folder is public */}
           {isCurrentlyPublic && qrCodeUrl && (
-            <div className="bg-gray-50 p-4 rounded-sm space-y-3">
-              <div className="text-sm font-medium text-gray-900">Share via QR Code</div>
+            <div className="bg-muted/30 p-4 rounded-sm space-y-3">
+              <div className="text-sm font-medium text-foreground">Share via QR Code</div>
               <div className="flex flex-col items-center space-y-3">
-                <div className="bg-white p-3 rounded-sm border-2 border-gray-200">
+                <div className="bg-white p-3 rounded-sm border-2 border-border">
                   <Image 
                     src={qrCodeUrl} 
                     alt="QR Code for folder" 
@@ -184,7 +184,7 @@ export default function MakePublicDialog({
                   <Download className="w-4 h-4 mr-2" />
                   Download QR Code
                 </Button>
-                <p className="text-xs text-center text-gray-600">
+                <p className="text-xs text-center text-muted-foreground">
                   Scan this code to access the folder directly
                 </p>
               </div>
@@ -193,8 +193,8 @@ export default function MakePublicDialog({
 
           {/* Pricing Options - Only show when making public */}
           {!isCurrentlyPublic && (
-            <div className="bg-gray-50 p-4 rounded-sm space-y-3">
-              <div className="text-sm font-medium text-gray-900">Access Settings</div>
+            <div className="bg-muted/30 p-4 rounded-sm space-y-3">
+              <div className="text-sm font-medium text-foreground">Access Settings</div>
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
@@ -230,9 +230,9 @@ export default function MakePublicDialog({
           )}
 
           {/* New Status Preview */}
-          <div className="bg-gray-50 p-3 rounded-sm">
+          <div className="bg-muted/30 p-3 rounded-sm">
             <div className="flex items-center gap-2 mb-2">
-              <div className="text-sm font-medium text-gray-900">After Change</div>
+              <div className="text-sm font-medium text-foreground">After Change</div>
             </div>
             <div className="flex items-center gap-2">
               {!isCurrentlyPublic ? (
@@ -241,7 +241,7 @@ export default function MakePublicDialog({
                     <Globe className="w-3 h-3 mr-1" />
                     Public
                   </Badge>
-                  <span className="text-xs text-gray-600">Anyone can view this folder on marketplace</span>
+                  <span className="text-xs text-muted-foreground">Anyone can view this folder on marketplace</span>
                 </>
               ) : (
                 <>
@@ -249,7 +249,7 @@ export default function MakePublicDialog({
                     <Lock className="w-3 h-3 mr-1" />
                     Private
                   </Badge>
-                  <span className="text-sm text-gray-600">Only you and shared users can view</span>
+                  <span className="text-sm text-muted-foreground">Only you and shared users can view</span>
                 </>
               )}
             </div>

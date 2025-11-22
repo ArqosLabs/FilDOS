@@ -58,13 +58,13 @@ const getTagIcon = (tag: string) => {
 };
 
 const getTagColor = (tag: string) => {
-  if (['images', 'design'].includes(tag)) return 'bg-blue-100 text-blue-700 border-blue-200';
-  if (['videos', 'audio'].includes(tag)) return 'bg-purple-100 text-purple-700 border-purple-200';
-  if (['documents', 'spreadsheets', 'presentations', 'markup'].includes(tag)) return 'bg-green-100 text-green-700 border-green-200';
-  if (['code', 'web', 'notebooks', 'databases'].includes(tag)) return 'bg-red-100 text-red-700 border-red-200';
-  if (['archives', 'binary', 'applications'].includes(tag)) return 'bg-orange-100 text-orange-700 border-orange-200';
-  if (['embeds'].includes(tag)) return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-  return 'bg-gray-100 text-gray-700 border-gray-200';
+  if (['images', 'design'].includes(tag)) return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800';
+  if (['videos', 'audio'].includes(tag)) return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800';
+  if (['documents', 'spreadsheets', 'presentations', 'markup'].includes(tag)) return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800';
+  if (['code', 'web', 'notebooks', 'databases'].includes(tag)) return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800';
+  if (['archives', 'binary', 'applications'].includes(tag)) return 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800';
+  if (['embeds'].includes(tag)) return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800';
+  return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700';
 };
 
 export default function TaggedFilesPage() {
@@ -155,7 +155,7 @@ export default function TaggedFilesPage() {
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Header with back button and tag info */}
-          <div className="p-3 sm:p-4 border-b bg-gray-50">
+          <div className="p-3 sm:p-4 border-b bg-muted/30">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
               <Button 
                 variant="ghost" 
@@ -181,7 +181,7 @@ export default function TaggedFilesPage() {
             {/* Search and filter bar */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Search within tagged files..."
                   value={searchQuery}
@@ -199,8 +199,8 @@ export default function TaggedFilesPage() {
           {allTags.length > 1 && (
             <div className="p-3 sm:p-4 border-b bg-background">
               <div className="flex items-center gap-2 mb-2">
-                <Filter className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
-                <span className="text-xs sm:text-sm font-medium text-gray-700">Related tags:</span>
+                <Filter className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                <span className="text-xs sm:text-sm font-medium text-muted-foreground">Related tags:</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {allTags
@@ -233,8 +233,8 @@ export default function TaggedFilesPage() {
           {searchLoading && (
             <div className="flex items-center justify-center p-6 sm:p-8">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600 text-sm sm:text-base">Searching files with tag &ldquo;{tag}&rdquo;...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground text-sm sm:text-base">Searching files with tag &ldquo;{tag}&rdquo;...</p>
               </div>
             </div>
           )}
@@ -243,8 +243,8 @@ export default function TaggedFilesPage() {
           {searchError && (
             <div className="flex items-center justify-center p-6 sm:p-8">
               <div className="text-center">
-                <div className="text-red-600 mb-2 text-sm sm:text-base">⚠️ Error</div>
-                <p className="text-gray-600 text-sm">
+                <div className="text-destructive mb-2 text-sm sm:text-base">⚠️ Error</div>
+                <p className="text-muted-foreground text-sm">
                   Failed to search files: {searchError.message}
                 </p>
                 <Button 
@@ -264,11 +264,11 @@ export default function TaggedFilesPage() {
             <>
               {files.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center">
-                  <Tag className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mb-4" />
-                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
+                  <Tag className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground mb-4" />
+                  <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">
                     No files found with tag &ldquo;{tag}&rdquo;
                   </h3>
-                  <p className="text-sm sm:text-base text-gray-600 mb-4 px-4">
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4 px-4">
                     {searchQuery 
                       ? `No files match your search criteria within this tag.`
                       : `You don't have any files tagged with "${tag}" yet.`

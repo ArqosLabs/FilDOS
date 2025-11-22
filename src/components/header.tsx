@@ -11,13 +11,13 @@ interface HeaderProps {
 
 export default function Header({ isFilePage, viewMode, setViewMode }: HeaderProps) {
   return (
-    <div className="flex border-b border-gray-200 bg-background justify-end p-2">
+    <div className="flex border-b border-border bg-background justify-end p-2">
 
       {/* Action Buttons */}
       <div className="flex items-center gap-2">
         {/* View Mode Toggle */}
         {isFilePage && setViewMode && (
-          <div className="flex border border-gray-200 rounded-md overflow-hidden">
+          <div className="flex border border-border rounded-md overflow-hidden">
             <Button
               variant={viewMode === "grid" ? "default" : "ghost"}
               size="sm"

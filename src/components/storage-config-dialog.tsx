@@ -157,7 +157,7 @@ export const StorageConfigDialog = ({
               ))}
             </div>
             {errors.storageCapacity && (
-              <p className="text-xs text-red-600">{errors.storageCapacity}</p>
+              <p className="text-xs text-destructive">{errors.storageCapacity}</p>
             )}
           </div>
 
@@ -175,10 +175,10 @@ export const StorageConfigDialog = ({
               onChange={(e) => setPersistencePeriod(Number(e.target.value))}
               min={1}
               max={365}
-              className={errors.persistencePeriod ? "border-red-500" : ""}
+              className={errors.persistencePeriod ? "border-destructive" : ""}
             />
             {errors.persistencePeriod && (
-              <p className="text-xs text-red-600">{errors.persistencePeriod}</p>
+              <p className="text-xs text-destructive">{errors.persistencePeriod}</p>
             )}
             <p className="text-xs text-muted-foreground">
               How long your data should remain stored (lockup period)
@@ -199,10 +199,10 @@ export const StorageConfigDialog = ({
               onChange={(e) => setMinDaysThreshold(Number(e.target.value))}
               min={0}
               max={persistencePeriod - 1}
-              className={errors.minDaysThreshold ? "border-red-500" : ""}
+              className={errors.minDaysThreshold ? "border-destructive" : ""}
             />
             {errors.minDaysThreshold && (
-              <p className="text-xs text-red-600">{errors.minDaysThreshold}</p>
+              <p className="text-xs text-destructive">{errors.minDaysThreshold}</p>
             )}
             <p className="text-xs text-muted-foreground">
               Minimum days of lockup remaining before you need to add more funds
