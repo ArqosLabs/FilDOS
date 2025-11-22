@@ -152,7 +152,7 @@ export const StorageManager = () => {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="max-w-7xl space-y-4 sm:space-y-6 p-3 sm:p-6">
+      <div className="w-full space-y-4 sm:space-y-6 p-3 sm:p-6">
         <StorageBalanceHeader
           config={config}
           onConfigSave={handleConfigSave}

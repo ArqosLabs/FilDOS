@@ -207,12 +207,12 @@ export default function Sidebar() {
 
       <div className={`p-3 border-t border-sidebar-border ${isCollapsed ? "flex flex-col items-center gap-4" : "flex items-center justify-between"}`}>
           <ThemeToggle />
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={`flex items-center gap-2 ${isCollapsed ? "flex-col" : ""}`}>
             <Button variant="ghost" size="icon" className="h-9 w-9">
-              <Bell className="h-6 w-6" />
+              <Bell className="h-5 w-5" />
             </Button>
             <Button variant="ghost" size="icon" className="h-9 w-9">
-              <Settings className="h-6 w-6" />
+              <Settings className="h-5 w-5" />
             </Button>
           </div>
       </div>

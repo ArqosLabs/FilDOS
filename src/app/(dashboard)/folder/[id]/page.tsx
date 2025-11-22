@@ -128,7 +128,7 @@ export default function FolderPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -156,19 +156,19 @@ export default function FolderPage() {
         <div className="flex flex-1 overflow-hidden">
           <main className="flex-1 flex flex-col overflow-hidden">
             <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center min-h-[60vh]">
-              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Payment Required</h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-1">
+              <h3 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">Payment Required</h3>
+              <p className="text-sm sm:text-base text-muted-foreground mb-1">
                 This folder requires a one-time payment to access.
               </p>
-              <p className="text-xs sm:text-sm text-gray-500 mb-6">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-6">
                 After payment, you&apos;ll have permanent read access to all contents.
               </p>
 
-              <div className="bg-gray-50 p-4 sm:p-6 rounded-lg border max-w-md w-full mb-6">
-                <div className="text-xs sm:text-sm text-gray-600 mb-2">Dataset</div>
+              <div className="bg-muted/50 p-4 sm:p-6 rounded-lg border max-w-md w-full mb-6">
+                <div className="text-xs sm:text-sm text-muted-foreground mb-2">Dataset</div>
                 <div className="text-base sm:text-lg font-semibold mb-4">{folderData.name}</div>
-                <div className="text-xs sm:text-sm text-gray-600 mb-1">Owner</div>
-                <div className="font-mono text-xs sm:text-sm text-gray-900 mb-4">
+                <div className="text-xs sm:text-sm text-muted-foreground mb-1">Owner</div>
+                <div className="font-mono text-xs sm:text-sm text-foreground mb-4">
                   {folderData.owner.slice(0, 6)}...{folderData.owner.slice(-4)}
                 </div>
               </div>
@@ -207,9 +207,9 @@ export default function FolderPage() {
         <div className="flex flex-1 overflow-hidden">
           <main className="flex-1 flex flex-col overflow-hidden">
             <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center min-h-[60vh]">
-              <Lock className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400 mb-4" />
-              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Access Denied</h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-6">
+              <Lock className="w-16 h-16 sm:w-20 sm:h-20 text-muted-foreground mb-4" />
+              <h3 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">Access Denied</h3>
+              <p className="text-sm sm:text-base text-muted-foreground mb-6">
                 You don&apos;t have permission to access this folder.
               </p>
               <Button
@@ -285,7 +285,7 @@ export default function FolderPage() {
               }
             </h2>
             {folderData && (
-              <div className="text-xs sm:text-sm text-gray-600 mt-1 flex flex-wrap items-center gap-2">
+              <div className="text-xs sm:text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-2">
                 <Badge className="capitalize text-xs">{folderData.folderType}</Badge>
                 {folderData.isPublic && (
                   <Badge variant="secondary" className="text-xs">
