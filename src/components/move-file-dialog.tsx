@@ -84,14 +84,14 @@ export default function MoveFileDialog({
         <div className="space-y-4">
           {loadingFolderIds || loadingFolderData ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-sm text-gray-500">Loading folders...</div>
+              <div className="text-sm text-muted-foreground">Loading folders...</div>
             </div>
           ) : availableFolders.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 No other folders available
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Create a new folder to move files
               </p>
             </div>
@@ -105,25 +105,25 @@ export default function MoveFileDialog({
                       key={folder.tokenId}
                       className={`flex items-center space-x-3 p-3 border rounded-md cursor-pointer transition-colors ${
                         selectedFolderId === folder.tokenId
-                          ? "bg-blue-50 border-blue-500"
-                          : "hover:bg-gray-50 border-gray-200"
+                          ? "bg-primary/10 border-primary"
+                          : "hover:bg-muted/50 border-border"
                       }`}
                       onClick={() => setSelectedFolderId(folder.tokenId)}
                     >
                       <div
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                           selectedFolderId === folder.tokenId
-                            ? "border-blue-500 bg-blue-500"
-                            : "border-gray-300"
+                            ? "border-primary bg-primary"
+                            : "border-muted-foreground/30"
                         }`}
                       >
                         {selectedFolderId === folder.tokenId && (
-                          <Check className="w-3 h-3 text-white" />
+                          <Check className="w-3 h-3 text-primary-foreground" />
                         )}
                       </div>
                       <div className="flex flex-col flex-1 min-w-0">
                         <span className="font-medium truncate text-sm">{folder.name}</span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                           {folder.folderType}
                           {folder.isPublic && " • Public"}
                         </span>

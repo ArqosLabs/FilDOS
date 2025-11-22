@@ -338,13 +338,13 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
         URL.revokeObjectURL(url);
       } else {
         // Download original file
-        const fileUrl = `https://${file.owner}.calibration.filbeam.io/${file.cid}`;
-        const link = document.createElement('a');
+          const fileUrl = `https://${file.owner}.calibration.filbeam.io/${file.cid}`;
+          const link = document.createElement('a');
         link.href = fileUrl;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+          link.download = file.name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
       }
     }
   }, [file, decryptedFile]);
@@ -432,25 +432,25 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
           {/* Loading State */}
           {isLoading && (
             <Card className="p-6 sm:p-8 text-center">
-              <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin mx-auto mb-3 sm:mb-4 text-blue-500" />
-              <p className="text-sm sm:text-base text-gray-600">Loading file...</p>
+              <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin mx-auto mb-3 sm:mb-4 text-primary" />
+              <p className="text-sm sm:text-base text-muted-foreground">Loading file...</p>
             </Card>
           )}
 
           {/* Error State - Compact */}
           {error && (
-            <div className="p-2 sm:p-3 border border-red-200 rounded-lg bg-red-50">
+            <div className="p-3 sm:p-4 border border-destructive/20 rounded-lg bg-destructive/10">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm text-red-700 break-words">{error}</p>
+                  <p className="text-sm sm:text-base text-destructive break-words font-medium mb-1">{error}</p>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                   <Button 
                     onClick={handleRetry} 
                     variant="ghost" 
                     size="sm"
-                    className="h-7 px-2 text-xs"
+                    className="h-8 px-3 text-xs"
                   >
                     Retry
                   </Button>
@@ -491,7 +491,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
               {/* Text Content */}
               {fileContent && (
                 <div className="p-3 sm:p-4 max-h-[400px] sm:max-h-[500px] overflow-y-auto">
-                  <pre className="text-[10px] sm:text-xs text-gray-800 whitespace-pre-wrap break-words font-mono">
+                  <pre className="text-[10px] sm:text-xs text-foreground whitespace-pre-wrap break-words font-mono">
                     {fileContent}
                   </pre>
                 </div>
@@ -499,7 +499,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* Image Preview */}
               {previewUrl && fileType.startsWith('image/') && !imageLoadError && (
-                <div className="p-3 sm:p-4 bg-gray-50">
+                <div className="p-3 sm:p-4 bg-muted/30">
                   <div className="relative w-full flex justify-center">
                     <Image
                       src={previewUrl}
@@ -518,7 +518,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* Video Preview */}
               {previewUrl && fileType.startsWith('video/') && (
-                <div className="p-3 sm:p-4 bg-gray-50">
+                <div className="p-3 sm:p-4 bg-muted/30">
                   <video 
                     controls 
                     className="max-w-full max-h-[400px] sm:max-h-[500px] rounded mx-auto"
@@ -544,7 +544,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
               {/* PDF Preview */}
               {previewUrl && fileType === 'application/pdf' && (
-                <div className="p-3 sm:p-4 bg-gray-50">
+                <div className="p-3 sm:p-4 bg-muted/30">
                   <iframe
                     src={previewUrl}
                     className="w-full h-[400px] sm:h-[500px] rounded border"
@@ -557,9 +557,9 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
 
           {/* No Preview Available - Only show when decrypted but no preview */}
           {!isLoading && !error && !isDecrypting && decryptedFile && !fileContent && !previewUrl && (
-            <div className="p-6 sm:p-8 border rounded-lg text-center bg-gray-50">
-              <Eye className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mx-auto mb-2" />
-              <p className="text-xs sm:text-sm text-gray-600 mb-3">Preview not available</p>
+            <div className="p-6 sm:p-8 border rounded-lg text-center bg-muted/30">
+              <Eye className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground mx-auto mb-2" />
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3">Preview not available</p>
               <Button onClick={handleDownload} size="sm" className="text-xs sm:text-sm">
                 <Download className="w-3 h-3 mr-1" />
                 Download

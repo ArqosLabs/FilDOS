@@ -150,7 +150,7 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
     <div className="flex-1 overflow-auto">
       <div className="p-6">
 
-        <div className="bg-background border border-gray-200 rounded-md overflow-hidden">
+        <div className="bg-background border border-border rounded-md overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -175,8 +175,8 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                 return (
                   <TableRow
                     key={file.id}
-                    className={`hover:bg-gray-50 cursor-pointer select-none ${
-                      isSelected ? "bg-blue-50" : ""
+                    className={`hover:bg-muted/50 cursor-pointer select-none ${
+                      isSelected ? "bg-muted" : ""
                     }`}
                     onClick={(e) => handleRowClick(file, e)}
                     onTouchEnd={(e) => handleRowClick(file, e)}
@@ -201,10 +201,10 @@ export default function FileList({ files, selectedFiles, onToggleSelection, onFo
                         <span>{file.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-400">
+                    <TableCell className="text-sm text-muted-foreground">
                       {file.owner.slice(0, 6) + "..." + file.owner.slice(-4)}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-400">
+                    <TableCell className="text-sm text-muted-foreground">
                       {file.modified}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>

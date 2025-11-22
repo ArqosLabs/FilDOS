@@ -17,10 +17,10 @@ export const ViewDataSets = () => {
 
   return (
     <div className="p-6 bg-background overflow-y-auto">
-      <div className="flex justify-between items-center pb-4 border-b">
+      <div className="flex justify-between items-center pb-4 border-b border-border">
         <div className="sticky top-0 bg-background z-10">
-          <h3 className="text-xl font-medium text-gray-900">Data Sets</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <h3 className="text-xl font-medium text-foreground">Data Sets</h3>
+          <p className="text-sm text-muted-foreground mt-1">
             View and manage your storage data sets
           </p>
         </div>
@@ -28,7 +28,7 @@ export const ViewDataSets = () => {
 
       {isLoadingDataSets ? (
         <div className="flex justify-center items-center py-8">
-          <p className="text-gray-500">Loading data sets...</p>
+          <p className="text-muted-foreground">Loading data sets...</p>
         </div>
       ) : data && data.datasets && data.datasets.length > 0 ? (
         <div className="mt-4 space-y-6">
@@ -36,30 +36,30 @@ export const ViewDataSets = () => {
           dataset && (
             <div
               key={dataset?.clientDataSetId}
-              className="bg-gray-50 rounded-md p-4 border border-gray-200"
+              className="bg-muted/30 rounded-md p-4 border border-border"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h4 className="text-lg font-medium text-gray-900">
+                  <h4 className="text-lg font-medium text-foreground">
                     Dataset #{dataset?.pdpVerifierDataSetId}
                   </h4>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Status:{" "}
                     <span
                       className={`font-medium ${
-                        dataset.isLive ? "text-green-600" : "text-red-600"
+                        dataset.isLive ? "text-green-500" : "text-destructive"
                       }`}
                     >
                       {dataset.isLive ? "Live" : "Inactive"}
                     </span>
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     With CDN:{" "}
                     <span className={`font-medium `}>
                       {dataset.withCDN ? "⚡ Yes ⚡" : "No"}
                     </span>
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     PDP URL:{" "}
                     <span
                       className="cursor-pointer"
@@ -75,29 +75,29 @@ export const ViewDataSets = () => {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Commission: {dataset.commissionBps / 100}%
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Managed: {dataset.isManaged ? "Yes" : "No"}
                   </p>
                 </div>
               </div>
 
               <div className="mt-4">
-                <h5 className="text-sm font-medium text-gray-900 mb-2">
+                <h5 className="text-sm font-medium text-foreground mb-2">
                   Piece Details
                 </h5>
-                <div className="bg-background rounded-md border border-gray-200 p-4">
+                <div className="bg-background rounded-md border border-border p-4">
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         Current Piece Count
                       </p>
                       <p className="font-medium">{dataset.currentPieceCount}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Next Piece ID</p>
+                      <p className="text-sm text-muted-foreground">Next Piece ID</p>
                       <p className="font-medium">{dataset.nextPieceId}</p>
                     </div>
                   </div>

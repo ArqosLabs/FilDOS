@@ -116,7 +116,7 @@ export default function SearchDialog({ children, folderId }: SearchDialogProps) 
                   <AlertCircle className="w-3 h-3 mr-1" />
                   No Embeddings
                 </Badge>
-                <span className="text-xs text-gray-600 font-light">
+                <span className="text-xs text-muted-foreground font-light">
                   Please embed for your folder files to enable semantic search.
                 </span>
               </div>
@@ -174,9 +174,9 @@ export default function SearchDialog({ children, folderId }: SearchDialogProps) 
 
           {/* Search Error */}
           {searchError && (
-            <div className="flex items-start gap-2 p-3 rounded-md bg-red-50 border border-red-200">
-              <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-red-700">
+            <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <AlertCircle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-destructive">
                 {searchError.message}
               </div>
             </div>
@@ -204,7 +204,7 @@ export default function SearchDialog({ children, folderId }: SearchDialogProps) 
                     <CardContent className="p-4">
                       <div className="flex flex-row items-center gap-3">
                         <div className="flex flex-row items-center justify-center gap-1">
-                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-xs text-gray-700 font-medium">
+                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-muted text-xs text-muted-foreground font-medium">
                             {index + 1}
                           </div>
                           <Image
@@ -222,7 +222,7 @@ export default function SearchDialog({ children, folderId }: SearchDialogProps) 
                             </span>
 
                           {result.excerpt && (
-                            <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
                               {result.excerpt}
                             </p>
                           )}
@@ -237,7 +237,7 @@ export default function SearchDialog({ children, folderId }: SearchDialogProps) 
 
           {/* No Results */}
           {searchResults && searchResults.results.length === 0 && (
-            <div className="text-center p-6 text-gray-500">
+            <div className="text-center p-6 text-muted-foreground">
               <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p className="text-sm">No results found for `${searchResults.query}`</p>
               <p className="text-xs mt-1">Try different keywords or check your embeddings</p>

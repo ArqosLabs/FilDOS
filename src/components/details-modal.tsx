@@ -99,20 +99,20 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               
               <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-medium text-gray-600">Type</label>
-                <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border capitalize">{file.type}</p>
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Type</label>
+                <p className="text-xs sm:text-sm bg-muted/30 p-2 rounded border border-border capitalize">{file.type}</p>
               </div>
               
               {file.size && (
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-medium text-gray-600">Size</label>
-                  <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border">{file.size}</p>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">Size</label>
+                  <p className="text-xs sm:text-sm bg-muted/30 p-2 rounded border border-border">{file.size}</p>
                 </div>
               )}
               
               <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-medium text-gray-600">Last Modified</label>
-                <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border flex items-center gap-2">
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Last Modified</label>
+                <p className="text-xs sm:text-sm bg-muted/30 p-2 rounded border border-border flex items-center gap-2">
                   <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                   <span className="truncate">{file.modified}</span>
                 </p>
@@ -128,9 +128,9 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-medium text-gray-600">Owner</label>
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Owner</label>
                 <div className="flex items-center gap-2">
-                  <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border flex-1 break-all max-w-full">
+                  <p className="text-xs sm:text-sm bg-muted/30 p-2 rounded border border-border flex-1 break-all max-w-full">
                     {file.owner}
                   </p>
                   <Button
@@ -149,7 +149,7 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
               </div>
               
               <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-medium text-gray-600">Visibility</label>
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Visibility</label>
                 <div className="flex items-center gap-2">
                   {file.shared ? (
                     <Badge variant="secondary" className="text-xs">
@@ -176,9 +176,9 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
             <div className="grid grid-cols-1 gap-3 sm:gap-4">
               {file.tokenId && (
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-medium text-gray-600">Token ID</label>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">Token ID</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border flex-1 break-all max-w-full">
+                    <p className="text-xs sm:text-sm bg-muted/30 p-2 rounded border border-border flex-1 break-all max-w-full">
                       {file.tokenId}
                     </p>
                     <Button
@@ -199,9 +199,9 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
               
               {file.cid && (
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-medium text-gray-600">Content ID (CID)</label>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">Content ID (CID)</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border flex-1 break-all max-w-full">
+                    <p className="text-xs sm:text-sm bg-muted/30 p-2 rounded border border-border flex-1 break-all max-w-full">
                       {file.cid}
                     </p>
                     <Button
@@ -230,9 +230,9 @@ export default function DetailsModal({ file, children }: DetailsModalProps) {
                 <h3 className="text-base sm:text-lg font-medium">File Access</h3>
                 
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-medium text-gray-600">IPFS/Filecoin URL</label>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">IPFS/Filecoin URL</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-xs sm:text-sm bg-gray-50 p-2 rounded border flex-1 break-all max-w-full">
+                    <p className="text-xs sm:text-sm bg-muted/30 p-2 rounded border border-border flex-1 break-all max-w-full">
                       {fileUrl}
                     </p>
                     <Button

@@ -115,7 +115,7 @@ export default function MyDrive() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -138,7 +138,7 @@ export default function MyDrive() {
               <h2 className="text-lg font-medium">My Drive</h2>
               <CreateFolderDialog onCreateFolder={handleCreateFolder}>
                 <Button
-                  className="bg-primary hover:bg-secondary text-white"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   disabled={mintFolder.isPending}
                 >
                   {mintFolder.isPending ? "Creating..." : "Create Folder"}
@@ -169,30 +169,30 @@ export default function MyDrive() {
           {hasError && (
             <div className="flex items-center justify-center p-8">
               <div className="text-center">
-                <div className="text-red-600 mb-2">⚠️ Error</div>
+                <div className="text-destructive mb-2">⚠️ Error</div>
                 <div className="space-y-2">
                   {foldersError && (
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                       <strong>Failed to load folders:</strong> {foldersError.message}
                     </p>
                   )}
                   {folderDataError && (
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                       <strong>Failed to load folder details:</strong> Some folder information may be incomplete.
                       {successCount > 0 && totalCount > 0 && (
-                        <span className="block text-sm text-gray-500 mt-1">
+                        <span className="block text-sm text-muted-foreground mt-1">
                           Loaded {successCount} of {totalCount} folders successfully.
                         </span>
                       )}
                     </p>
                   )}
                   {mintFolder.error && (
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                       <strong>Failed to create folder:</strong> {mintFolder.error.message}
                     </p>
                   )}
                   {!foldersError && !folderDataError && !mintFolder.error && (
-                    <p className="text-gray-600">Something went wrong. Please try again.</p>
+                    <p className="text-muted-foreground">Something went wrong. Please try again.</p>
                   )}
                 </div>
               </div>
@@ -225,9 +225,9 @@ export default function MyDrive() {
 
               {files.length === 0 && !foldersLoading ? (
                 <div className="flex flex-col items-center justify-center p-12 text-center">
-                  <Folder className="w-16 h-16 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No folders yet</h3>
-                  <p className="text-gray-600 mb-4">
+                  <Folder className="w-16 h-16 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No folders yet</h3>
+                  <p className="text-muted-foreground mb-4">
                     Create your first folder to start organizing your files.
                   </p>
                 </div>

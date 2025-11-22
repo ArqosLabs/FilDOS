@@ -112,8 +112,8 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
             return (
               <div
                 key={file.id}
-                className={`group relative bg-background border border-gray-200 rounded-md p-4 hover:shadow-sm transition-all cursor-pointer select-none ${
-                  isSelected ? "ring-2 ring-primary bg-blue-50" : ""
+                className={`group relative bg-background border border-border rounded-md p-4 hover:shadow-sm transition-all cursor-pointer select-none ${
+                  isSelected ? "ring-2 ring-primary bg-muted/50" : ""
                 }`}
                 onClick={(e) => handleItemClick(file, e)}
                 onTouchEnd={(e) => handleItemClick(file, e)}
@@ -129,12 +129,12 @@ export default function FileGrid({ files, selectedFiles, onToggleSelection, onFo
                   />
 
                   {/* File Name */}
-                  <h3 className="text-sm font-base text-black truncate w-full mb-1">
+                  <h3 className="text-sm font-base text-foreground truncate w-full mb-1">
                     {file.name}
                   </h3>
 
                   {/* File Info */}
-                  <div className="text-xs text-gray-400 space-y-1">
+                  <div className="text-xs text-muted-foreground space-y-1">
                     {file.size && <div>{file.size}</div>}
                     <div>{file.modified}</div>
                   </div>

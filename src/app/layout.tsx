@@ -2,6 +2,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
 import { SynapseProvider } from "@/providers/SynapseProvider";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Inter } from 'next/font/google'
 import type { Metadata } from 'next'
 import { ThirdwebProvider } from "thirdweb/react";
@@ -26,21 +27,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
       className={inter.className}
       >
-        <ThirdwebProvider>
-          <ReactQueryProvider>
-            <SynapseProvider>
-              <ChainWarning />
-              <main className="flex flex-col min-h-screen">
-                {children}
-              </main>
-            </SynapseProvider>
-          </ReactQueryProvider>
-        </ThirdwebProvider>
-        <Analytics />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ThirdwebProvider>
+            <ReactQueryProvider>
+              <SynapseProvider>
+                <ChainWarning />
+                <main className="flex flex-col min-h-screen">
+                  {children}
+                </main>
+              </SynapseProvider>
+            </ReactQueryProvider>
+          </ThirdwebProvider>
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   );

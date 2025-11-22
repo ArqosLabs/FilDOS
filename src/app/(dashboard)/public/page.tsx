@@ -58,7 +58,7 @@ export default function Marketplace() {
                 <Store className="w-5 h-5" />
                 <h2 className="text-lg font-medium">Data Marketplace</h2>
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {publicFolders?.length || 0} folder{(publicFolders?.length || 0) !== 1 ? 's' : ''} available
               </div>
             </div>
@@ -68,8 +68,8 @@ export default function Marketplace() {
           {hasError && (
             <div className="flex items-center justify-center p-8">
               <div className="text-center">
-                <div className="text-red-600 mb-2">⚠️ Error</div>
-                <p className="text-gray-600">
+                <div className="text-destructive mb-2">⚠️ Error</div>
+                <p className="text-muted-foreground">
                   {foldersError?.message || "Something went wrong loading the marketplace"}
                 </p>
               </div>
@@ -81,7 +81,7 @@ export default function Marketplace() {
             <div className="flex items-center justify-center p-8">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading marketplace...</p>
+                <p className="text-muted-foreground">Loading marketplace...</p>
               </div>
             </div>
           )}
@@ -91,12 +91,12 @@ export default function Marketplace() {
             <>
               {(publicFolders?.length || 0) === 0 ? (
                 <div className="flex flex-col items-center justify-center p-12 text-center">
-                  <Store className="w-16 h-16 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No folders available yet</h3>
-                  <p className="text-gray-600 mb-4">
+                  <Store className="w-16 h-16 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No folders available yet</h3>
+                  <p className="text-muted-foreground mb-4">
                     Public folders will appear here when they become available.
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Create folders and make them public to share with the community.
                   </p>
                 </div>
@@ -110,11 +110,11 @@ export default function Marketplace() {
                       return (
                         <Card 
                           key={tokenId}
-                          className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
+                          className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-border"
                           onClick={() => handleFolderClick(tokenId)}
                         >
                           {/* Card Header */}
-                          <div className="bg-gray-50 p-4 border-b">
+                          <div className="bg-muted/30 p-4 border-b">
                             <h3 className="font-medium text-md line-clamp-1">
                               {folderData?.name || `Dataset ${tokenId}`}
                             </h3>
@@ -124,16 +124,16 @@ export default function Marketplace() {
                           <div className="p-4 space-y-3">
                             {/* Price */}
                             
-                              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-sm">
-                                <span className="text-xs font-medium text-gray-600">Price</span>
-                                <div className="flex items-center gap-1 text-gray-900 font-base text-sm">
+                              <div className="flex items-center justify-between p-2 bg-muted/30 rounded-sm">
+                                <span className="text-xs font-medium text-muted-foreground">Price</span>
+                                <div className="flex items-center gap-1 text-foreground font-base text-sm">
                                   <span>{!isFree ? `${formatPrice(folderData?.viewingPrice || BigInt(0))} USDFC` : "Free"}</span>
                                 </div>
                               </div>
 
                             {/* Metadata */}
                             <div className="space-y-2">
-                              <div className="flex items-center gap-2 text-xs text-gray-600">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <User className="w-3 h-3 flex-shrink-0" />
                                 <span className="truncate font-mono">
                                   {folderData?.owner ? 
@@ -142,7 +142,7 @@ export default function Marketplace() {
                                   }
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 text-xs text-gray-600">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Calendar className="w-3 h-3 flex-shrink-0" />
                                 <span>
                                   {folderData?.createdAt ? 

@@ -225,12 +225,12 @@ export default function ShareFolderDialog({ children, folderId, folderName }: Sh
               onChange={(e) => setGranteeAddress(e.target.value)}
               className={`${
                 granteeAddress && !isValidAddress(granteeAddress) 
-                  ? "border-red-500 focus:border-red-500" 
+                  ? "border-destructive focus:border-destructive" 
                   : ""
               }`}
             />
             {granteeAddress && !isValidAddress(granteeAddress) && (
-              <p className="text-sm text-red-500">Please enter a valid Ethereum address</p>
+              <p className="text-sm text-destructive">Please enter a valid Ethereum address</p>
             )}
           </div>
 

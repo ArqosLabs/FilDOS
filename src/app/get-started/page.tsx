@@ -2,38 +2,26 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, AlertTriangle, Info } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAccount } from "@/hooks/useAccount";
 import WalletConnectButton from "@/components/connect-button";
 
 export default function GetStarted() {
-  const { isConnected, chainId } = useAccount();
+  const { isConnected } = useAccount();
 
   return (
-    <div className="w-full flex flex-col h-screen bg-gray-50">
+    <div className="w-full flex flex-col h-screen bg-background">
       {/* <Navbar /> */}
       <main className="flex flex-col items-center justify-center flex-1 py-10 px-6 w-full mx-auto">
         <div className="max-w-2xl w-full space-y-6">
           {/* Header */}
           <div className="text-center space-y-4">
-            <Badge className="bg-primary text-white">Get Started</Badge>
-            <h1 className="text-4xl font-medium text-gray-900">
+            <Badge className="bg-primary text-primary-foreground">Get Started</Badge>
+            <h1 className="text-4xl font-medium text-foreground">
               Welcome to FilDOS
             </h1>
           </div>
-
-          {/* Network Notice */}
-          {chainId !== 314159 && (
-            <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red" />
-              <AlertDescription className="text-red-800">
-                <strong>Network Notice:</strong> Filecoin mainnet is not supported yet. 
-                Please switch to Filecoin Calibration network.
-              </AlertDescription>
-            </Alert>
-          )}
 
           {/* Connection Status */}
           {!isConnected ? (
@@ -49,7 +37,7 @@ export default function GetStarted() {
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
                 <WalletConnectButton />
-                <p className="text-sm text-gray-500 text-center">
+                <p className="text-sm text-muted-foreground text-center">
                   Connected to Filecoin Calibration network
                 </p>
               </CardContent>

@@ -41,10 +41,12 @@ const fileTypes = [
 export default function Sidebar() {
   const segment = useSelectedLayoutSegment();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
       setIsCollapsed(window.innerWidth < 640);
+      setIsMobile(window.innerWidth < 640);
     };
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
@@ -65,20 +67,20 @@ export default function Sidebar() {
 
   return (
     <aside 
-      className={`bg-background border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out relative ${
+      className={`bg-background border-r border-sidebar-border flex flex-col transition-all duration-300 ease-in-out relative ${
         isCollapsed ? "w-18" : "w-64"
       }`}
     >
       {/* Toggle Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-6 z-10 bg-background border border-gray-200 rounded-full p-1 hover:bg-gray-100 transition-colors shadow-sm"
+        className={`absolute -right-3 top-6 z-10 bg-background border border-sidebar-border rounded-full p-1 hover:bg-sidebar-accent transition-colors shadow-sm ${isMobile ? "hidden" : ""}`}
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {isCollapsed ? (
-          <ChevronRight className="w-4 h-4 text-gray-600" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
         ) : (
-          <ChevronLeft className="w-4 h-4 text-gray-600" />
+          <ChevronLeft className="w-4 h-4 text-muted-foreground" />
         )}
       </button>
 
@@ -153,7 +155,7 @@ export default function Sidebar() {
                 <button
                   onClick={() => refetch()}
                   disabled={isBalanceLoading || isRefetching}
-                  className="p-1 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-none transition-colors"
+                  className="p-1 hover:bg-sidebar-accent rounded disabled:opacity-50 disabled:cursor-none transition-colors"
                   title="Refresh storage data"
                 >
                   <RefreshCw className={`h-3 w-3 text-muted-foreground ${isRefetching ? 'animate-spin' : ''}`} />
@@ -176,7 +178,7 @@ export default function Sidebar() {
         <div className="space-y-1">
           {!isCollapsed && (
           <div className="px-3 py-2">
-            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">File Types</h3>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">File Types</h3>
           </div>
           )}
           {fileTypes.map((item) => {
