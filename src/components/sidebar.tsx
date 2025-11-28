@@ -9,7 +9,6 @@ import {
   Image,
   Video,
   FileArchive,
-  Scale,
   RefreshCw,
   Store,
   ChevronLeft,
@@ -20,17 +19,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useBalances } from "@/hooks/useBalances";
-import { useDatasets } from "@/hooks/useDatasets";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
+import { useDatasets } from "@/hooks/useDataset";
 
 const sidebarItems = [
   { icon: HardDrive, label: "My Drive", route: null },
   { icon: Users, label: "Shared with me", route: "shared" },
   { icon: Store, label: "Data Marketplace", route: "public" },
   // { icon: Trash2, label: "Trash", route: "trash" },
-  { icon: Scale, label: "My Data Sets", route: "data-sets" }
 ];
 
 const fileTypes = [
@@ -63,11 +61,10 @@ export default function Sidebar() {
   } = useBalances();
   const balances = data;
 
-  const { data: datasetsData } = useDatasets();
-  const datasets = datasetsData?.datasets || [];
+  const { data: datasets } = useDatasets();
 
   // Calculate total storage usage
-  const totalStorageGB = datasets.reduce((acc, dataset) => {
+  const totalStorageGB = (datasets || []).reduce((acc, dataset) => {
     return acc + (dataset?.sizeInGB || 0);
   }, 0);
 

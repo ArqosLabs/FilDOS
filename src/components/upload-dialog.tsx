@@ -24,7 +24,7 @@ import {
   RefreshCw,
   Lock
 } from "lucide-react";
-import { useAccount } from "@/hooks/useAccount";
+import { useConnection } from "wagmi";
 
 interface UploadDialogProps {
   children: React.ReactNode;
@@ -40,7 +40,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
   const [contractAddError, setContractAddError] = useState<string | null>(null);
   const [processedUploadId, setProcessedUploadId] = useState<string | null>(null);
   const [encryptFile, setEncryptFile] = useState(false);
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
 
   const { uploadFileMutation, uploadedInfo, handleReset, status, progress } =
     useFileUpload();

@@ -20,7 +20,7 @@ import { useFileDecryption } from '@/hooks/useFileDecryption';
 import { useFiles } from '@/hooks/useContract';
 import { FileItem, FileEntry } from '@/types';
 import { Badge } from './ui/badge';
-import { useAccount } from '@/hooks/useAccount';
+import { useConnection } from 'wagmi';
 
 interface FilePreviewModalProps {
   file: FileItem | null;
@@ -29,7 +29,7 @@ interface FilePreviewModalProps {
 }
 
 export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProps) {
-  const { address } = useAccount();
+  const { address } = useConnection();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);
@@ -138,7 +138,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
     let timeoutId: NodeJS.Timeout | null = null;
 
     try {
-      const fileUrl = `https://caliberation-pdp.infrafolio.com/piece/${file.cid}`;
+      const fileUrl = `https://${file.owner}.calibration.filbeam.io/${file.cid}`;
       
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), 30000); // Increased timeout to 30s

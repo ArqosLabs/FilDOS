@@ -3,10 +3,11 @@ import { TOKENS } from "@filoz/synapse-sdk";
 import { calculateStorageMetrics } from "@/utils/calculateStorageMetrics";
 import { formatUnits } from "viem";
 import { defaultBalances, UseBalancesResponse } from "@/types";
-import { useSynapse } from "@/providers/SynapseProvider";
-import { useAccount } from "./useAccount";
 import { config } from "@/config";
 import { useMemo } from "react";
+import { useConnection } from "wagmi";
+import { useEthersSigner } from "./useEthers";
+import { useSynapse } from "@/providers/SynapseProvider";
 
 const STORAGE_CONFIG_KEY = "fildos_user_storage_config";
 
@@ -21,8 +22,10 @@ export const useBalances = (
   persistencePeriod?: number,
   minDaysThreshold?: number
 ) => {
-  const { synapse } = useSynapse();
-  const { address, chainId } = useAccount();
+
+  const signer = useEthersSigner();
+  const { address, chainId } = useConnection();
+  const { getSynapse } = useSynapse();
 
   // Get user config from localStorage if parameters not provided
   const userConfig = useMemo(() => {
@@ -61,9 +64,9 @@ export const useBalances = (
 
   const query = useQuery({
     queryKey: ["balances", address, chainId, userConfig.storageCapacity, userConfig.persistencePeriod, userConfig.minDaysThreshold],
-    enabled: !!synapse && !!address,
+    enabled: !!address && !!signer,
     queryFn: async (): Promise<UseBalancesResponse> => {
-      if (!synapse) throw new Error("Synapse not found");
+      const synapse = await getSynapse();
 
       const [filRaw, usdfcRaw, paymentsRaw] = await Promise.all([
         synapse.payments.walletBalance(),

@@ -9,8 +9,8 @@ import Header from "@/components/header";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
 import { FileItem } from "@/types";
-import { useAccount } from "@/hooks/useAccount";
 import { ConnectWalletPrompt } from "@/components/not-connected";
+import { useConnection } from "wagmi";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -26,7 +26,7 @@ export default function SharedFolders() {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const router = useRouter();
 
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useConnection();
   const { data: sharedFolders, isLoading: foldersLoading, error: foldersError } = useSharedFolders();
   const { folderDataMap, isLoading: folderDataLoading, hasError: folderDataError } = useFolderList(sharedFolders || []);
 

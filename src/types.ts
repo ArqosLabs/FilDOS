@@ -1,20 +1,19 @@
 import {
-  ProviderInfo,
   DataSetData,
   EnhancedDataSetInfo,
 } from "@filoz/synapse-sdk";
 
-export interface DataSet extends EnhancedDataSetInfo {
+export interface DatasetsSizeInfo {
+  sizeInBytes: number;
+  sizeInKiB: number;
+  sizeInMiB: number;
+  sizeInGB: number;
+}
+
+export interface DataSet extends EnhancedDataSetInfo, DatasetsSizeInfo {
+  serviceURL: string;
   data: DataSetData | null;
-  provider: ProviderInfo | null;
-  // Size information from DatasetsSizeInfo
-  leafCount?: number;
-  pieceCount?: number;
-  sizeInBytes?: number;
-  sizeInKiB?: number;
-  sizeInMiB?: number;
-  sizeInGB?: number;
-  message?: string;
+  pieceSizes: Record<string, UnifiedSizeInfo>;
 }
 
 export interface UnifiedSizeInfo {

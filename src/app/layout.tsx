@@ -1,12 +1,14 @@
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
-import { SynapseProvider } from "@/providers/SynapseProvider";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { SynapseProvider } from "@/providers/SynapseProvider";
 import { Inter } from 'next/font/google'
 import type { Metadata } from 'next'
-import { ThirdwebProvider } from "thirdweb/react";
-import { ChainWarning } from "@/components/chain-warning";
+import { WagmiProvider } from "wagmi";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import "@rainbow-me/rainbowkit/styles.css";
+import { config } from "@/lib/wagmi";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -37,16 +39,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ThirdwebProvider>
+          <WagmiProvider config={config}>
             <ReactQueryProvider>
               <SynapseProvider>
-                <ChainWarning />
-                <main className="flex flex-col min-h-screen">
-                  {children}
-                </main>
+                <RainbowKitProvider>
+                    <main className="flex flex-col min-h-screen">
+                      {children}
+                    </main>
+                </RainbowKitProvider>
               </SynapseProvider>
             </ReactQueryProvider>
-          </ThirdwebProvider>
+          </WagmiProvider>
           <Analytics />
         </ThemeProvider>
       </body>

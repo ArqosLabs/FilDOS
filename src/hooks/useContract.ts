@@ -1,9 +1,9 @@
-import { useMemo } from "react";
+import { use, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getContract } from "@/utils/contracts";
 import { useEthersSigner, useEthersProvider } from "@/hooks/useEthers";
 import type { FileEntry, FolderAccess } from "@/types";
-import { useAccount } from "./useAccount";
+import { useConnection } from "wagmi";
 
 
 /**
@@ -12,7 +12,7 @@ import { useAccount } from "./useAccount";
 export const useContract = () => {
   const signer = useEthersSigner();
   const provider = useEthersProvider();
-  const { address, chainId, isConnected } = useAccount();
+  const { address, chainId, isConnected } = useConnection();
   const queryClient = useQueryClient();
 
   // Get read-only contract instance (for queries)

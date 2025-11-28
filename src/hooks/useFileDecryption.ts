@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { decryptFileWithLit, initLitClient } from "@/lib/litClient";
-import { useAccount } from "./useAccount";
+import { useConnection } from "wagmi";
 
 export const useFileDecryption = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
-  const { address } = useAccount();
+  const { address } = useConnection();
 
   const mutation = useMutation({
     mutationKey: ["file-decryption", address],

@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/button";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
 import { FileItem } from "@/types";
-import { useAccount } from "@/hooks/useAccount";
 import { ConnectWalletPrompt } from "@/components/not-connected";
+import { useConnection } from "wagmi";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -30,7 +30,7 @@ export default function MyDrive() {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useConnection();
   const { data: ownedFolders, isLoading: foldersLoading, error: foldersError } = useOwnedFolders();
   const { 
     folderDataMap, 

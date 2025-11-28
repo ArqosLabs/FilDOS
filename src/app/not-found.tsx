@@ -11,14 +11,14 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-muted/50 flex flex-col">
       {/* Header */}
       <header className="border-b bg-background/80 backdrop-blur-md">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-6 py-2">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-2">
-              <Image src="/FILDOS.png" alt="FilDOS Logo" width={32} height={32} className="w-8 h-8" />
-              <h1 className="text-xl font-medium text-primary tracking-tight">
+              <Image src="/FILDOS.png" alt="FilDOS Logo" width={32} height={32} className="w-12 h-12" />
+              <h1 className="text-lg tracking-tight">
                 FilDOS
               </h1>
             </Link>
@@ -52,7 +52,7 @@ export default function NotFound() {
               </div>
             </div>
             <div className="absolute -bottom-2 -left-6 animate-float">
-              <div className="w-6 h-6 bg-primary rounded-full opacity-60"></div>
+              <div className="w-6 h-6 bg-primary/60 rounded-full"></div>
             </div>
           </div>
 
@@ -62,12 +62,12 @@ export default function NotFound() {
               404 - Page Not Found
             </Badge>
             
-            <h1 className="text-5xl md:text-6xl font-medium text-gray-900 mb-4">
+            <h1 className="text-5xl md:text-6xl font-medium text-foreground mb-4">
               Oops! Lost in the
               <span className="text-primary block">Semantic Space</span>
             </h1>
             
-            <p className="text-xl text-gray-600 max-w-xl mx-auto leading-relaxed">
+            <p className="text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed">
               The page you&apos;re looking for doesn&apos;t exist yet, but our AI-native storage revolution is 
               <span className="font-medium text-primary"> coming soon!</span>
             </p>
@@ -86,20 +86,6 @@ export default function NotFound() {
                 Get Started
               </Button>
             </Link>
-          </div>
-
-          {/* Help Text */}
-          <div className="pt-8 border-t border-gray-200">
-            <p className="text-sm text-gray-500">
-              Looking for something specific? Check our{" "}
-              <Link href="/" className="text-primary hover:underline font-medium">
-                about page
-              </Link>{" "}
-              or explore our{" "}
-              <Link href="/" className="text-primary hover:underline font-medium">
-                app
-              </Link>
-            </p>
           </div>
         </div>
       </main>

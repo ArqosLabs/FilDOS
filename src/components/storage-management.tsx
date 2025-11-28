@@ -3,7 +3,6 @@
 import { useBalances } from "@/hooks/useBalances";
 import { usePayment, useRevokeService } from "@/hooks/usePayment";
 import { useWithdraw } from "@/hooks/useWithdraw";
-import { useDatasets } from "@/hooks/useDatasets";
 import { config as defaultConfig } from "@/config";
 import { formatUnits } from "viem";
 import { AllowanceItemProps, SectionProps } from "@/types";
@@ -23,20 +22,21 @@ import {
   Shield
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
-import { useSynapse } from "@/providers/SynapseProvider";
 import { StorageConfigDialog, StorageConfig } from "./storage-config-dialog";
 import { fetchWarmStorageCosts } from "@/utils/warmStorageUtils";
 import { getPricePerTBPerMonth } from "@/utils";
-import { useAccount } from "@/hooks/useAccount";
 import ConnectWalletPrompt from "./not-connected";
+import { useConnection } from "wagmi";
+import { useSynapse } from "@/providers/SynapseProvider";
+import { useDatasets } from "@/hooks/useDataset";
 
 const STORAGE_CONFIG_KEY = "fildos_user_storage_config";
 
 export const StorageManager = () => {
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const revokeService = useRevokeService();
   const withdrawService = useWithdraw();
-  const { synapse } = useSynapse();
+  const { getSynapse } = useSynapse();
   const [revokeStatus, setRevokeStatus] = useState<string>("");
   const [withdrawStatus, setWithdrawStatus] = useState<string>("");
   const [pricePerTiBPerMonth, setPricePerTiBPerMonth] = useState<string | null>(null);
@@ -80,25 +80,24 @@ export const StorageManager = () => {
 
   useEffect(() => {
     const fetchPricing = async () => {
-      if (synapse) {
-        try {
-          const storageCosts = await fetchWarmStorageCosts(synapse);
-          const pricePerTiB = getPricePerTBPerMonth(storageCosts);
+      try {
+        const synapse = await getSynapse();
+        const storageCosts = await fetchWarmStorageCosts(synapse);
+        const pricePerTiB = getPricePerTBPerMonth(storageCosts, true);
 
-          // Validate that we got a valid bigint price
-          if (pricePerTiB && typeof pricePerTiB === 'bigint') {
-            const priceInUSDFC = Number(formatUnits(pricePerTiB, 18));
-            setPricePerTiBPerMonth(priceInUSDFC.toFixed(2));
-          } else {
-            console.warn("Invalid price data received from storage service");
-          }
-        } catch (error) {
-          console.error("Failed to fetch storage pricing:", error);
+        // Validate that we got a valid bigint price
+        if (pricePerTiB && typeof pricePerTiB === 'bigint') {
+          const priceInUSDFC = Number(formatUnits(pricePerTiB, 18));
+          setPricePerTiBPerMonth(priceInUSDFC.toFixed(2));
+        } else {
+          console.warn("Invalid price data received from storage service");
         }
+      } catch (error) {
+        console.error("Failed to fetch storage pricing:", error);
       }
     };
     fetchPricing();
-  }, [synapse]);
+  }, [getSynapse]);
 
   const config = useMemo(
     () => ({
@@ -142,9 +141,9 @@ export const StorageManager = () => {
   const handleRevoke = async () => {
     const { mutation, status } = revokeService;
     try {
-      if (!synapse) throw new Error("Synapse not ready");
       setIsRevoking(true);
       setRevokeStatus(status);
+      const synapse = await getSynapse();
       await mutation.mutateAsync({
         service: synapse.getWarmStorageAddress()
       });
@@ -550,7 +549,7 @@ const StorageBalanceHeader = ({
   onConfigSave: (config: StorageConfig) => void;
   pricePerTiBPerMonth: string | null;
 }) => {
-  const { chainId } = useAccount();
+  const { chainId } = useConnection();
   const isMainnet = chainId === 314;
 
   return (
@@ -736,12 +735,11 @@ const StorageStatusSection = ({
  * Section displaying current storage usage from datasets
  */
 const CurrentStorageUsage = () => {
-  const { data, isLoading } = useDatasets();
+  const { data: datasets, isLoading } = useDatasets();
   const { data: balances } = useBalances();
-  const datasets = data?.datasets || [];
 
   // Calculate total storage by type
-  const { cdnStorageGB, standardStorageGB, totalStorageGB } = datasets.reduce(
+  const { cdnStorageGB, standardStorageGB, totalStorageGB } = (datasets || []).reduce(
     (acc: { cdnStorageGB: number; standardStorageGB: number; totalStorageGB: number }, dataset) => {
       const sizeGB = dataset?.sizeInGB || 0;
       if (dataset?.withCDN) {
@@ -798,7 +796,7 @@ const CurrentStorageUsage = () => {
             title={`CDN: ${cdnStorageGB.toFixed(3)} GB | Standard: ${standardStorageGB.toFixed(3)} GB`}
           >
             <div
-              className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-500"
+              className="h-full bg-linear-to-r from-primary to-primary/80 rounded-full transition-all duration-500"
               style={{ width: `${Math.min(usagePercentage, 100)}%` }}
             />
           </div>

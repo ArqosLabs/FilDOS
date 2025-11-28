@@ -1,20 +1,22 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { TOKENS, TIME_CONSTANTS, Synapse } from "@filoz/synapse-sdk";
+import { TOKENS, TIME_CONSTANTS } from "@filoz/synapse-sdk";
 import { useEthersSigner } from "./useEthers";
 import { MAX_UINT256 } from "@/utils/constants";
 import { config } from "@/config";
-import { useAccount } from "./useAccount";
+import { useConnection } from "wagmi";
 import { useSynapse } from "@/providers/SynapseProvider";
+
 
 /**
  * Custom hook for handling storage payment transactions using EIP-2612 permit signatures
  */
 export const usePayment = () => {
   const [status, setStatus] = useState<string>("");
-  const { address, chainId } = useAccount();
+  const { address, chainId } = useConnection();
   const signer = useEthersSigner();
   const queryClient = useQueryClient();
+  const { getSynapse } = useSynapse();
   const mutation = useMutation({
     mutationKey: ["payment", address, chainId],
     mutationFn: async ({
@@ -30,10 +32,7 @@ export const usePayment = () => {
 
       // === SYNAPSE INITIALIZATION ===
       // Create Synapse instance with user's configuration
-      const synapse = await Synapse.create({
-        signer,
-        withCDN: config.withCDN,
-      });
+      const synapse = await getSynapse();
 
       // Get contract addresses from Synapse for the current network
       const warmStorageAddress = synapse.getWarmStorageAddress();
@@ -91,11 +90,11 @@ export const usePayment = () => {
 
 export const useRevokeService = () => {
   const [status, setStatus] = useState<string>("");
-  const { synapse } = useSynapse();
+  const { getSynapse } = useSynapse();
   const mutation = useMutation({
     mutationFn: async ({ service }: { service: string }) => {
-      if (!synapse) throw new Error("Synapse not ready");
       setStatus("Preparing transaction...");
+      const synapse = await getSynapse();
       const transaction = await synapse.payments.revokeService(
         service,
         TOKENS.USDFC

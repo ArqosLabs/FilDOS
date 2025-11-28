@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
 import type { FileEntry } from "@/types";
-import { useAccount } from "@/hooks/useAccount";
 import { ConnectWalletPrompt } from "@/components/not-connected";
+import { useConnection } from "wagmi";
 
 // Convert FileEntry to FileItem format for compatibility with existing components
 interface FileItem {
@@ -73,7 +73,7 @@ export default function TaggedFilesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const params = useParams();
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
 
   // Get the tag from the URL and decode it
   const tag = decodeURIComponent(params.tag as string);

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSynapse } from "@/providers/SynapseProvider";
-import { useAccount } from "./useAccount";
+import { useConnection } from "wagmi";
 
 /**
  * Hook for withdrawing funds from the wallet.
@@ -10,8 +10,8 @@ import { useAccount } from "./useAccount";
  */
 export const useWithdraw = () => {
   const [status, setStatus] = useState<string>("");
-  const { address, chainId } = useAccount();
-  const { synapse } = useSynapse();
+  const { address, chainId } = useConnection();
+  const { getSynapse } = useSynapse();
   const queryClient = useQueryClient();
   
   const mutation = useMutation({
@@ -20,10 +20,10 @@ export const useWithdraw = () => {
       // === VALIDATION PHASE ===
       // Ensure all required dependencies are available before proceeding
       if (!address) throw new Error("Address not found");
-      if (!synapse) throw new Error("Synapse not found");
       if (!chainId) throw new Error("Chain id not found");
 
       setStatus("Withdrawing your funds...");
+      const synapse = await getSynapse();
       const tx = await synapse.payments.withdraw(amount);
       await tx.wait(1);
       setStatus("You successfully withdrew your funds");

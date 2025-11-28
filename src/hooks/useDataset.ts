@@ -6,14 +6,13 @@ import {
   EnhancedDataSetInfo,
   PDPServer,
 } from "@filoz/synapse-sdk";
+import { useConnection } from "wagmi";
 import { DataSet } from "@/types";
 import { getDatasetSizeMessage } from "@/utils/storageCalculations";
 import { UnifiedSizeInfo as PieceSizeInfo } from "@/types";
 import { useEthersSigner } from "@/hooks/useEthers";
-import { Synapse } from "@filoz/synapse-sdk";
 import { getPieceInfoFromCidBytes } from "@/utils/storageCalculations";
-import { useAccount } from "./useAccount";
-import { config } from "@/config";
+import { useSynapse } from "@/providers/SynapseProvider";
 
 /**
  * Hook to fetch and manage user datasets from Filecoin storage
@@ -27,18 +26,16 @@ import { config } from "@/config";
  * 6. Implement caching and background refresh strategies
  */
 export const useDatasets = () => {
-  const { address, chainId } = useAccount();
+  const { address, chainId } = useConnection();
   const signer = useEthersSigner();
+  const { getSynapse } = useSynapse();
   return useQuery({
-    enabled: !!address && !!signer && !!chainId,
+    enabled: !!address,
     queryKey: ["datasets", address, chainId],
     queryFn: async () => {
       // STEP 1: Validate prerequisites
       if (!signer) throw new Error("Signer not found");
-      const synapse = await Synapse.create({
-        signer,
-        withCDN: config.withCDN,
-      });
+      const synapse = await getSynapse();
 
       // STEP 2: Fetch providers and datasets in parallel for efficiency
       const datasets = await synapse.storage.findDataSets();
@@ -85,7 +82,6 @@ export const useDatasets = () => {
 
             return {
               ...dataset,
-              provider: provider,
               ...{ ...datasetSizeInfo, message: getDatasetSizeMessage(datasetSizeInfo) },
               serviceURL: serviceURL,
               data, // Contains pieces array with CIDs

@@ -4,11 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
-import { useAccount } from "@/hooks/useAccount";
-import WalletConnectButton from "@/components/connect-button";
+import { useConnection } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function GetStarted() {
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
 
   return (
     <div className="w-full flex flex-col h-screen bg-background">
@@ -36,7 +36,7 @@ export default function GetStarted() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
-                <WalletConnectButton />
+                <ConnectButton showBalance={false} />
                 <p className="text-sm text-muted-foreground text-center">
                   Connected to Filecoin Calibration network
                 </p>

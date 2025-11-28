@@ -18,10 +18,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { encryptFileWithLit, decryptFileWithLit, initLitClient } from "@/lib/litClient";
-import { useAccount } from "@/hooks/useAccount";
+import { useConnection } from "wagmi";
 
 export default function LitTestPage() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useConnection();
 
   // State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

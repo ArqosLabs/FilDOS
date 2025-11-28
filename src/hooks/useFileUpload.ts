@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSynapse } from "@/providers/SynapseProvider";
 import { encryptFileWithLit, initLitClient } from "@/lib/litClient";
-import { useAccount } from "./useAccount";
 import { config } from "@/config";
 import { calculateStorageMetrics } from "@/utils";
 import { usePayment } from "./usePayment";
+import { useConnection } from "wagmi";
+import { useSynapse } from "@/providers/SynapseProvider";
 
 export type UploadedInfo = {
   fileName?: string;
@@ -32,10 +32,10 @@ export const useFileUpload = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
   const [uploadedInfo, setUploadedInfo] = useState<UploadedInfo | null>(null);
-  const { address, chainId } = useAccount();
-  const { synapse } = useSynapse();
+  const { address, chainId } = useConnection();
   const { mutation: paymentMutation } = usePayment();
   const queryClient = useQueryClient();
+  const { getSynapse } = useSynapse();
 
   const mutation = useMutation({
     mutationKey: ["file-upload", address],
@@ -90,9 +90,7 @@ export const useFileUpload = () => {
       const uint8ArrayBytes = new Uint8Array(arrayBuffer);
 
       // Ensure synapse instance is available
-      if (!synapse) {
-        throw new Error("Wallet not connected or signer unavailable. Please connect your wallet and ensure you're on a supported Filecoin network.");
-      }
+      const synapse = await getSynapse();
 
       setStatus("Checking USDFC balance and storage allowances...");
       setProgress(encrypt ? 20 : 5);
@@ -160,7 +158,7 @@ export const useFileUpload = () => {
         },
         onPieceAdded: (hash) => {
           setStatus(
-            `Waiting for transaction to be confirmed on chain (txHash: ${hash})`
+            `Waiting for transaction to be confirmed on chain (txHash: ${hash?.slice(0, 6)}...)`
           );
           setUploadedInfo((prev) => ({
             ...prev,

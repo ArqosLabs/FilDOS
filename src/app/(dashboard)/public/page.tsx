@@ -8,8 +8,8 @@ import { useFolderList } from "@/hooks/useFolderList";
 import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useAccount } from "@/hooks/useAccount";
 import { ConnectWalletPrompt } from "@/components/not-connected";
+import { useConnection } from "wagmi";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -29,7 +29,7 @@ const formatPrice = (price: bigint) => {
 export default function Marketplace() {
   const router = useRouter();
 
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const { data: publicFolders, isLoading: foldersLoading, error: foldersError } = usePublicFolders();
   const { folderDataMap, isLoading: folderDataLoading, hasError: folderDataError } = useFolderList(publicFolders || []);
 

@@ -12,10 +12,10 @@ import FileList from "@/components/file-list";
 import { useFiles, useFolderData, useCanRead } from "@/hooks/useContract";
 import EmbeddingDialog from "@/components/embedding-dialog";
 import SearchDialog from "@/components/search-dialog";
-import PayAccessDialog from "@/components/pay-access-dialog";
+// import PayAccessDialog from "@/components/pay-access-dialog";
 import { FileItem } from "@/types";
-import { useAccount } from "@/hooks/useAccount";
 import { ConnectWalletPrompt } from "@/components/not-connected";
+import { useConnection } from "wagmi";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -74,7 +74,7 @@ export default function FolderPage() {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
-  const { isConnected, address } = useAccount();
+  const { isConnected, address } = useConnection();
   const { data: folderFiles, isLoading: filesLoading, error: filesError } = useFiles(folderId, true);
   const { data: folderData, isLoading: folderDataLoading, error: folderDataError } = useFolderData(folderId);
   const { data: canRead, isLoading: canReadLoading } = useCanRead(folderId, address);
@@ -173,7 +173,7 @@ export default function FolderPage() {
                 </div>
               </div>
 
-              <PayAccessDialog
+              {/* <PayAccessDialog
                 folderId={folderId}
                 folderName={folderData.name}
                 viewingPrice={folderData.viewingPrice}
@@ -182,7 +182,7 @@ export default function FolderPage() {
                 <Button size="lg" className="min-w-[200px] w-full sm:w-auto">
                   Pay to Access
                 </Button>
-              </PayAccessDialog>
+              </PayAccessDialog> */}
 
               <Button
                 variant="ghost"
