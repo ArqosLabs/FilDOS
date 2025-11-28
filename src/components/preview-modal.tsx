@@ -138,7 +138,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
     let timeoutId: NodeJS.Timeout | null = null;
 
     try {
-      const fileUrl = `https://${file.owner}.calibration.filbeam.io/${file.cid}`;
+      const fileUrl = `https://caliberation-pdp.infrafolio.com/piece/${file.cid}`;
       
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), 30000); // Increased timeout to 30s

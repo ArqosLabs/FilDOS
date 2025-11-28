@@ -148,8 +148,16 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
       // Create a unique identifier for this upload to prevent duplicate processing
       const uploadId = uploadedInfo?.pieceCid || '';
       
+      // Only proceed if upload was successful (status doesn't contain error indicators)
+      const hasUploadError = status && (
+        status.includes("failed") || 
+        status.includes("error") || 
+        status.includes("Error") ||
+        status.includes("❌")
+      );
+      
       if (uploadedInfo && uploadedInfo.pieceCid && uploadedInfo.fileName && file && 
-          !isAddingToContract && uploadId !== processedUploadId) {
+          !isAddingToContract && uploadId !== processedUploadId && !hasUploadError) {
         
         setProcessedUploadId(uploadId);
         setIsAddingToContract(true);
@@ -194,7 +202,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
     };
 
     addFileToContract();
-  }, [uploadedInfo, file, folderId, isAddingToContract, processedUploadId, addFile]);
+  }, [uploadedInfo, file, folderId, isAddingToContract, processedUploadId, addFile, status]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();

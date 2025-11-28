@@ -30,7 +30,7 @@ export default function WalletConnectButton() {
     const { resolvedTheme } = useTheme();
 
     return (
-        <div className="gap-1 flex items-center">
+        <div className="gap-1 flex items-center" suppressHydrationWarning>
             <ConnectButton
                 chain={filecoinCalibration}
                 client={client}

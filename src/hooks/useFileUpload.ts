@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { preflightCheck } from "@/utils/preflightCheck";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSynapse } from "@/providers/SynapseProvider";
 import { encryptFileWithLit, initLitClient } from "@/lib/litClient";
 import { useAccount } from "./useAccount";
+import { config } from "@/config";
+import { calculateStorageMetrics } from "@/utils";
+import { usePayment } from "./usePayment";
 
 export type UploadedInfo = {
   fileName?: string;
@@ -30,13 +32,14 @@ export const useFileUpload = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
   const [uploadedInfo, setUploadedInfo] = useState<UploadedInfo | null>(null);
+  const { address, chainId } = useAccount();
   const { synapse } = useSynapse();
-  const { address } = useAccount();
+  const { mutation: paymentMutation } = usePayment();
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationKey: ["file-upload", address],
     mutationFn: async ({ file, encrypt = false }: { file: File; encrypt?: boolean }) => {
-      if (!synapse) throw new Error("Synapse not found");
       if (!address) throw new Error("Address not found");
       setProgress(0);
       setUploadedInfo(null);
@@ -85,59 +88,43 @@ export const useFileUpload = () => {
       const arrayBuffer = await fileToUpload.arrayBuffer();
       // 2) Convert ArrayBuffer → Uint8Array
       const uint8ArrayBytes = new Uint8Array(arrayBuffer);
-      // 3) Get dataset
-      const datasets = await synapse.storage.findDataSets(address);
-      // 4) Check if we have a dataset
-      const datasetExists = datasets.length > 0;
-      // Include dataset creation fee if no dataset exists
-      const includeDatasetCreationFee = !datasetExists;
-      // 5) Check if we have enough USDFC to cover the storage costs and deposit if not
+
+      // Ensure synapse instance is available
+      if (!synapse) {
+        throw new Error("Wallet not connected or signer unavailable. Please connect your wallet and ensure you're on a supported Filecoin network.");
+      }
+
       setStatus("Checking USDFC balance and storage allowances...");
       setProgress(encrypt ? 20 : 5);
-      await preflightCheck(
-        fileToUpload,
-        synapse,
-        includeDatasetCreationFee,
-        setStatus,
-        setProgress
-      );
+      const { isSufficient, depositNeeded } =
+        await calculateStorageMetrics(synapse, config, file.size);
+      if (!isSufficient) {
+        setStatus(
+          "Insufficient storage balance, setting up your storage configuration..."
+        );
+        await paymentMutation.mutateAsync({
+          depositAmount: depositNeeded
+        });
+        setStatus("Storage configuration setup complete");
+      }
 
       setStatus("Setting up storage service and dataset...");
       setProgress(encrypt ? 30 : 25);
 
-      // 6) Create storage service
       let storageService;
       try {
         storageService = await synapse.createStorage({
-          withCDN: true,
+          providerId: 4,
           callbacks: {
             onDataSetResolved: (info) => {
               console.log("Dataset resolved:", info);
               setStatus("Existing dataset found and resolved");
               setProgress(encrypt ? 35 : 30);
             },
-            onDataSetCreationStarted: (transactionResponse, statusUrl) => {
-              console.log("Dataset creation started:", transactionResponse);
-              console.log("Dataset creation status URL:", statusUrl);
-              setStatus("Creating new dataset on blockchain...");
-              setProgress(encrypt ? 40 : 35);
-            },
-            onDataSetCreationProgress: (status) => {
-              console.log("Dataset creation progress:", status);
-              if (status.transactionSuccess) {
-                setStatus(`Dataset transaction confirmed on chain`);
-                setProgress(encrypt ? 50 : 45);
-              }
-              if (status.serverConfirmed) {
-                setStatus(
-                  `Dataset ready! (${Math.round(status.elapsedMs / 1000)}s)`
-                );
-                setProgress(encrypt ? 55 : 50);
-              }
-            },
             onProviderSelected: (provider) => {
               console.log("Storage provider selected:", provider);
               setStatus(`Storage provider selected (${provider.name})`);
+              setProgress(encrypt ? 40 : 35);
             },
           },
         });
@@ -154,7 +141,7 @@ export const useFileUpload = () => {
       setStatus("Uploading file to storage provider...");
       setProgress(encrypt ? 60 : 55);
       // 7) Upload file to storage provider
-      await storageService.upload(uint8ArrayBytes, {
+      const {pieceCid} = await storageService.upload(uint8ArrayBytes, {
         onUploadComplete: (piece) => {
           setStatus(
             `File uploaded! Signing msg to add pieces to the dataset`
@@ -169,21 +156,16 @@ export const useFileUpload = () => {
             dataToEncryptHash: encryptedMetadata?.dataToEncryptHash || "",
             encryptedMetadata: encryptedMetadata,
           }));
-          setProgress(encrypt ? 85 : 80);
+          setProgress(80);
         },
-        onPieceAdded: (transactionResponse) => {
+        onPieceAdded: (hash) => {
           setStatus(
-            `Waiting for transaction to be confirmed on chain ${
-              transactionResponse ? `(txHash: ${transactionResponse.hash.slice(0, 6)}...${transactionResponse.hash.slice(-4)})` : ""
-            }`
+            `Waiting for transaction to be confirmed on chain (txHash: ${hash})`
           );
-          if (transactionResponse) {
-            console.log("Transaction response:", transactionResponse);
-            setUploadedInfo((prev) => ({
-              ...prev,
-              txHash: transactionResponse?.hash,
-            }));
-          }
+          setUploadedInfo((prev) => ({
+            ...prev,
+            txHash: hash,
+          }));
         },
         onPieceConfirmed: () => {
           setStatus("Data pieces added to dataset successfully");
@@ -192,14 +174,24 @@ export const useFileUpload = () => {
       });
 
       setProgress(encrypt ? 98 : 95);
+      setUploadedInfo((prev) => ({
+        ...prev,
+        pieceCid: pieceCid.toV1().toString(),
+      }));
     },
     onSuccess: () => {
       setStatus("File successfully stored on Filecoin!");
       setProgress(100);
+      queryClient.invalidateQueries({
+        queryKey: ["balances", address, config, chainId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["datasets", address, chainId],
+      });
     },
     onError: (error) => {
       console.error("Upload failed:", error);
-      setStatus(`❌ Upload failed: ${error.message || "Please try again"}`);
+      setStatus(`Upload failed: ${error.message || "Please try again"}`);
       setProgress(0);
     },
   });

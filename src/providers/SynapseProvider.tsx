@@ -68,10 +68,23 @@ export const SynapseProvider = ({
           await destroyProvider(synapseRef.current.getProvider());
         }
 
+        // Validate that the signer is still available (race condition check)
+        if (!ethersSigner) {
+          console.warn('SynapseProvider: Signer became unavailable during initialization');
+          if (!cancelled) {
+            synapseRef.current = null;
+            setSynapse(null);
+            setWarmStorageService(null);
+          }
+          return;
+        }
+
         // Determine the correct RPC URL based on the current chain
         const rpcURL = chainId === 314
             ? RPC_URLS.mainnet.websocket
             : RPC_URLS.calibration.websocket;
+
+        console.log('Creating Synapse instance with:', { chainId, rpcURL, withCDN: config.withCDN });
 
         const synapse = await Synapse.create({
           signer: ethersSigner,

@@ -2,4 +2,8 @@ export * from "./constants";
 export * from "./calculateStorageMetrics";
 export * from "./warmStorageUtils";
 export * from "./preflightCheck";
-export * from "./storageCostUtils";
+export * from "./getRails";
+export * from "./chains";
+export * from "./client";
+export * from "./contracts";
+export * from "./storageCalculations"
