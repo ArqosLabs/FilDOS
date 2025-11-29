@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
       ...config.watchOptions,
       ignored: ['**/web3/**', '**/node_modules/**'],
     };
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      /Critical dependency: the request of a dependency is an expression/,
+      /Critical dependency: require function is used in a way in which dependencies cannot be statically extracted/,
+    ];
     
     return config;
   },

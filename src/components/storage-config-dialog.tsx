@@ -72,7 +72,7 @@ export const StorageConfigDialog = ({
     }
     if (minDaysThreshold >= persistencePeriod) {
       newErrors.minDaysThreshold =
-        "Minimum days threshold must be less than persistence period";
+        "Alert threshold must be less than persistence period";
     }
 
     setErrors(newErrors);
@@ -119,8 +119,8 @@ export const StorageConfigDialog = ({
         <DialogHeader>
           <DialogTitle>Storage Configuration</DialogTitle>
           <DialogDescription>
-            Configure your storage parameters. These values will be used to
-            calculate your storage costs and requirements.
+            Configure your storage parameters. These values are used to
+            calculate storage costs and notify you when funds are running low.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -181,7 +181,7 @@ export const StorageConfigDialog = ({
               <p className="text-xs text-destructive">{errors.persistencePeriod}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              How long your data should remain stored (lockup period)
+              Target duration for maintaining your storage balance
             </p>
           </div>
 
@@ -205,7 +205,7 @@ export const StorageConfigDialog = ({
               <p className="text-xs text-destructive">{errors.minDaysThreshold}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Minimum days of lockup remaining before you need to add more funds
+              Alert threshold - notify when remaining days drop below this value
             </p>
           </div>
         </div>

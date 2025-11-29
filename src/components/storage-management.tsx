@@ -2,12 +2,12 @@
 
 import { useBalances } from "@/hooks/useBalances";
 import { usePayment, useRevokeService } from "@/hooks/usePayment";
+import { useWithdraw } from "@/hooks/useWithdraw";
 import { config as defaultConfig } from "@/config";
 import { formatUnits } from "viem";
-import { AllowanceItemProps, PaymentActionProps, SectionProps } from "@/types";
+import { AllowanceItemProps, SectionProps } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -22,20 +22,24 @@ import {
   Shield
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
-import { useSynapse } from "@/providers/SynapseProvider";
 import { StorageConfigDialog, StorageConfig } from "./storage-config-dialog";
-import { fetchWarmStorageCosts } from "@/utils/warmStorageUtils";
+import { fetchWarmStorageCosts } from "@/utils/calculateStorageMetrics";
 import { getPricePerTBPerMonth } from "@/utils";
-import { useAccount } from "@/hooks/useAccount";
 import ConnectWalletPrompt from "./not-connected";
+import { useConnection } from "wagmi";
+import { useSynapse } from "@/providers/SynapseProvider";
+import { useDatasets } from "@/hooks/useDataset";
+import { CDN_DATA_SET_CREATION_COST } from "@/utils/constants";
 
 const STORAGE_CONFIG_KEY = "fildos_user_storage_config";
 
 export const StorageManager = () => {
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const revokeService = useRevokeService();
-  const { synapse } = useSynapse();
+  const withdrawService = useWithdraw();
+  const { getSynapse } = useSynapse();
   const [revokeStatus, setRevokeStatus] = useState<string>("");
+  const [withdrawStatus, setWithdrawStatus] = useState<string>("");
   const [pricePerTiBPerMonth, setPricePerTiBPerMonth] = useState<string | null>(null);
 
   const [userConfig, setUserConfig] = useState<StorageConfig>(() => {
@@ -67,6 +71,8 @@ export const StorageManager = () => {
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify(userConfig));
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new Event('storageConfigUpdated'));
       } catch (error) {
         console.error("Failed to save storage config to localStorage:", error);
       }
@@ -75,19 +81,24 @@ export const StorageManager = () => {
 
   useEffect(() => {
     const fetchPricing = async () => {
-      if (synapse) {
-        try {
-          const storageCosts = await fetchWarmStorageCosts(synapse);
-          const pricePerTiB = getPricePerTBPerMonth(storageCosts);
-            const priceInUSDFC = Number(formatUnits(pricePerTiB, 18));
-            setPricePerTiBPerMonth(priceInUSDFC.toFixed(2));
-        } catch (error) {
-          console.error("Failed to fetch storage pricing:", error);
+      try {
+        const synapse = await getSynapse();
+        const storageCosts = await fetchWarmStorageCosts(synapse);
+        const pricePerTiB = getPricePerTBPerMonth(storageCosts, true);
+
+        // Validate that we got a valid bigint price
+        if (pricePerTiB && typeof pricePerTiB === 'bigint') {
+          const priceInUSDFC = Number(formatUnits(pricePerTiB, 18));
+          setPricePerTiBPerMonth(priceInUSDFC.toFixed(2));
+        } else {
+          console.warn("Invalid price data received from storage service");
         }
+      } catch (error) {
+        console.error("Failed to fetch storage pricing:", error);
       }
     };
     fetchPricing();
-  }, [synapse]);
+  }, [getSynapse]);
 
   const config = useMemo(
     () => ({
@@ -123,7 +134,7 @@ export const StorageManager = () => {
   };
 
   if (!isConnected) {
-    return <ConnectWalletPrompt 
+    return <ConnectWalletPrompt
       description="Please connect your wallet to manage your storage settings and balances."
     />;
   }
@@ -131,9 +142,9 @@ export const StorageManager = () => {
   const handleRevoke = async () => {
     const { mutation, status } = revokeService;
     try {
-      if (!synapse) throw new Error("Synapse not ready");
       setIsRevoking(true);
       setRevokeStatus(status);
+      const synapse = await getSynapse();
       await mutation.mutateAsync({
         service: synapse.getWarmStorageAddress()
       });
@@ -144,7 +155,7 @@ export const StorageManager = () => {
         typeof err === "object" && err !== null && "message" in err
           ? String((err as { message?: string }).message)
           : "Failed to revoke approval";
-      setRevokeStatus(`❌ ${message}`);
+      setRevokeStatus(`${message}`);
     } finally {
       setIsRevoking(false);
     }
@@ -158,6 +169,8 @@ export const StorageManager = () => {
           onConfigSave={handleConfigSave}
           pricePerTiBPerMonth={pricePerTiBPerMonth}
         />
+
+        <CurrentStorageUsage />
 
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
           <WalletBalancesSection
@@ -177,30 +190,29 @@ export const StorageManager = () => {
           onRevoke={handleRevoke}
           isRevoking={isRevoking}
           config={config}
+          isProcessingPayment={isProcessingPayment}
+          onPayment={handlePayment}
+          handleRefetchBalances={handleRefetchBalances}
         />
 
         <ActionSection
           balances={balances}
           isLoading={isBalanceLoading}
-          isProcessingPayment={isProcessingPayment}
-          onPayment={handlePayment}
           handleRefetchBalances={handleRefetchBalances}
           config={config}
+          withdrawService={withdrawService}
+          setWithdrawStatus={setWithdrawStatus}
         />
 
         {status && (
           <Card className={`${status.includes("❌")
             ? "border-destructive/50 bg-destructive/10"
-            : status.includes("✅")
-              ? "border-green-500/50 bg-green-500/10"
-              : "border-blue-500/50 bg-blue-500/10"
+            : "border-blue-500/50 bg-blue-500/10"
             }`}>
             <CardContent className="pt-6">
               <p className={`text-sm ${status.includes("❌")
                 ? "text-destructive"
-                : status.includes("✅")
-                  ? "text-green-700 dark:text-green-400"
-                  : "text-primary"
+                : "text-primary"
                 }`}>
                 {status}
               </p>
@@ -210,18 +222,29 @@ export const StorageManager = () => {
         {revokeStatus && (
           <Card className={`${revokeStatus.includes("❌")
             ? "border-destructive/50 bg-destructive/10"
-            : revokeStatus.includes("✅")
-              ? "border-green-500/50 bg-green-500/10"
-              : "border-blue-500/50 bg-blue-500/10"
+            : "border-blue-500/50 bg-blue-500/10"
             }`}>
             <CardContent className="pt-6">
               <p className={`text-sm ${revokeStatus.includes("❌")
                 ? "text-destructive"
-                : revokeStatus.includes("✅")
-                  ? "text-green-700 dark:text-green-400"
-                  : "text-primary"
+                : "text-primary"
                 }`}>
                 {revokeStatus}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        {withdrawStatus && (
+          <Card className={`${withdrawStatus.includes("❌")
+            ? "border-destructive/50 bg-destructive/10"
+            : "border-blue-500/50 bg-blue-500/10"
+            }`}>
+            <CardContent className="pt-6">
+              <p className={`text-sm ${withdrawStatus.includes("❌")
+                ? "text-destructive"
+                : "text-primary"
+                }`}>
+                {withdrawStatus}
               </p>
             </CardContent>
           </Card>
@@ -240,14 +263,24 @@ const AllowanceStatusSection = ({
   onRevoke,
   isRevoking,
   config,
+  isProcessingPayment,
+  onPayment,
+  handleRefetchBalances,
 }: SectionProps & {
   onRevoke?: () => void | Promise<void>;
   isRevoking?: boolean;
   config: StorageConfig & { withCDN: boolean; aiServerUrl: string };
+  isProcessingPayment?: boolean;
+  onPayment?: (params: { lockupAllowance: bigint; epochRateAllowance: bigint; depositAmount: bigint }) => Promise<void>;
+  handleRefetchBalances?: () => Promise<void>;
 }) => {
-  const depositNeededFormatted = Number(
+  const depositNeeded = Number(
     formatUnits(balances?.depositNeeded ?? BigInt(0), 18)
-  ).toFixed(3);
+  ).toFixed(5);
+  const needsDeposit = (balances?.depositNeeded ?? BigInt(0)) > BigInt(0);
+  const needsLockup = !balances?.isLockupSufficient;
+  const needsRate = !balances?.isRateSufficient;
+  const needsAction = !balances?.isSufficient && !isLoading;
 
   return (
     <Card>
@@ -271,48 +304,58 @@ const AllowanceStatusSection = ({
           />
         </div>
 
-        {!isLoading && !balances?.isRateSufficient && (
+        {needsAction && (
           <Card className="border-amber-500/50 bg-amber-500/10">
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 space-y-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-                <div className="space-y-2">
-                  <p className="text-amber-800 dark:text-amber-200 font-medium">
-                    Storage Rate Insufficient
-                  </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
-                    Max configured storage is {config.storageCapacity} GB. Your current covered storage is{" "}
-                    {balances?.currentRateAllowanceGB?.toLocaleString()} GB.
-                  </p>
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                    Currently using {balances?.currentStorageGB?.toLocaleString()} GB.
-                  </p>
+                <div className="space-y-2 flex-1">
+                  <p className="text-amber-800 dark:text-amber-200 font-medium">Action needed</p>
+                  <ul className="text-sm text-amber-700 dark:text-amber-300 list-disc pl-5 space-y-1">
+                    {needsDeposit && (
+                      <li>
+                        Deposit {depositNeeded} USDFC to reach your {config.persistencePeriod}-day target. Current balance covers {balances?.daysLeft?.toFixed(1)} days.
+                      </li>
+                    )}
+                    {needsLockup && !needsDeposit && (
+                      <li>
+                        Update lockup allowance to meet {config.minDaysThreshold}-day alert threshold (currently at {balances?.daysLeft?.toFixed(1)} days)
+                      </li>
+                    )}
+                    {needsRate && (
+                      <li>
+                        Update rate allowance to support {config.storageCapacity} GB capacity
+                      </li>
+                    )}
+                  </ul>
+                  <div className="mt-3 pt-3 border-t border-amber-500/30">
+                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                      <strong>Note:</strong> Includes {Number(formatUnits(CDN_DATA_SET_CREATION_COST, 18)).toFixed(2)} USDFC one-time CDN dataset creation cost
+                    </p>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {!isLoading && !balances?.isLockupSufficient && (
-          <Card className="border-amber-500/50 bg-amber-500/10">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-                <div className="space-y-2">
-                  <p className="text-amber-800 dark:text-amber-200 font-medium">
-                    Lockup Period Insufficient
-                  </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
-                    Max configured lockup is {config.persistencePeriod} days. Your current covered lockup is{" "}
-                    {balances?.persistenceDaysLeft.toFixed(1)} days, which is less than the notice period of {config.minDaysThreshold} days.
-                  </p>
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                    Currently using {balances?.currentStorageGB?.toLocaleString()} GB.
-                    Deposit {depositNeededFormatted} USDFC to extend lockup for{" "}
-                    {(config.persistencePeriod - (balances?.persistenceDaysLeft ?? 0)).toFixed(1)} more days.
-                  </p>
-                </div>
-              </div>
+              {onPayment && (
+                <Button
+                  onClick={async () => {
+                    await onPayment({
+                      lockupAllowance: balances?.lockupNeeded ?? BigInt(0),
+                      epochRateAllowance: balances?.rateNeeded ?? BigInt(0),
+                      depositAmount: balances?.depositNeeded ?? BigInt(0),
+                    });
+                    await handleRefetchBalances?.();
+                  }}
+                  disabled={isProcessingPayment}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isProcessingPayment
+                    ? "Processing transaction..."
+                    : needsDeposit
+                      ? "Deposit to Reach Target"
+                      : "Update Allowances"}
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
@@ -326,7 +369,7 @@ const AllowanceStatusSection = ({
             className="w-full sm:w-auto"
             size="sm"
           >
-            {isRevoking ? "Revoking..." : "Revoke Warm Storage Approval"}
+            {isRevoking ? "Revoking..." : "Revoke Storage Approval"}
           </Button>
         </div>
       </CardContent>
@@ -340,35 +383,112 @@ const AllowanceStatusSection = ({
 const ActionSection = ({
   balances,
   isLoading,
-  isProcessingPayment,
-  onPayment,
-  handleRefetchBalances,
   config,
-}: PaymentActionProps & { config: StorageConfig & { withCDN: boolean; aiServerUrl: string } }) => {
+  withdrawService,
+  setWithdrawStatus,
+  handleRefetchBalances,
+}: SectionProps & {
+  config: StorageConfig & { withCDN: boolean; aiServerUrl: string };
+  withdrawService?: { mutation: { mutateAsync: (params: { amount: bigint }) => Promise<void>; isPending: boolean }; status: string };
+  setWithdrawStatus?: (status: string) => void;
+  handleRefetchBalances?: () => Promise<void>;
+}) => {
+  const canWithdraw = (balances?.availableToFreeUp ?? BigInt(0)) > BigInt(0);
+
   if (isLoading || !balances) return null;
 
+  // Success state - no deposit needed and meets minimum threshold
   if (balances.isSufficient) {
-    return (
-      <Card className="border-green-500/50 bg-green-500/10">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-            <div>
-              <p className="text-green-800 dark:text-green-300 font-medium">Storage Balance Sufficient</p>
-              <p className="text-sm text-green-700 dark:text-green-400">
-                Your storage balance supports {config.storageCapacity}GB for {balances.persistenceDaysLeft.toFixed(1)} days.
-              </p>
+    const daysLeft = balances.daysLeft ?? 0;
+    const showThresholdWarning =
+      daysLeft < config.minDaysThreshold && daysLeft > 0;
+
+    if (showThresholdWarning) {
+      return (
+        <Card className="border-amber-500/50 bg-amber-500/10">
+          <CardContent className="pt-6 space-y-2">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <div>
+                <p className="text-amber-800 dark:text-amber-200 font-medium">
+                  ⚠️ Balance running low: {daysLeft.toFixed(1)} days remaining (alert threshold: {config.minDaysThreshold}d)
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  Configured: {config.storageCapacity} GB • {config.persistencePeriod} days target
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  Consider depositing USDFC to extend your storage duration.
+                </p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <Card className="border-green-500/50 bg-green-500/10">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div>
+                <p className="text-green-800 dark:text-green-300 font-medium">
+                  Storage balance is healthy - {daysLeft.toFixed(1)} days remaining
+                </p>
+                <p className="text-sm text-green-700 dark:text-green-400 mt-1">
+                  Configured: {config.storageCapacity} GB • {config.persistencePeriod} days target
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        {canWithdraw && (
+          <Card className="border-green-500/50 bg-green-500/10">
+            <CardContent className="pt-6 space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                <div>
+                  <p className="text-green-800 dark:text-green-300 font-medium">
+                    Excess funds available: {balances.availableToFreeUpFormatted} USDFC
+                  </p>
+                  <p className="text-sm text-green-700 dark:text-green-400">
+                    Withdraw extra balance while maintaining your storage plan
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={async () => {
+                  if (withdrawService && balances?.availableToFreeUp) {
+                    try {
+                      setWithdrawStatus?.("Processing withdrawal...");
+                      await withdrawService.mutation.mutateAsync({
+                        amount: balances.availableToFreeUp
+                      });
+                      setWithdrawStatus?.(withdrawService.status);
+                      if (handleRefetchBalances) {
+                        await handleRefetchBalances();
+                      }
+                    } catch (error) {
+                      console.error("Withdrawal failed:", error);
+                      setWithdrawStatus?.(`${error instanceof Error ? error.message : "Withdrawal failed"}`);
+                    }
+                  }
+                }}
+                disabled={!withdrawService || withdrawService.mutation.isPending}
+                className="w-full"
+                size="lg"
+              >
+                {withdrawService?.mutation.isPending ? "Processing..." : "Withdraw Excess Funds"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     );
   }
 
-  const depositNeededFormatted = Number(
-    formatUnits(balances?.depositNeeded ?? BigInt(0), 18)
-  ).toFixed(3);
-
+  // Missing tokens
   if (balances.filBalance === BigInt(0) || balances.usdfcBalance === BigInt(0)) {
     return (
       <div className="space-y-4">
@@ -380,7 +500,7 @@ const ActionSection = ({
                 <div>
                   <p className="text-destructive font-medium">FIL Tokens Required</p>
                   <p className="text-sm text-destructive/90">
-                    You need FIL tokens to pay for transaction fees. Please deposit FIL tokens to your wallet.
+                    Add FIL for network fees to complete transactions.
                   </p>
                 </div>
               </div>
@@ -395,7 +515,7 @@ const ActionSection = ({
                 <div>
                   <p className="text-destructive font-medium">USDFC Tokens Required</p>
                   <p className="text-sm text-destructive/90">
-                    You need USDFC tokens to pay for storage. Please deposit USDFC tokens to your wallet.
+                    Add USDFC for storage payments.
                   </p>
                 </div>
               </div>
@@ -406,153 +526,10 @@ const ActionSection = ({
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {balances.isRateSufficient && !balances.isLockupSufficient && (
-        <LockupIncreaseAction
-          totalLockupNeeded={balances.totalLockupNeeded}
-          depositNeeded={balances.depositNeeded}
-          rateNeeded={balances.rateNeeded}
-          isProcessingPayment={isProcessingPayment}
-          onPayment={onPayment}
-          handleRefetchBalances={handleRefetchBalances}
-        />
-      )}
-      {!balances.isRateSufficient && balances.isLockupSufficient && (
-        <RateIncreaseAction
-          currentLockupAllowance={balances.currentLockupAllowance}
-          rateNeeded={balances.rateNeeded}
-          isProcessingPayment={isProcessingPayment}
-          onPayment={onPayment}
-          handleRefetchBalances={handleRefetchBalances}
-        />
-      )}
-      {!balances.isRateSufficient && !balances.isLockupSufficient && (
-        <Card className="border-destructive/50 bg-destructive/10">
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
-              <div>
-                <p className="text-destructive font-medium">Insufficient Storage Balance</p>
-                <p className="text-sm text-destructive/90">
-                  You need to deposit {depositNeededFormatted} USDFC & increase your rate allowance to meet your storage needs.
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={async () => {
-                await onPayment({
-                  lockupAllowance: balances.totalLockupNeeded,
-                  epochRateAllowance: balances.rateNeeded,
-                  depositAmount: balances.depositNeeded,
-                });
-                await handleRefetchBalances();
-              }}
-              disabled={isProcessingPayment}
-              className="w-full"
-              size="lg"
-            >
-              {isProcessingPayment ? "Processing transactions..." : "Deposit & Increase Allowances"}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+  return null;
 };
 
-/**
- * Component for handling lockup deposit action
- */
-const LockupIncreaseAction = ({
-  totalLockupNeeded,
-  depositNeeded,
-  rateNeeded,
-  isProcessingPayment,
-  onPayment,
-  handleRefetchBalances,
-}: PaymentActionProps) => {
-  if (!totalLockupNeeded || !depositNeeded || !rateNeeded) return null;
 
-  const depositNeededFormatted = Number(
-    formatUnits(depositNeeded ?? BigInt(0), 18)
-  ).toFixed(3);
-
-  return (
-    <Card className="border-amber-500/50 bg-amber-500/10">
-      <CardContent className="pt-6 space-y-4">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-          <div>
-            <p className="text-amber-800 dark:text-amber-200 font-medium">Additional USDFC Required</p>
-            <p className="text-sm text-amber-700 dark:text-amber-300">
-              Deposit {depositNeededFormatted} USDFC to extend storage lockup period.
-            </p>
-          </div>
-        </div>
-        <Button
-          onClick={async () => {
-            await onPayment({
-              lockupAllowance: totalLockupNeeded,
-              epochRateAllowance: rateNeeded,
-              depositAmount: depositNeeded,
-            });
-            await handleRefetchBalances();
-          }}
-          disabled={isProcessingPayment}
-          className="w-full"
-          size="lg"
-        >
-          {isProcessingPayment ? "Processing transactions..." : "Deposit & Increase Lockup"}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-};
-
-/**
- * Component for handling rate deposit action
- */
-const RateIncreaseAction = ({
-  currentLockupAllowance,
-  rateNeeded,
-  isProcessingPayment,
-  onPayment,
-  handleRefetchBalances,
-}: PaymentActionProps) => {
-  if (!currentLockupAllowance || !rateNeeded) return null;
-
-  return (
-    <Card className="border-amber-500/50 bg-amber-500/10">
-      <CardContent className="pt-6 space-y-4">
-        <div className="flex items-start gap-3">
-          <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-          <div>
-            <p className="text-amber-800 dark:text-amber-200 font-medium">Rate Allowance Increase Required</p>
-            <p className="text-sm text-amber-700 dark:text-amber-300">
-              Increase your rate allowance to meet your storage capacity needs.
-            </p>
-          </div>
-        </div>
-        <Button
-          onClick={async () => {
-            await onPayment({
-              lockupAllowance: currentLockupAllowance,
-              epochRateAllowance: rateNeeded,
-              depositAmount: BigInt(0),
-            });
-            await handleRefetchBalances();
-          }}
-          disabled={isProcessingPayment}
-          className="w-full"
-          size="lg"
-        >
-          {isProcessingPayment ? "Increasing Rate..." : "Increase Rate"}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-};
 
 /**
  * Header section with title and USDFC faucet button
@@ -566,7 +543,8 @@ const StorageBalanceHeader = ({
   onConfigSave: (config: StorageConfig) => void;
   pricePerTiBPerMonth: string | null;
 }) => {
-  const { chainId } = useAccount();
+  const { chainId } = useConnection();
+  const isMainnet = chainId === 314;
 
   return (
     <Card>
@@ -590,7 +568,7 @@ const StorageBalanceHeader = ({
               }}
               onSave={onConfigSave}
             />
-            {chainId === 314159 && (
+            {!isMainnet && (
               <>
                 <Button
                   variant="outline"
@@ -665,7 +643,7 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
         </div>
         <div className="flex items-center justify-between p-3 sm:p-4 rounded-sm border bg-muted/50">
           <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-medium">Warm Storage Balance</span>
+            <span className="text-xs sm:text-sm font-medium">My Storage Balance</span>
           </div>
           <span className="text-xs sm:text-sm">
             {isLoading ? "..." : `${balances?.warmStorageBalanceFormatted?.toLocaleString()} USDFC`}
@@ -682,11 +660,8 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
 const StorageStatusSection = ({
   balances,
   isLoading,
+  config,
 }: SectionProps & { config: StorageConfig & { withCDN: boolean; aiServerUrl: string } }) => {
-  const storageUsagePercent = balances?.currentRateAllowanceGB
-    ? (balances.currentStorageGB / balances.currentRateAllowanceGB) * 100
-    : 0;
-
   return (
     <Card>
       <CardHeader>
@@ -698,17 +673,11 @@ const StorageStatusSection = ({
       <CardContent className="space-y-4 sm:space-y-6">
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-xs sm:text-sm font-medium">Storage Usage</span>
+            <span className="text-xs sm:text-sm font-medium">Configured Capacity</span>
             <span className="text-xs sm:text-sm text-muted-foreground">
-              {isLoading ? "..." : `${balances?.currentStorageGB?.toLocaleString()} GB / ${balances?.currentRateAllowanceGB?.toLocaleString()} GB`}
+              {isLoading ? "..." : `${balances?.totalConfiguredCapacity?.toLocaleString()} GB`}
             </span>
           </div>
-          {!isLoading && (
-            <Progress value={storageUsagePercent} className="h-2" />
-          )}
-          <p className="text-xs text-muted-foreground">
-            {isLoading ? "..." : `${storageUsagePercent.toFixed(1)}% of allocated storage used`}
-          </p>
         </div>
 
         <Separator />
@@ -717,19 +686,37 @@ const StorageStatusSection = ({
           <div className="flex items-center justify-between p-3 rounded-sm border bg-muted/30">
             <div className="flex items-center gap-2">
               <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-              <span className="text-xs sm:text-sm">Persistence (Max Usage)</span>
+              <span className="text-xs sm:text-sm">Days Remaining (Max Capacity)</span>
             </div>
-            <Badge variant={balances?.persistenceDaysLeft && balances.persistenceDaysLeft > 7 ? "default" : "destructive"} className="text-xs">
-              {isLoading ? "..." : `${balances?.persistenceDaysLeft.toFixed(1)} days`}
+            <Badge variant={balances?.daysLeft && balances.daysLeft > config.minDaysThreshold ? "default" : "destructive"} className="text-xs">
+              {isLoading ? "..." : `${balances?.daysLeft.toFixed(1)} days`}
             </Badge>
           </div>
           <div className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-              <span className="text-xs sm:text-sm">Persistence (Current Usage)</span>
+              <span className="text-xs sm:text-sm">Days Remaining (Current Usage)</span>
             </div>
-            <Badge variant={balances?.persistenceDaysLeftAtCurrentRate && balances.persistenceDaysLeftAtCurrentRate > 7 ? "default" : "destructive"} className="text-xs">
-              {isLoading ? "..." : `${balances?.persistenceDaysLeftAtCurrentRate.toFixed(1)} days`}
+            <Badge variant={balances?.daysLeftAtCurrentRate && balances.daysLeftAtCurrentRate > config.minDaysThreshold ? "default" : "destructive"} className="text-xs">
+              {isLoading ? "..." : `${balances?.daysLeftAtCurrentRate === Infinity ? "∞" : balances?.daysLeftAtCurrentRate.toFixed(1)} days`}
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
+            <div className="flex items-center gap-2">
+              <Coins className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              <span className="text-xs sm:text-sm">Monthly Cost (Current)</span>
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {isLoading ? "..." : `${balances?.monthlyRateFormatted.toFixed(2)} USDFC`}
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
+            <div className="flex items-center gap-2">
+              <Coins className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              <span className="text-xs sm:text-sm">Monthly Cost (Max Capacity)</span>
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {isLoading ? "..." : `${balances?.maxMonthlyRateFormatted.toFixed(2)} USDFC`}
             </Badge>
           </div>
         </div>
@@ -737,6 +724,90 @@ const StorageStatusSection = ({
     </Card>
   );
 };
+
+/**
+ * Section displaying current storage usage from datasets
+ */
+const CurrentStorageUsage = () => {
+  const { data: datasets, isLoading } = useDatasets();
+  const { data: balances } = useBalances();
+
+  // Calculate total storage by type
+  const { cdnStorageGB, standardStorageGB, totalStorageGB } = (datasets || []).reduce(
+    (acc: { cdnStorageGB: number; standardStorageGB: number; totalStorageGB: number }, dataset) => {
+      const sizeGB = dataset?.sizeInGB || 0;
+      if (dataset?.withCDN) {
+        acc.cdnStorageGB += sizeGB;
+      } else {
+        acc.standardStorageGB += sizeGB;
+      }
+      acc.totalStorageGB += sizeGB;
+      return acc;
+    },
+    { cdnStorageGB: 0, standardStorageGB: 0, totalStorageGB: 0 }
+  );
+
+  const configuredCapacity = balances?.totalConfiguredCapacity || 0;
+  const usagePercentage = configuredCapacity > 0 ? (totalStorageGB / configuredCapacity) * 100 : 0;
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+            <HardDrive className="h-4 w-4 sm:h-5 sm:w-5" />
+            Current Storage Usage
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 animate-pulse">
+            <div className="h-8 bg-muted/50 rounded" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+          <HardDrive className="h-4 w-4 sm:h-5 sm:w-5" />
+          Current Storage Usage
+        </CardTitle>
+        <CardDescription className="text-sm">
+          {totalStorageGB.toFixed(3)} GB / {configuredCapacity.toFixed(0)} GB
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">Storage Used</span>
+            <span className="text-muted-foreground">{usagePercentage.toFixed(1)}%</span>
+          </div>
+          <div
+            className="group relative w-full h-3 bg-muted/50 rounded-full overflow-hidden cursor-pointer"
+            title={`CDN: ${cdnStorageGB.toFixed(3)} GB | Standard: ${standardStorageGB.toFixed(3)} GB`}
+          >
+            <div
+              className="h-full bg-linear-to-r from-primary to-primary/80 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+            />
+          </div>
+          <div className="flex flex-row mt-2 gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span>CDN: {cdnStorageGB.toFixed(3)} GB</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>Standard: {standardStorageGB.toFixed(3)} GB</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 /**
  * Component for displaying an allowance status
  */

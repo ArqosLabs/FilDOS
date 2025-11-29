@@ -9,9 +9,7 @@ import {
   Image,
   Video,
   FileArchive,
-  Scale,
   RefreshCw,
-  Loader2,
   Store,
   ChevronLeft,
   ChevronRight,
@@ -21,17 +19,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useBalances } from "@/hooks/useBalances";
-import { Progress } from "./ui/progress";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
+import { useDatasets } from "@/hooks/useDataset";
 
 const sidebarItems = [
   { icon: HardDrive, label: "My Drive", route: null },
   { icon: Users, label: "Shared with me", route: "shared" },
   { icon: Store, label: "Data Marketplace", route: "public" },
   // { icon: Trash2, label: "Trash", route: "trash" },
-  { icon: Scale, label: "My Data Sets", route: "data-sets" }
 ];
 
 const fileTypes = [
@@ -64,9 +61,15 @@ export default function Sidebar() {
   } = useBalances();
   const balances = data;
 
-  const storageUsagePercent = balances?.currentRateAllowanceGB
-    ? (balances.currentStorageGB / balances.currentRateAllowanceGB) * 100
-    : 0;
+  const { data: datasets } = useDatasets();
+
+  // Calculate total storage usage
+  const totalStorageGB = (datasets || []).reduce((acc, dataset) => {
+    return acc + (dataset?.sizeInGB || 0);
+  }, 0);
+
+  const configuredCapacity = balances?.totalConfiguredCapacity || 0;
+  const usagePercentage = configuredCapacity > 0 ? (totalStorageGB / configuredCapacity) * 100 : 0;
 
   return (
     <aside
@@ -138,18 +141,11 @@ export default function Sidebar() {
           {/* Storage Usage */}
           {!isCollapsed && (
             <div className="px-3 py-2">
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">
-                    {isBalanceLoading ? (
-                      <span className="flex items-center gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        Loading...
-                      </span>
-                    ) : (
-                      `${balances?.currentStorageGB?.toLocaleString()} GB of ${balances?.currentRateAllowanceGB?.toLocaleString()} GB used`
-                    )}
-                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    {totalStorageGB.toFixed(2)} / {configuredCapacity.toFixed(0)} GB ({usagePercentage.toFixed(0)}%)
+                  </p>
                   <button
                     onClick={() => refetch()}
                     disabled={isBalanceLoading || isRefetching}
@@ -160,11 +156,15 @@ export default function Sidebar() {
                   </button>
                 </div>
                 {!isBalanceLoading && (
-                  <Progress value={storageUsagePercent} className="h-2" />
+                  <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(usagePercentage, 100)}%`,
+                      }}
+                    />
+                  </div>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  {isBalanceLoading ? "..." : `${storageUsagePercent.toFixed(1)}% of allocated storage used`}
-                </p>
               </div>
             </div>
           )}
@@ -206,15 +206,15 @@ export default function Sidebar() {
       </div>
 
       <div className={`p-3 border-t border-sidebar-border ${isCollapsed ? "flex flex-col items-center gap-4" : "flex items-center justify-between"}`}>
-          <ThemeToggle />
-          <div className={`flex items-center gap-2 ${isCollapsed ? "flex-col" : ""}`}>
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <Settings className="h-5 w-5" />
-            </Button>
-          </div>
+        <ThemeToggle />
+        <div className={`flex items-center gap-2 ${isCollapsed ? "flex-col" : ""}`}>
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Bell className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
     </aside>
   );

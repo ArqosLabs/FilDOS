@@ -1,12 +1,38 @@
 import {
-  ProviderInfo,
   DataSetData,
   EnhancedDataSetInfo,
 } from "@filoz/synapse-sdk";
 
-export interface DataSet extends EnhancedDataSetInfo {
+export interface DatasetsSizeInfo {
+  sizeInBytes: number;
+  sizeInKiB: number;
+  sizeInMiB: number;
+  sizeInGB: number;
+}
+
+export interface DataSet extends EnhancedDataSetInfo, DatasetsSizeInfo {
+  serviceURL: string;
   data: DataSetData | null;
-  provider: ProviderInfo | null;
+  pieceSizes: Record<string, UnifiedSizeInfo>;
+}
+
+export interface UnifiedSizeInfo {
+  /** Size in bytes - primary measurement */
+  sizeBytes: bigint;
+  /** Size in KiB (1024 bytes) */
+  sizeKiB: number;
+  /** Size in MiB (1024^2 bytes) */
+  sizeMiB: number;
+  /** Size in GiB (1024^3 bytes) - standardized for calculations */
+  sizeGiB: number;
+  /** Whether CDN storage is enabled for this item */
+  withCDN?: boolean;
+  /** Number of merkle tree leaves */
+  leafCount?: number;
+  /** Number of pieces */
+  pieceCount?: number;
+  /** User-friendly size message */
+  message?: string;
 }
 
 export interface DatasetsSizeInfo {
@@ -27,44 +53,40 @@ export interface DatasetsResponse {
 /**
  * Interface for formatted balance data returned by useBalances
  */
-export interface UseBalancesResponse {
+export interface UseBalancesResponse extends StorageCalculationResult {
   filBalance: bigint;
   usdfcBalance: bigint;
   warmStorageBalance: bigint;
   filBalanceFormatted: number;
   usdfcBalanceFormatted: number;
   warmStorageBalanceFormatted: number;
-  persistenceDaysLeft: number;
-  persistenceDaysLeftAtCurrentRate: number;
-  isSufficient: boolean;
-  isRateSufficient: boolean;
-  isLockupSufficient: boolean;
-  rateNeeded: bigint;
-  totalLockupNeeded: bigint;
-  depositNeeded: bigint;
-  currentRateAllowanceGB: number;
-  currentStorageGB: number;
-  currentLockupAllowance: bigint;
+  availableToFreeUpFormatted: number;
+  monthlyRateFormatted: number;
+  maxMonthlyRateFormatted: number;
 }
 
 export const defaultBalances: UseBalancesResponse = {
+  availableToFreeUp: BigInt(0),
   filBalance: BigInt(0),
   usdfcBalance: BigInt(0),
   warmStorageBalance: BigInt(0),
   filBalanceFormatted: 0,
   usdfcBalanceFormatted: 0,
   warmStorageBalanceFormatted: 0,
-  persistenceDaysLeft: 0,
-  persistenceDaysLeftAtCurrentRate: 0,
+  availableToFreeUpFormatted: 0,
+  daysLeft: 0,
+  daysLeftAtCurrentRate: 0,
   isSufficient: false,
   isRateSufficient: false,
   isLockupSufficient: false,
-  rateNeeded: BigInt(0),
-  totalLockupNeeded: BigInt(0),
   depositNeeded: BigInt(0),
-  currentRateAllowanceGB: 0,
-  currentStorageGB: 0,
-  currentLockupAllowance: BigInt(0),
+  totalConfiguredCapacity: 0,
+  monthlyRateFormatted: 0,
+  maxMonthlyRateFormatted: 0,
+  rateNeeded: BigInt(0),
+  lockupNeeded: BigInt(0),
+  currentMonthlyRate: BigInt(0),
+  maxMonthlyRate: BigInt(0),
 };
 
 /**
@@ -91,39 +113,33 @@ export interface WarmStorageBalance {
  * Interface representing the calculated storage metrics
  */
 export interface StorageCalculationResult {
-  /** The required rate allowance needed for storage */
-  rateNeeded: bigint;
-  /** The current rate used */
-  rateUsed: bigint;
-  /** The current storage usage in bytes */
-  currentStorageBytes: bigint;
-  /** The current storage usage in GB */
-  currentStorageGB: number;
-  /** The required lockup amount needed for storage persistence */
-  totalLockupNeeded: bigint;
-  /** The additional lockup amount needed for storage persistence */
+  /** Balance needed to cover storage */
   depositNeeded: bigint;
-  /** Number of days left before lockup expires */
-  persistenceDaysLeft: number;
+  /** The available balance to free up */
+  availableToFreeUp: bigint;
+  /** Number of days left before lockup expires at configured storage capacity(GB) rate */
+  daysLeft: number;
   /** Number of days left before lockup expires at current rate */
-  persistenceDaysLeftAtCurrentRate: number;
-  /** Whether the current rate allowance is sufficient */
-  isRateSufficient: boolean;
-  /** Whether the current lockup allowance is sufficient for at least the minimum days threshold */
-  isLockupSufficient: boolean;
-  /** Whether both rate and lockup allowances are sufficient */
+  daysLeftAtCurrentRate: number;
+  /** Whether the rate allowance and lockup allowance are sufficient based on your configuration */
   isSufficient: boolean;
-  /** The current rate allowance in GB */
-  currentRateAllowanceGB: number;
-  /** The current lockup allowance in USDFC */
-  currentLockupAllowance: bigint;
+  /** Whether the rate allowance is sufficient based on your configuration */
+  isRateSufficient: boolean;
+  /** Whether the lockup allowance is sufficient based on your configuration */
+  isLockupSufficient: boolean;
+  /** The total storage paid for in GB */
+  totalConfiguredCapacity: number;
+  /** Rate allowance needed per epoch */
+  rateNeeded: bigint;
+  /** Lockup allowance needed */
+  lockupNeeded: bigint;
+  /** Current monthly rate */
+  currentMonthlyRate: bigint;
+  /** Max monthly rate for configured capacity */
+  maxMonthlyRate: bigint;
 }
 
 export interface PaymentActionProps extends SectionProps {
-  totalLockupNeeded?: bigint;
-  currentLockupAllowance?: bigint;
-  rateNeeded?: bigint;
-  depositNeeded?: bigint;
   isProcessingPayment: boolean;
   onPayment: (params: {
     lockupAllowance: bigint;
@@ -151,6 +167,49 @@ export interface AllowanceItemProps {
 export interface StorageCosts {
   pricePerTiBPerMonthNoCDN: bigint;
   pricePerTiBPerMonthWithCDN: bigint;
+}
+
+/**
+ * 🔧 Shared Types for Storage Manager Components
+ *
+ * Common interfaces and types used across components.
+ * Copy these along with components for full functionality.
+ */
+
+// Standard storage metrics interface
+export interface StorageMetrics {
+  cdnStorageGB: number;
+  standardStorageGB: number;
+  totalStorageGB: number;
+  cdnStorageBytes: bigint;
+  standardStorageBytes: bigint;
+  totalStorageBytes: bigint;
+}
+
+// Balance information interface
+export interface BalanceInfo {
+  filBalanceFormatted?: number;
+  usdfcBalanceFormatted?: number;
+  warmStorageBalanceFormatted?: number;
+  isSufficient?: boolean;
+  filBalance?: bigint;
+  usdfcBalance?: bigint;
+  depositNeeded?: bigint;
+  daysLeft?: number;
+}
+
+// Payment action payload
+export interface PaymentPayload {
+  lockupAllowance: bigint;
+  epochRateAllowance: bigint;
+  depositAmount: bigint;
+}
+
+// Dataset summary
+export interface DatasetSummary {
+  totalDatasets: number;
+  cdnDatasets: number;
+  standardDatasets: number;
 }
 
 // Contract-related types

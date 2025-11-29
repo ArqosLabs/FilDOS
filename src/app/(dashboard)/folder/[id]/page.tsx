@@ -12,10 +12,11 @@ import FileList from "@/components/file-list";
 import { useFiles, useFolderData, useCanRead } from "@/hooks/useContract";
 import EmbeddingDialog from "@/components/embedding-dialog";
 import SearchDialog from "@/components/search-dialog";
-import PayAccessDialog from "@/components/pay-access-dialog";
+// import PayAccessDialog from "@/components/pay-access-dialog";
 import { FileItem } from "@/types";
-import { useAccount } from "@/hooks/useAccount";
 import { ConnectWalletPrompt } from "@/components/not-connected";
+import { useConnection } from "wagmi";
+import { getFileTypeFromExtension } from "@/utils/fileClassification";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -24,45 +25,6 @@ const formatDate = (timestamp: bigint) => {
     month: 'short',
     day: 'numeric'
   });
-};
-
-const getFileTypeFromExtension = (filename: string): FileItem['type'] => {
-
-  const ext = filename.split('.').pop()?.toLowerCase();
-  switch (ext) {
-    case 'pdf':
-      return 'pdf';
-    case 'jpg':
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-    case 'svg':
-      return 'image';
-    case 'mp4':
-    case 'avi':
-    case 'mov':
-    case 'mkv':
-      return 'video';
-    case 'doc':
-    case 'docx':
-    case 'txt':
-      return 'document';
-    case 'mp3':
-    case 'wav':
-    case 'flac':
-      return 'audio';
-    case 'xls':
-    case 'xlsx':
-    case 'csv':
-      return 'spreadsheet';
-    case 'ppt':
-    case 'pptx':
-      return 'presentation';
-    case 'pdf':
-      return 'pdf';
-    default:
-      return 'other';
-  }
 };
 
 export default function FolderPage() {
@@ -74,7 +36,7 @@ export default function FolderPage() {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
-  const { isConnected, address } = useAccount();
+  const { isConnected, address } = useConnection();
   const { data: folderFiles, isLoading: filesLoading, error: filesError } = useFiles(folderId, true);
   const { data: folderData, isLoading: folderDataLoading, error: folderDataError } = useFolderData(folderId);
   const { data: canRead, isLoading: canReadLoading } = useCanRead(folderId, address);
@@ -173,7 +135,7 @@ export default function FolderPage() {
                 </div>
               </div>
 
-              <PayAccessDialog
+              {/* <PayAccessDialog
                 folderId={folderId}
                 folderName={folderData.name}
                 viewingPrice={folderData.viewingPrice}
@@ -182,7 +144,7 @@ export default function FolderPage() {
                 <Button size="lg" className="min-w-[200px] w-full sm:w-auto">
                   Pay to Access
                 </Button>
-              </PayAccessDialog>
+              </PayAccessDialog> */}
 
               <Button
                 variant="ghost"
@@ -324,7 +286,7 @@ export default function FolderPage() {
               {files.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center">
                   <Upload className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mb-4" />
-                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
+                  <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">
                     No files in this folder
                   </h3>
                   <p className="text-sm sm:text-base text-gray-600 mb-4">

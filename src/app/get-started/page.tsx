@@ -4,11 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
-import { useAccount } from "@/hooks/useAccount";
-import WalletConnectButton from "@/components/connect-button";
+import { useConnection } from "wagmi";
+import ConnectButton from "@/components/connect-button";
 
 export default function GetStarted() {
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
 
   return (
     <div className="w-full flex flex-col h-screen bg-background">
@@ -32,14 +32,11 @@ export default function GetStarted() {
                   Connect Your Wallet
                 </CardTitle>
                 <CardDescription>
-                  Connect your wallet to start using FilDOS decentralized storage
+                  Get ready to start using FilDOS decentralized storage
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
-                <WalletConnectButton />
-                <p className="text-sm text-muted-foreground text-center">
-                  Connected to Filecoin Calibration network
-                </p>
+                <ConnectButton />
               </CardContent>
             </Card>
           ) : (

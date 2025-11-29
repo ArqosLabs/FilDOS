@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { useAddFile } from "@/hooks/useContract";
+import { classifyFile } from "@/utils/fileClassification";
 import { 
   Upload, 
   File, 
@@ -24,7 +24,7 @@ import {
   RefreshCw,
   Lock
 } from "lucide-react";
-import { useAccount } from "@/hooks/useAccount";
+import { useConnection } from "wagmi";
 
 interface UploadDialogProps {
   children: React.ReactNode;
@@ -36,104 +36,20 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [isAddingToContract, setIsAddingToContract] = useState(false);
-  const [contractAddError, setContractAddError] = useState<string | null>(null);
-  const [processedUploadId, setProcessedUploadId] = useState<string | null>(null);
   const [encryptFile, setEncryptFile] = useState(false);
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
 
-  const { uploadFileMutation, uploadedInfo, handleReset, status, progress } =
-    useFileUpload();
-  const addFile = useAddFile();
+  const { 
+    uploadFileMutation, 
+    uploadedInfo, 
+    handleReset, 
+    status, 
+    progress,
+    isAddingToContract,
+    contractAddError,
+  } = useFileUpload(folderId);
 
   const { isPending: isLoading, mutateAsync: uploadFile } = uploadFileMutation;
-
-  const classifyFile = (file: File): string[] => {
-    const fileName = file.name.toLowerCase();
-    const fileExtension = fileName.split('.').pop() || '';
-    const fileType = file.type.toLowerCase();
-    
-    const tags: string[] = [];
-    
-    // Add file extension as a tag
-    if (fileExtension) {
-      tags.push(fileExtension);
-    }
-    
-    // Classify by category and add category tag
-    if (fileType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'svg', 'bmp', 'webp', 'ico', 'tiff', 'tif'].includes(fileExtension)) {
-      tags.push('images');
-    } else if (fileType.startsWith('video/') || ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v', '3gp', 'ogv'].includes(fileExtension)) {
-      tags.push('videos');
-    } else if (fileType.startsWith('audio/') || ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a'].includes(fileExtension)) {
-      tags.push('audio');
-    } else if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'cab', 'ace'].includes(fileExtension)) {
-      tags.push('archives');
-    } else if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'pages'].includes(fileExtension)) {
-      tags.push('documents');
-    } else if (['xls', 'xlsx', 'csv', 'ods', 'numbers'].includes(fileExtension)) {
-      tags.push('spreadsheets');
-      tags.push('documents');
-    } else if (['ppt', 'pptx', 'odp', 'key'].includes(fileExtension)) {
-      tags.push('presentations');
-      tags.push('documents');
-    } else if (['html', 'htm', 'js', 'css', 'json', 'xml', 'yaml', 'yml'].includes(fileExtension)) {
-      tags.push('web');
-      tags.push('code');
-    } else if (['swf', 'fla', 'flv'].includes(fileExtension)) {
-      tags.push('embeds');
-    } else if (['pkl'].includes(fileExtension)) {
-      tags.push('code');
-    } else if (['md', 'markdown', 'rst', 'tex'].includes(fileExtension)) {
-      tags.push('markup');
-      tags.push('documents');
-    } else if (['svg', 'ai', 'eps', 'psd', 'sketch', 'fig', 'xd'].includes(fileExtension)) {
-      tags.push('design');
-      tags.push('images');
-    } else if (['blend', 'fbx', 'obj', 'dae', '3ds', 'max', 'maya'].includes(fileExtension)) {
-      tags.push('3d-models');
-    } else if (['ttf', 'otf', 'woff', 'woff2', 'eot'].includes(fileExtension)) {
-      tags.push('fonts');
-    } else if (['apk', 'ipa', 'exe', 'msi', 'dmg', 'deb', 'rpm', 'pkg'].includes(fileExtension)) {
-      tags.push('applications');
-    } else if (['ipynb', 'rmd', 'qmd'].includes(fileExtension)) {
-      tags.push('notebooks');
-      tags.push('code');
-    } else if (['db', 'sqlite', 'sql', 'mdb'].includes(fileExtension)) {
-      tags.push('databases');
-    } else if (['bin', 'dat', 'dump', 'img', 'iso', 'dmg'].includes(fileExtension)) {
-      tags.push('binary');
-    } else {
-      // If we can't classify it, mark it as 'other'
-      tags.push('other');
-    }
-    
-    // Add MIME type category if it's useful
-    if (fileType.includes('application/')) {
-      if (fileType.includes('pdf')) {
-        // Already handled above
-      } else if (fileType.includes('json')) {
-        tags.push('data');
-      } else if (fileType.includes('octet-stream')) {
-        tags.push('binary');
-      }
-    }
-    
-    // Add file size category
-    const fileSizeMB = file.size / (1024 * 1024);
-    if (fileSizeMB < 1) {
-      tags.push('small');
-    } else if (fileSizeMB < 10) {
-      tags.push('medium');
-    } else if (fileSizeMB < 100) {
-      tags.push('large');
-    } else {
-      tags.push('xlarge');
-    }
-    
-    // Remove duplicates and return
-    return [...new Set(tags)];
-  };
 
   // Get preview tags for the current file
   const previewTags = file ? classifyFile(file) : [];
@@ -141,60 +57,6 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Add file to contract after upload is complete
-  useEffect(() => {
-    const addFileToContract = async () => {
-      // Create a unique identifier for this upload to prevent duplicate processing
-      const uploadId = uploadedInfo?.pieceCid || '';
-      
-      if (uploadedInfo && uploadedInfo.pieceCid && uploadedInfo.fileName && file && 
-          !isAddingToContract && uploadId !== processedUploadId) {
-        
-        setProcessedUploadId(uploadId);
-        setIsAddingToContract(true);
-        setContractAddError(null);
-        
-        // Add a delay to ensure the upload transaction completes and user is ready
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        try {
-          const tags = classifyFile(file);
-
-          await addFile.mutateAsync({
-            tokenId: folderId,
-            cid: uploadedInfo.pieceCid,
-            filename: uploadedInfo.fileName,
-            tags: tags,
-            encrypted: uploadedInfo.encrypted || false,
-            dataToEncryptHash: uploadedInfo.encryptedMetadata?.dataToEncryptHash || "",
-            fileType: uploadedInfo.encrypted && uploadedInfo.encryptedMetadata
-              ? uploadedInfo.encryptedMetadata.originalFileType
-              : (uploadedInfo.fileType || file.type || "application/octet-stream"),
-          });
-          
-          console.log("File added to contract successfully!");
-          console.log("File tags:", tags);
-        } catch (error) {
-          console.error("❌ Error adding file to contract:", error);
-          const errorMessage = error instanceof Error ? error.message : "Failed to add file to folder";
-          
-          // Check if user rejected the transaction
-          if (errorMessage.includes("user rejected") || errorMessage.includes("User denied")) {
-            setContractAddError("Transaction cancelled. File uploaded but not added to folder. Please reset and try again.");
-          } else {
-            setContractAddError(errorMessage);
-          }
-          
-          setProcessedUploadId(null); // Reset on error so user can retry
-        } finally {
-          setIsAddingToContract(false);
-        }
-      }
-    };
-
-    addFileToContract();
-  }, [uploadedInfo, file, folderId, isAddingToContract, processedUploadId, addFile]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -236,9 +98,6 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
     if (!newOpen) {
       handleReset();
       setFile(null);
-      setIsAddingToContract(false);
-      setContractAddError(null);
-      setProcessedUploadId(null);
       setEncryptFile(false);
     }
   };
@@ -261,7 +120,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
         </DialogHeader>
 
         <div className="space-y-4 sm:space-y-6">
-          <Card className={`border-1 border-dashed cursor-pointer transition-all duration-200 ${
+          <Card className={`border border-dashed cursor-pointer transition-all duration-200 ${
             isDragging
               ? "border-primary bg-primary/5 shadow-lg"
               : file
@@ -326,7 +185,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                         <div className="space-y-1 mx-auto">
                           <p className="text-xs text-muted-foreground">Auto-tags:</p>
                           <div className="flex flex-wrap gap-1 justify-center">
-                            {previewTags.map((tag, index) => {
+                            {previewTags.map((tag: string, index: number) => {
                               // Color-code tags by category
                               const getTagVariant = (tag: string) => {
                                 if (['images', 'design'].includes(tag)) return 'default'; // Blue
@@ -387,7 +246,7 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                 if (!file) return;
                 await uploadFile({ file, encrypt: encryptFile });
               }}
-              disabled={!file || isLoading || isAddingToContract || !!uploadedInfo}
+              disabled={!file || isLoading || isAddingToContract || (!!uploadedInfo && !contractAddError)}
               size="lg"
             >
               {isLoading ? (
@@ -400,15 +259,15 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                   Adding to folder...
                 </>
-              ) : !uploadedInfo ? (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload File
-                </>
-              ) : (
+              ) : uploadedInfo && !contractAddError ? (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Complete
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload File
                 </>
               )}
             </Button>
@@ -417,9 +276,6 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
               onClick={() => {
                 handleReset();
                 setFile(null);
-                setIsAddingToContract(false);
-                setContractAddError(null);
-                setProcessedUploadId(null);
                 setEncryptFile(false);
               }}
               disabled={!file || isLoading || isAddingToContract}
@@ -433,69 +289,62 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
           {/* Status and Progress */}
           {(status || isAddingToContract || contractAddError) && (
             <div className="space-y-2">
-              {isLoading && (
+              {(isLoading || isAddingToContract) && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs sm:text-sm gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <RefreshCw className="h-3 w-3 text-primary animate-spin flex-shrink-0" />
+                      <RefreshCw className="h-3 w-3 text-primary animate-spin shrink-0" />
                       <span className="text-foreground font-base truncate">
-                        {contractAddError 
-                          ? contractAddError
-                          : isAddingToContract 
-                            ? "Adding file to folder..." 
-                            : status?.replace(/[❌✅🎉]/g, '').trim()
+                        {isAddingToContract 
+                          ? "Adding file to folder..." 
+                          : status?.replace(/[❌✅🎉]/g, '').trim()
                         }
                       </span>
                     </div>
-                    <span className="text-muted-foreground flex-shrink-0">{progress}%</span>
+                    <span className="text-muted-foreground shrink-0">{progress}%</span>
                   </div>
                   <Progress value={progress} className="h-2" />
                 </div>
               )}
-              {!isLoading && (contractAddError || status) && (
+              {!isLoading && !isAddingToContract && (contractAddError || status) && (
                 <div className="flex items-center gap-2 text-xs sm:text-sm">
                   {contractAddError || status?.includes("failed") || status?.includes("error") ? (
-                    <XCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+                    <XCircle className="h-4 w-4 text-destructive shrink-0" />
                   ) : (
-                    <CheckCircle className="h-4 w-4 text-secondary flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-secondary shrink-0" />
                   )}
-                  <span className={`${contractAddError || status?.includes("failed") || status?.includes("error") ? "text-destructive" : "text-foreground"} break-words`}>
-                    {contractAddError 
-                      ? contractAddError
-                      : isAddingToContract 
-                        ? "Adding file to folder..." 
-                        : status
-                    }
+                  <span className={`${contractAddError || status?.includes("failed") || status?.includes("error") ? "text-destructive" : "text-foreground"} wrap-break-word`}>
+                    {contractAddError || status}
                   </span>
                 </div>
               )}
             </div>
           )}
           {/* Upload Success Details */}
-          {uploadedInfo && !isLoading && !contractAddError && (
+          {uploadedInfo && !isLoading && !isAddingToContract && !contractAddError && (
             <div className="space-y-3 p-3 sm:p-4 border rounded-lg">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-secondary" />
                 <p className="text-xs sm:text-sm font-base">
-                  {isAddingToContract ? "Processing..." : "Upload Complete"}
+                  Upload Complete
                 </p>
               </div>
               
               <div className="grid gap-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground flex-shrink-0">File:</span>
+                  <span className="text-muted-foreground shrink-0">File:</span>
                   <span className="font-base truncate text-right max-w-[180px] sm:max-w-[200px]">{uploadedInfo.fileName}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground flex-shrink-0">Size:</span>
+                  <span className="text-muted-foreground shrink-0">Size:</span>
                   <span className="font-base">{(uploadedInfo.fileSize! / 1024 / 1024).toFixed(2)} MB</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground flex-shrink-0">CommP:</span>
+                  <span className="text-muted-foreground shrink-0">CommP:</span>
                   <span className="font-mono text-[10px] truncate">{uploadedInfo.pieceCid?.slice(0,16)}...</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground flex-shrink-0">TX Hash:</span>
+                  <span className="text-muted-foreground shrink-0">TX Hash:</span>
                   <span className="font-mono text-[10px] truncate">{uploadedInfo.txHash?.slice(0, 16)}...</span>
                 </div>
                 {uploadedInfo.encrypted && (

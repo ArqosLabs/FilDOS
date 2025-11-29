@@ -1,63 +1,29 @@
-"use client";
+import { useWeb3AuthConnect, useWeb3AuthDisconnect } from '@web3auth/modal/react'
+import { Button } from './ui/button';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { useTheme } from "next-themes";
-import { filecoinCalibration, supportedChains } from "@/utils/chains";
-import { client } from "@/utils/client";
-import { ChainIcon, ChainProvider, ConnectButton, lightTheme, darkTheme } from "thirdweb/react";
-import { inAppWallet, createWallet } from "thirdweb/wallets";
+function ConnectButton() {
+  const { connect, loading: connectLoading, isConnected } = useWeb3AuthConnect()
+  const { disconnect, loading: disconnectLoading } = useWeb3AuthDisconnect()
+  const queryClient = useQueryClient()
 
-const wallets = [
-    inAppWallet({
-        auth: {
-            options: [
-                "google",
-                "farcaster",
-                "email",
-                "x",
-                "passkey",
-                "phone",
-                "facebook",
-                "guest",
-            ],
-        },
-    }),
-    createWallet("io.metamask"),
-    createWallet("com.coinbase.wallet"),
-    createWallet("me.rainbow"),
-];
+  const loading = connectLoading || disconnectLoading
 
-export default function WalletConnectButton() {
-    const { resolvedTheme } = useTheme();
+  const handleDisconnect = async () => {
+    await disconnect()
+    queryClient.clear()
+  }
 
-    return (
-        <div className="gap-1 flex items-center">
-            <ConnectButton
-                chain={filecoinCalibration}
-                client={client}
-                chains={supportedChains}
-                connectButton={{ label: "Sign In" }}
-                connectModal={{
-                    size: "compact",
-                    titleIcon:
-                        "https://www.fildos.cloud/FILDOS.png",
-                }}
-                theme={(resolvedTheme === "dark" ? darkTheme : lightTheme)({
-                    colors: {
-                        accentText: "#0295f6",
-                        primaryButtonBg: "#0295f6"
-                    },
-                })}
-                wallets={wallets}
-            />
-            <ChainProvider chain={filecoinCalibration}>
-                <div className="hidden sm:block">
-                    <ChainIcon
-                        client={client}
-                        className="h-auto w-6 rounded-full"
-                        loadingComponent={<span>...</span>}
-                    />
-                </div>
-            </ChainProvider>
-        </div>
-    );
+  return (
+    <div>
+      <Button 
+        onClick={() => isConnected ? handleDisconnect() : connect()} 
+        disabled={loading}
+      >
+        {loading ? (isConnected ? 'Disconnecting...' : 'Connecting...') : (isConnected ? 'Disconnect' : 'Connect')}
+      </Button>
+    </div>
+  )
 }
+
+export default ConnectButton;

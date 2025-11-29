@@ -1,12 +1,12 @@
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
-import { SynapseProvider } from "@/providers/SynapseProvider";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { SynapseProvider } from "@/providers/SynapseProvider";
 import { Inter } from 'next/font/google'
 import type { Metadata } from 'next'
-import { ThirdwebProvider } from "thirdweb/react";
-import { ChainWarning } from "@/components/chain-warning";
+import { WagmiProvider } from "@/providers/WagmiProvider";
+import { Web3AuthProvider } from "@/providers/Web3AuthProvider";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-      className={inter.className}
+        className={inter.className}
       >
         <ThemeProvider
           attribute="class"
@@ -37,16 +37,18 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ThirdwebProvider>
+          <Web3AuthProvider>
+
             <ReactQueryProvider>
-              <SynapseProvider>
-                <ChainWarning />
-                <main className="flex flex-col min-h-screen">
-                  {children}
-                </main>
-              </SynapseProvider>
+              <WagmiProvider>
+                <SynapseProvider>
+                  <main className="flex flex-col min-h-screen">
+                    {children}
+                  </main>
+                </SynapseProvider>
+              </WagmiProvider>
             </ReactQueryProvider>
-          </ThirdwebProvider>
+          </Web3AuthProvider>
           <Analytics />
         </ThemeProvider>
       </body>

@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useShareFolder, useFolderSharees, useRevokeShare, useFolderData } from "@/hooks/useContract";
-import { useAccount } from "@/hooks/useAccount";
+import { useConnection } from "wagmi";
 
 // Format USDFC (6 decimals) to readable string
 const formatUSDFC = (amount: bigint) => {
@@ -37,7 +37,7 @@ export default function ShareFolderDialog({ children, folderId, folderName }: Sh
   const [canWrite, setCanWrite] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { address } = useAccount();
+  const { address } = useConnection();
   const shareFolder = useShareFolder();
   const revokeShare = useRevokeShare();
   const { data: sharees } = useFolderSharees(folderId);
