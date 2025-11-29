@@ -1,35 +1,23 @@
 "use client";
+
 import { filecoinCalibration, filecoin } from "viem/chains";
 import { createConfig, http } from "wagmi";
-import { connectorsForWallets } from "@rainbow-me/rainbowkit";
-import { injectedWallet, rainbowWallet, metaMaskWallet, rabbyWallet } from "@rainbow-me/rainbowkit/wallets";
+import { web3AuthConnector } from "./web3AuthConnector";
+import type { IProvider } from '@web3auth/modal';
 
-// Only initialize connectors on the client side
-const getConnectors = () => {
-  if (typeof window === "undefined") {
-    return [];
-  }
+// Provider will be set by WagmiProvider
+let web3AuthProviderGetter: (() => IProvider | null) | null = null;
 
-  return connectorsForWallets(
-    [
-      {
-        groupName: "Recommended",
-        wallets: [metaMaskWallet, injectedWallet],
-      },
-      {
-        groupName: "Popular",
-        wallets: [rainbowWallet, rabbyWallet],
-      },
-    ],
-    {
-      appName: "Filecoin Onchain Cloud dApp",
-      projectId: "filecoin-onchain-cloud-dapp",
-    },
-  );
-};
+export function setWeb3AuthProvider(getter: () => IProvider | null) {
+  web3AuthProviderGetter = getter;
+}
 
 export const config = createConfig({
-  connectors: getConnectors(),
+  connectors: [
+    web3AuthConnector({
+      getProvider: () => web3AuthProviderGetter?.() ?? null,
+    }),
+  ],
   chains: [{ ...filecoinCalibration, name: "Filecoin testnet" }, { ...filecoin, name: "Filecoin" }],
   transports: {
     [filecoin.id]: http(undefined, {
@@ -40,6 +28,6 @@ export const config = createConfig({
     }),
   },
   batch: {
-    multicall: false,
+    multicall: true,
   },
 });

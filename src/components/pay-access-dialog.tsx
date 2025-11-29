@@ -11,13 +11,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Alert } from "@/components/ui/alert";
-import { TransactionButton } from "thirdweb/react";
-import { prepareContractCall, getContract, readContract } from "thirdweb";
-import { client } from "@/utils/client";
-import { filecoinCalibration } from "@/utils/chains";
+import { Button } from "@/components/ui/button";
+import { useConnection } from "wagmi";
 import { CONTRACT_ADDRESS } from "@/utils/contracts";
 import { usePaymentToken } from "@/hooks/useContract";
-import { useActiveAccount } from "thirdweb/react";
+import { useEthersSigner } from "@/hooks/useEthers";
+import { Contract } from "ethers";
 
 interface PayAccessDialogProps {
   children: React.ReactNode;
@@ -44,26 +43,32 @@ export default function PayAccessDialog({
   const [needsApproval, setNeedsApproval] = useState(true);
   const [isCheckingAllowance, setIsCheckingAllowance] = useState(false);
   const [hasCheckedAllowance, setHasCheckedAllowance] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
 
-  const account = useActiveAccount();
+  const { address, isConnected } = useConnection();
+  const signer = useEthersSigner();
   const { data: paymentTokenAddress } = usePaymentToken();
 
-  // Get ThirdWeb contract instance
-  const contract = useMemo(() => getContract({
-    client,
-    address: CONTRACT_ADDRESS,
-    chain: filecoinCalibration,
-  }), []);
-
-  // Get payment token contract instance - memoized to prevent recreation
+  // Get payment token contract instance
   const paymentTokenContract = useMemo(() => {
-    if (!paymentTokenAddress) return null;
-    return getContract({
-      client,
-      address: paymentTokenAddress,
-      chain: filecoinCalibration,
-    });
-  }, [paymentTokenAddress]);
+    if (!paymentTokenAddress || !signer) return null;
+    return new Contract(
+      paymentTokenAddress,
+      ["function allowance(address owner, address spender) view returns (uint256)", "function approve(address spender, uint256 amount) returns (bool)"],
+      signer
+    );
+  }, [paymentTokenAddress, signer]);
+
+  // Get main contract instance
+  const contract = useMemo(() => {
+    if (!signer) return null;
+    return new Contract(
+      CONTRACT_ADDRESS,
+      ["function payForViewAccess(uint256 tokenId)"],
+      signer
+    );
+  }, [signer]);
 
   // Check allowance when dialog opens or after approval
   useEffect(() => {
@@ -80,17 +85,13 @@ export default function PayAccessDialog({
     }
 
     const checkAllowance = async () => {
-      if (!account?.address || !paymentTokenContract) {
+      if (!address || !paymentTokenContract) {
         return;
       }
 
       setIsCheckingAllowance(true);
       try {
-        const allowance = await readContract({
-          contract: paymentTokenContract,
-          method: "function allowance(address owner, address spender) view returns (uint256)",
-          params: [account.address, CONTRACT_ADDRESS],
-        });
+        const allowance = await paymentTokenContract.allowance(address, CONTRACT_ADDRESS);
 
         setNeedsApproval(allowance < viewingPrice);
         setHasCheckedAllowance(true);
@@ -103,17 +104,37 @@ export default function PayAccessDialog({
     };
 
     checkAllowance();
-  }, [open, account?.address, paymentTokenContract, viewingPrice, hasCheckedAllowance, isCheckingAllowance]);
+  }, [open, address, paymentTokenContract, viewingPrice, hasCheckedAllowance, isCheckingAllowance]);
 
-  const handleApprovalSuccess = () => {
-    // Reset check flag to allow recheck after approval
-    setHasCheckedAllowance(false);
-    setNeedsApproval(false);
+  const handleApprove = async () => {
+    if (!paymentTokenContract) return;
+    setIsApproving(true);
+    try {
+      const tx = await paymentTokenContract.approve(CONTRACT_ADDRESS, viewingPrice);
+      await tx.wait();
+      // Reset check flag to allow recheck after approval
+      setHasCheckedAllowance(false);
+      setNeedsApproval(false);
+    } catch (error) {
+      console.error("Approval failed:", error);
+    } finally {
+      setIsApproving(false);
+    }
   };
 
-  const handlePaymentSuccess = () => {
-    setOpen(false);
-    onSuccess?.();
+  const handlePayment = async () => {
+    if (!contract) return;
+    setIsPaying(true);
+    try {
+      const tx = await contract.payForViewAccess(BigInt(folderId));
+      await tx.wait();
+      setOpen(false);
+      onSuccess?.();
+    } catch (error) {
+      console.error("Payment failed:", error);
+    } finally {
+      setIsPaying(false);
+    }
   };
 
   return (
@@ -159,36 +180,28 @@ export default function PayAccessDialog({
           </div>
 
           {/* Step 1: Approval Widget */}
-          {account && paymentTokenContract && needsApproval && !isCheckingAllowance && (
+          {isConnected && paymentTokenContract && needsApproval && !isCheckingAllowance && (
             <div className="space-y-2 mx-auto flex">
-              <TransactionButton
-                transaction={() => prepareContractCall({
-                  contract: paymentTokenContract,
-                  method: "function approve(address spender, uint256 amount) returns (bool)",
-                  params: [CONTRACT_ADDRESS, viewingPrice],
-                })}
-                theme="light"
-                onTransactionConfirmed={handleApprovalSuccess}
-                >
-                Approve Token Spending
-              </TransactionButton>
+              <Button
+                onClick={handleApprove}
+                disabled={isApproving}
+                className="w-full"
+              >
+                {isApproving ? "Approving..." : "Approve Token Spending"}
+              </Button>
             </div>
           )}
 
           {/* Step 2: Payment Widget */}
-          {account && !needsApproval && !isCheckingAllowance && (
+          {isConnected && !needsApproval && !isCheckingAllowance && (
             <div className="space-y-2 mx-auto flex">
-              <TransactionButton
-                transaction={() => prepareContractCall({
-                  contract,
-                  method: "function payForViewAccess(uint256 tokenId)",
-                  params: [BigInt(folderId)],
-                })}
-                theme="light"
-                onTransactionConfirmed={handlePaymentSuccess}
+              <Button
+                onClick={handlePayment}
+                disabled={isPaying}
+                className="w-full"
               >
-                Complete Payment ({formatPrice(viewingPrice)} USDFC)
-              </TransactionButton>
+                {isPaying ? "Processing..." : `Complete Payment (${formatPrice(viewingPrice)} USDFC)`}
+              </Button>
             </div>
           )}
 
@@ -201,7 +214,7 @@ export default function PayAccessDialog({
           )}
 
           {/* No wallet connected */}
-          {!account && (
+          {!isConnected && (
             <Alert className="border-yellow-200 bg-yellow-50 py-3">
               <AlertCircle className="w-4 h-4 text-yellow-600" />
               <div className="ml-2 text-sm text-yellow-800">

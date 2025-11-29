@@ -48,11 +48,11 @@ export const getDatasetsSizes = (datasets: DataSet[]): {
 } => {
   const sizes = datasets.reduce((acc, dataset) => {
     if (dataset.withCDN) {
-      acc.cdnSizeInBytes += Number(dataset.data?.pieces.reduce((acc, piece) => acc + getPieceInfoFromCidBytes(piece.pieceCid).sizeBytes, 0n));
+      acc.cdnSizeInBytes += Number(dataset.data?.pieces.reduce((acc, piece) => acc + getPieceInfoFromCidBytes(piece.pieceCid).sizeBytes, BigInt(0)));
     } else {
-      acc.nonCdnSizeInBytes += Number(dataset.data?.pieces.reduce((acc, piece) => acc + getPieceInfoFromCidBytes(piece.pieceCid).sizeBytes, 0n));
+      acc.nonCdnSizeInBytes += Number(dataset.data?.pieces.reduce((acc, piece) => acc + getPieceInfoFromCidBytes(piece.pieceCid).sizeBytes, BigInt(0)));
     }
-    acc.sizeInBytes += Number(dataset.data?.pieces.reduce((acc, piece) => acc + getPieceInfoFromCidBytes(piece.pieceCid).sizeBytes, 0n));
+    acc.sizeInBytes += Number(dataset.data?.pieces.reduce((acc, piece) => acc + getPieceInfoFromCidBytes(piece.pieceCid).sizeBytes, BigInt(0)));
     return acc;
   }, { sizeInBytes: 0, cdnSizeInBytes: 0, nonCdnSizeInBytes: 0 } as {
     sizeInBytes: number;
@@ -203,7 +203,7 @@ export const calculateRemainingLockupAllowance = (
 ): bigint => {
   const allowance = toDecimal(currentLockupAllowance);
   const used = toDecimal(currentLockupUsed);
-  return allowance.gt(used) ? BigInt(allowance.sub(used).toFixed(0)) : 0n;
+  return allowance.gt(used) ? BigInt(allowance.sub(used).toFixed(0)) : BigInt(0);
 };
 
 /** Converts per-epoch rate to daily rate */

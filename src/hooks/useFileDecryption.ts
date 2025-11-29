@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { decryptFileWithLit, initLitClient } from "@/lib/litClient";
 import { useConnection } from "wagmi";
+import { useEthersProvider } from "./useEthers";
 
 export const useFileDecryption = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
   const { address } = useConnection();
+  const provider = useEthersProvider();
 
   const mutation = useMutation({
     mutationKey: ["file-decryption", address],
@@ -14,6 +16,7 @@ export const useFileDecryption = () => {
       ciphertext,
       dataToEncryptHash,
       metadata,
+      tokenId,
     }: {
       ciphertext: string;
       dataToEncryptHash: string;
@@ -22,6 +25,7 @@ export const useFileDecryption = () => {
         originalFileSize: number;
         originalFileType: string;
       };
+      tokenId: string;
     }) => {
       if (!address) throw new Error("Address not found");
       
@@ -43,7 +47,9 @@ export const useFileDecryption = () => {
           ciphertext,
           dataToEncryptHash,
           metadata,
-          address
+          address,
+          tokenId,
+          provider ?? undefined
         );
 
         setStatus("Decryption complete!");

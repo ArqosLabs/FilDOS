@@ -1,7 +1,7 @@
 "use client";
 
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
+import ConnectButton from "./connect-button";
 
 export default function Navbar() {
   return (
@@ -22,9 +22,9 @@ export default function Navbar() {
         </div>
 
         {/* Right Side Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 mr-12">
           <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
-          <ConnectButton showBalance={false} />
+          <ConnectButton />
         </div>
       </div>
     </nav>

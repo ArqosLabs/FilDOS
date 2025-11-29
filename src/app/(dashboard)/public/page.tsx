@@ -134,7 +134,7 @@ export default function Marketplace() {
                             {/* Metadata */}
                             <div className="space-y-2">
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <User className="w-3 h-3 flex-shrink-0" />
+                                <User className="w-3 h-3 shrink-0" />
                                 <span className="truncate font-mono">
                                   {folderData?.owner ? 
                                     `${folderData.owner.slice(0, 6)}...${folderData.owner.slice(-4)}` : 
@@ -143,7 +143,7 @@ export default function Marketplace() {
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Calendar className="w-3 h-3 flex-shrink-0" />
+                                <Calendar className="w-3 h-3 shrink-0" />
                                 <span>
                                   {folderData?.createdAt ? 
                                     formatDate(folderData.createdAt) : 

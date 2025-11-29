@@ -6,6 +6,8 @@ import { calculateStorageMetrics } from "@/utils";
 import { usePayment } from "./usePayment";
 import { useConnection } from "wagmi";
 import { useSynapse } from "@/providers/SynapseProvider";
+import { useAddFile } from "./useContract";
+import { classifyFile } from "@/utils/fileClassification";
 
 export type UploadedInfo = {
   fileName?: string;
@@ -27,15 +29,19 @@ export type UploadedInfo = {
 
 /**
  * Hook to upload a file to the Filecoin network using Synapse.
+ * Also automatically adds the file to a folder contract after upload.
  */
-export const useFileUpload = () => {
+export const useFileUpload = (folderId: string) => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
   const [uploadedInfo, setUploadedInfo] = useState<UploadedInfo | null>(null);
+  const [isAddingToContract, setIsAddingToContract] = useState(false);
+  const [contractAddError, setContractAddError] = useState<string | null>(null);
   const { address, chainId } = useConnection();
   const { mutation: paymentMutation } = usePayment();
   const queryClient = useQueryClient();
   const { getSynapse } = useSynapse();
+  const addFile = useAddFile();
 
   const mutation = useMutation({
     mutationKey: ["file-upload", address],
@@ -58,7 +64,7 @@ export const useFileUpload = () => {
           setStatus("Encrypting file with Lit Protocol...");
           setProgress(10);
           
-          const encrypted = await encryptFileWithLit(file, address);
+          const encrypted = await encryptFileWithLit(file, address, folderId);
           
           // Convert ciphertext to a Blob/File for upload
           const encryptedBlob = new Blob([encrypted.ciphertext], { 
@@ -76,7 +82,7 @@ export const useFileUpload = () => {
             encryptedAt: encrypted.encryptedAt,
           };
           
-          setStatus("File encrypted successfully!");
+          setStatus("File encrypted successfully...");
           setProgress(15);
         } catch (error) {
           console.error("Encryption error:", error);
@@ -103,7 +109,7 @@ export const useFileUpload = () => {
         await paymentMutation.mutateAsync({
           depositAmount: depositNeeded
         });
-        setStatus("Storage configuration setup complete");
+        setStatus("Storage configuration setup complete...");
       }
 
       setStatus("Setting up storage service and dataset...");
@@ -111,12 +117,13 @@ export const useFileUpload = () => {
 
       let storageService;
       try {
-        storageService = await synapse.createStorage({
+        storageService = await synapse.storage.createContext({
           providerId: 4,
+          withCDN: true,
           callbacks: {
             onDataSetResolved: (info) => {
               console.log("Dataset resolved:", info);
-              setStatus("Existing dataset found and resolved");
+              setStatus("Existing dataset found and resolved...");
               setProgress(encrypt ? 35 : 30);
             },
             onProviderSelected: (provider) => {
@@ -138,11 +145,12 @@ export const useFileUpload = () => {
 
       setStatus("Uploading file to storage provider...");
       setProgress(encrypt ? 60 : 55);
+      
       // 7) Upload file to storage provider
       const {pieceCid} = await storageService.upload(uint8ArrayBytes, {
         onUploadComplete: (piece) => {
           setStatus(
-            `File uploaded! Signing msg to add pieces to the dataset`
+            `Piece CID generated`
           );
           setUploadedInfo((prev) => ({
             ...prev,
@@ -157,29 +165,84 @@ export const useFileUpload = () => {
           setProgress(80);
         },
         onPieceAdded: (hash) => {
-          setStatus(
-            `Waiting for transaction to be confirmed on chain (txHash: ${hash?.slice(0, 6)}...)`
-          );
+          setStatus("Transaction submitted to chain...");
           setUploadedInfo((prev) => ({
             ...prev,
             txHash: hash,
           }));
+          setProgress(85);
         },
         onPieceConfirmed: () => {
-          setStatus("Data pieces added to dataset successfully");
+          setStatus("Data pieces confirmed on chain...");
           setProgress(90);
         },
       });
-
-      setProgress(encrypt ? 98 : 95);
-      setUploadedInfo((prev) => ({
-        ...prev,
+      
+      setProgress(encrypt ? 88 : 85);
+      const finalUploadInfo: UploadedInfo = {
+        fileName: encrypt ? file.name : fileToUpload.name,
+        fileSize: file.size,
         pieceCid: pieceCid.toV1().toString(),
-      }));
+        encrypted: encrypt,
+        fileType: file.type || "application/octet-stream",
+        dataToEncryptHash: encryptedMetadata?.dataToEncryptHash || "",
+        encryptedMetadata: encryptedMetadata,
+      };
+      
+      setUploadedInfo(finalUploadInfo);
+      setStatus("File stored on Filecoin...");
+      
+      // Add file to contract - do this INSIDE mutationFn
+      setProgress(90);
+        setIsAddingToContract(true);
+        setContractAddError(null);
+        
+        // Add a small delay to ensure state updates
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        try {
+          setStatus("Organizing file in your folder...");
+          setProgress(92);
+          const tags = classifyFile(file);
+
+          if (!finalUploadInfo.pieceCid || !finalUploadInfo.fileName) {
+            throw new Error("Missing required upload information (CID or filename)");
+          }
+
+          await addFile.mutateAsync({
+            tokenId: folderId,
+            cid: finalUploadInfo.pieceCid,
+            filename: finalUploadInfo.fileName,
+            tags: tags,
+            encrypted: finalUploadInfo.encrypted || false,
+            dataToEncryptHash: finalUploadInfo.encryptedMetadata?.dataToEncryptHash || "",
+            fileType: finalUploadInfo.encrypted && finalUploadInfo.encryptedMetadata
+              ? finalUploadInfo.encryptedMetadata.originalFileType
+              : (finalUploadInfo.fileType || file.type || "application/octet-stream"),
+          });
+          
+          setStatus("File uploaded successfully!");
+          setProgress(100);
+        } catch (error) {
+          console.error("❌ Error adding file to contract:", error);
+          const errorMessage = error instanceof Error ? error.message : "Failed to add file to folder";
+          
+          // Check if user rejected the transaction
+          if (errorMessage.includes("user rejected") || errorMessage.includes("User denied")) {
+            setContractAddError("Transaction cancelled. File uploaded but not added to folder. Please reset and try again.");
+          } else {
+            setContractAddError(errorMessage);
+          }
+          setProgress(100); // Complete even on error so modal can close
+        } finally {
+          setIsAddingToContract(false);
+        }
+      
+      // Return the upload info
+      return finalUploadInfo;
     },
-    onSuccess: () => {
-      setStatus("File successfully stored on Filecoin!");
-      setProgress(100);
+    onSuccess: (uploadInfo, variables) => {
+      console.log("File upload mutation successful:", uploadInfo, variables);
       queryClient.invalidateQueries({
         queryKey: ["balances", address, config, chainId],
       });
@@ -198,6 +261,8 @@ export const useFileUpload = () => {
     setProgress(0);
     setUploadedInfo(null);
     setStatus("");
+    setIsAddingToContract(false);
+    setContractAddError(null);
   };
 
   return {
@@ -206,5 +271,7 @@ export const useFileUpload = () => {
     uploadedInfo,
     handleReset,
     status,
+    isAddingToContract,
+    contractAddError,
   };
 };

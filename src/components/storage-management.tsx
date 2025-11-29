@@ -23,12 +23,13 @@ import {
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { StorageConfigDialog, StorageConfig } from "./storage-config-dialog";
-import { fetchWarmStorageCosts } from "@/utils/warmStorageUtils";
+import { fetchWarmStorageCosts } from "@/utils/calculateStorageMetrics";
 import { getPricePerTBPerMonth } from "@/utils";
 import ConnectWalletPrompt from "./not-connected";
 import { useConnection } from "wagmi";
 import { useSynapse } from "@/providers/SynapseProvider";
 import { useDatasets } from "@/hooks/useDataset";
+import { CDN_DATA_SET_CREATION_COST } from "@/utils/constants";
 
 const STORAGE_CONFIG_KEY = "fildos_user_storage_config";
 
@@ -206,16 +207,12 @@ export const StorageManager = () => {
         {status && (
           <Card className={`${status.includes("❌")
             ? "border-destructive/50 bg-destructive/10"
-            : status.includes("✅")
-              ? "border-green-500/50 bg-green-500/10"
-              : "border-blue-500/50 bg-blue-500/10"
+            : "border-blue-500/50 bg-blue-500/10"
             }`}>
             <CardContent className="pt-6">
               <p className={`text-sm ${status.includes("❌")
                 ? "text-destructive"
-                : status.includes("✅")
-                  ? "text-green-700 dark:text-green-400"
-                  : "text-primary"
+                : "text-primary"
                 }`}>
                 {status}
               </p>
@@ -225,16 +222,12 @@ export const StorageManager = () => {
         {revokeStatus && (
           <Card className={`${revokeStatus.includes("❌")
             ? "border-destructive/50 bg-destructive/10"
-            : revokeStatus.includes("✅")
-              ? "border-green-500/50 bg-green-500/10"
-              : "border-blue-500/50 bg-blue-500/10"
+            : "border-blue-500/50 bg-blue-500/10"
             }`}>
             <CardContent className="pt-6">
               <p className={`text-sm ${revokeStatus.includes("❌")
                 ? "text-destructive"
-                : revokeStatus.includes("✅")
-                  ? "text-green-700 dark:text-green-400"
-                  : "text-primary"
+                : "text-primary"
                 }`}>
                 {revokeStatus}
               </p>
@@ -244,16 +237,12 @@ export const StorageManager = () => {
         {withdrawStatus && (
           <Card className={`${withdrawStatus.includes("❌")
             ? "border-destructive/50 bg-destructive/10"
-            : withdrawStatus.includes("✅")
-              ? "border-green-500/50 bg-green-500/10"
-              : "border-blue-500/50 bg-blue-500/10"
+            : "border-blue-500/50 bg-blue-500/10"
             }`}>
             <CardContent className="pt-6">
               <p className={`text-sm ${withdrawStatus.includes("❌")
                 ? "text-destructive"
-                : withdrawStatus.includes("✅")
-                  ? "text-green-700 dark:text-green-400"
-                  : "text-primary"
+                : "text-primary"
                 }`}>
                 {withdrawStatus}
               </p>
@@ -339,6 +328,11 @@ const AllowanceStatusSection = ({
                       </li>
                     )}
                   </ul>
+                  <div className="mt-3 pt-3 border-t border-amber-500/30">
+                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                      <strong>Note:</strong> Includes {Number(formatUnits(CDN_DATA_SET_CREATION_COST, 18)).toFixed(2)} USDFC one-time CDN dataset creation cost
+                    </p>
+                  </div>
                 </div>
               </div>
               {onPayment && (

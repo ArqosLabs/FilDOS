@@ -21,6 +21,7 @@ import { useFiles } from '@/hooks/useContract';
 import { FileItem, FileEntry } from '@/types';
 import { Badge } from './ui/badge';
 import { useConnection } from 'wagmi';
+import { getFileLogo } from '@/utils/fileClassification';
 
 interface FilePreviewModalProps {
   file: FileItem | null;
@@ -90,18 +91,6 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
       lastLoadKeyRef.current = null;
     }
   }, [isOpen]);
-
-  const getFileLogo = useCallback((fileName: string) => {
-    const extension = fileName.split('.').pop()?.toLowerCase() || '';
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) return '/logos/image.png';
-    if (['mp4', 'webm', 'avi', 'mov'].includes(extension)) return '/logos/video.png';
-    if (['mp3', 'wav', 'ogg', 'flac'].includes(extension)) return '/logos/audio.png';
-    if (['pdf'].includes(extension)) return '/logos/pdf.png';
-    if (['doc', 'docx', 'txt', 'md'].includes(extension)) return '/logos/document.png';
-    if (['xls', 'xlsx', 'csv'].includes(extension)) return '/logos/excel.png';
-    if (['ppt', 'pptx'].includes(extension)) return '/logos/ppt.png';
-    return '/logos/other.png';
-  }, []);
 
   const getContentType = useCallback((fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase() || '';
@@ -247,7 +236,12 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
       const originalFileName = fileMetadata.filename;
       const originalFileType = fileMetadata.fileType || 'application/octet-stream';
       
-      // Decrypt the file using contract metadata
+      const tokenId = file.tokenId;
+      if (!tokenId) {
+        setError('File tokenId missing. Unable to decrypt.');
+        return;
+      }
+
       const decrypted = await decryptFileMutation.mutateAsync({
         ciphertext: ciphertext,
         dataToEncryptHash: fileMetadata.dataToEncryptHash,
@@ -256,6 +250,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
           originalFileSize: 0, // We don't have this in contract
           originalFileType: originalFileType,
         },
+        tokenId: tokenId,
       });
       
       setDecryptedFile(decrypted);
@@ -411,7 +406,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
               alt="file icon" 
               width={16} 
               height={16}
-              className="text-gray-600 sm:w-5 sm:h-5 flex-shrink-0"
+              className="text-gray-600 sm:w-5 sm:h-5 shrink-0"
             />
             <span className="break-all line-clamp-2 text-sm sm:text-base">{file.name}</span>
           </DialogTitle>
@@ -422,7 +417,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
           {isDecrypting && (
             <div className="p-2 sm:p-3 border rounded-lg bg-primary/5 border-primary/20">
               <div className="flex items-center gap-2 mb-2">
-                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-primary flex-shrink-0" />
+                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-primary shrink-0" />
                 <span className="text-xs sm:text-sm text-foreground">Decrypting file...</span>
               </div>
               <Progress value={decryptProgress} className="h-1" />
@@ -441,11 +436,11 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
           {error && (
             <div className="p-3 sm:p-4 border border-destructive/20 rounded-lg bg-destructive/10">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm sm:text-base text-destructive break-words font-medium mb-1">{error}</p>
+                  <p className="text-sm sm:text-base text-destructive wrap-break font-medium mb-1">{error}</p>
                 </div>
-                <div className="flex gap-1 flex-shrink-0">
+                <div className="flex gap-1 shrink-0">
                   <Button 
                     onClick={handleRetry} 
                     variant="ghost" 
@@ -467,7 +462,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
                 {/* Decrypted Badge */}
                 {decryptedFile && (
                   <Badge variant="outline" className="text-xs">
-                    <Key className="h-3 w-3 text-primary flex-shrink-0" />
+                    <Key className="h-3 w-3 text-primary shrink-0" />
                     <span className="font-medium text-primary">Decrypted</span>
                   </Badge>
                 )}
@@ -491,7 +486,7 @@ export function FilePreviewModal({ isOpen, onClose, file }: FilePreviewModalProp
               {/* Text Content */}
               {fileContent && (
                 <div className="p-3 sm:p-4 max-h-[400px] sm:max-h-[500px] overflow-y-auto">
-                  <pre className="text-[10px] sm:text-xs text-foreground whitespace-pre-wrap break-words font-mono">
+                  <pre className="text-[10px] sm:text-xs text-foreground whitespace-pre-wrap wrap-break font-mono">
                     {fileContent}
                   </pre>
                 </div>

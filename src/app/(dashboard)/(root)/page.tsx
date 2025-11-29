@@ -86,12 +86,6 @@ export default function MyDrive() {
         // Clear success message after 5 seconds
         setTimeout(() => setLastCreatedFolder(null), 5000);
       }
-      
-      console.log("✅ Folder created successfully!");
-      console.log(`📁 Folder Name: ${name}`);
-      console.log(`🏷️ Folder Type: ${folderType}`);
-      console.log(`🔢 Token ID: ${result.tokenId}`);
-      console.log(`📋 Transaction Hash: ${result.receipt.hash}`);
     } catch (error) {
       console.error("❌ Error creating folder:", error);
     }
@@ -151,7 +145,7 @@ export default function MyDrive() {
           {lastCreatedFolder && (
             <div className="bg-secondary/10 border-l-4 border-secondary p-4 m-4">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-secondary flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-secondary shrink-0" />
                 <p className="text-xs text-foreground flex-1 font-light">
                   Folder created successfully! &ldquo;{lastCreatedFolder.name}&rdquo; (Token ID: {lastCreatedFolder.tokenId})
                 </p>
@@ -215,7 +209,7 @@ export default function MyDrive() {
               {folderDataLoading && successCount > 0 && totalCount > successCount && (
                 <div className="bg-primary/10 border-l-4 border-primary p-4 m-4">
                   <div className="flex items-center gap-3">
-                    <Loader2 className="h-5 w-5 text-primary animate-spin flex-shrink-0" />
+                    <Loader2 className="h-5 w-5 text-primary animate-spin shrink-0" />
                     <p className="text-sm text-foreground">
                       Loading folder details... ({successCount}/{totalCount} loaded)
                     </p>

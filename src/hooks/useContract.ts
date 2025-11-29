@@ -1,4 +1,4 @@
-import { use, useMemo } from "react";
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getContract } from "@/utils/contracts";
 import { useEthersSigner, useEthersProvider } from "@/hooks/useEthers";

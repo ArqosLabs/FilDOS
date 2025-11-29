@@ -5,10 +5,8 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { SynapseProvider } from "@/providers/SynapseProvider";
 import { Inter } from 'next/font/google'
 import type { Metadata } from 'next'
-import { WagmiProvider } from "wagmi";
-import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import "@rainbow-me/rainbowkit/styles.css";
-import { config } from "@/lib/wagmi";
+import { WagmiProvider } from "@/providers/WagmiProvider";
+import { Web3AuthProvider } from "@/providers/Web3AuthProvider";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-      className={inter.className}
+        className={inter.className}
       >
         <ThemeProvider
           attribute="class"
@@ -39,17 +37,18 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <WagmiProvider config={config}>
+          <Web3AuthProvider>
+
             <ReactQueryProvider>
-              <SynapseProvider>
-                <RainbowKitProvider>
-                    <main className="flex flex-col min-h-screen">
-                      {children}
-                    </main>
-                </RainbowKitProvider>
-              </SynapseProvider>
+              <WagmiProvider>
+                <SynapseProvider>
+                  <main className="flex flex-col min-h-screen">
+                    {children}
+                  </main>
+                </SynapseProvider>
+              </WagmiProvider>
             </ReactQueryProvider>
-          </WagmiProvider>
+          </Web3AuthProvider>
           <Analytics />
         </ThemeProvider>
       </body>

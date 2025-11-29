@@ -5,34 +5,32 @@ import { CONTRACT_ADDRESS } from "@/utils/contracts";
 
 let litNodeClient: LitNodeClient | null = null;
 
-const evmContractConditions = [
-  {
-    contractAddress: CONTRACT_ADDRESS,
-    functionName: "canRead",
-    functionParams: ["1", ":userAddress"],
-    functionAbi: {
-      type: "function",
-      stateMutability: "view",
-      outputs: [
-        { type: "bool", name: "", internalType: "bool" }
-      ],
-      name: "canRead",
-      inputs: [
-        { type: "uint256", name: "tokenId", internalType: "uint256" },
-        { type: "address", name: "user", internalType: "address" }
-      ]
-    },
-    chain: "filecoinCalibrationTestnet",
-    returnValueTest: {
-      key: "",
-      comparator: "=",
-      value: "true"
+function getAccessControlConditions(tokenId: string) {
+  return [
+    {
+      contractAddress: CONTRACT_ADDRESS,
+      functionName: "canRead",
+      functionParams: [tokenId, ":userAddress"],
+      functionAbi: {
+        type: "function",
+        stateMutability: "view",
+        outputs: [
+          { type: "bool", name: "", internalType: "bool" }
+        ],
+        name: "canRead",
+        inputs: [
+          { type: "uint256", name: "tokenId", internalType: "uint256" },
+          { type: "address", name: "user", internalType: "address" }
+        ]
+      },
+      chain: "filecoinCalibrationTestnet",
+      returnValueTest: {
+        key: "",
+        comparator: "=",
+        value: "true"
+      }
     }
-  }
-];
-
-function getAccessControlConditions() {
-  return evmContractConditions;
+  ];
 }
 
 
@@ -59,8 +57,8 @@ export function getLitClient(): LitNodeClient | null {
 // Encrypt file function
 export async function encryptFileWithLit(
   file: File,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  walletAddress: string
+  walletAddress: string,
+  tokenId: string
 ): Promise<{
   ciphertext: string;
   dataToEncryptHash: string;
@@ -72,7 +70,7 @@ export async function encryptFileWithLit(
   await initLitClient();
 
   // Get access control conditions
-  const accessControlConditionsList = getAccessControlConditions();
+  const accessControlConditionsList = getAccessControlConditions(tokenId);
 
   // Encrypt the file
   const result = await encryptFile(
@@ -95,13 +93,19 @@ export async function encryptFileWithLit(
 }
 
 // Get auth signature with proper SIWE format
-export async function getAuthSig() {
-  if (!window.ethereum) {
+export async function getAuthSig(provider?: ethers.BrowserProvider) {
+  // Use provided provider or fall back to window.ethereum
+  let ethProvider: ethers.BrowserProvider;
+  
+  if (provider) {
+    ethProvider = provider;
+  } else if (window.ethereum) {
+    ethProvider = new ethers.BrowserProvider(window.ethereum);
+  } else {
     throw new Error("No Ethereum provider found");
   }
 
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
+  const signer = await ethProvider.getSigner();
   const address = await signer.getAddress();
 
   // Create a proper SIWE (Sign-In with Ethereum) message
@@ -145,16 +149,17 @@ export async function decryptFileWithLit(
     originalFileSize: number;
     originalFileType: string;
   },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  walletAddress: string
+  walletAddress: string,
+  tokenId: string,
+  provider?: ethers.BrowserProvider
 ): Promise<File> {
   await initLitClient();
 
-  // Get auth signature
-  const authSig = await getAuthSig();
+  // Get auth signature with the provided provider
+  const authSig = await getAuthSig(provider);
 
   // Simple access control
-  const accessControlConditions = getAccessControlConditions();
+  const accessControlConditions = getAccessControlConditions(tokenId);
 
   // Decrypt the file
   const decryptedFile = await decryptToFile(
