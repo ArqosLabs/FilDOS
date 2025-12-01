@@ -7,6 +7,8 @@ import { Inter } from 'next/font/google'
 import type { Metadata } from 'next'
 import { WagmiProvider } from "@/providers/WagmiProvider";
 import { Web3AuthProvider } from "@/providers/Web3AuthProvider";
+import { ModalProvider } from "@/providers/ModalProvider";
+import { ModalManager } from "@/components/modal-manager";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -42,9 +44,12 @@ export default function RootLayout({
             <ReactQueryProvider>
               <WagmiProvider>
                 <SynapseProvider>
-                  <main className="flex flex-col min-h-screen">
-                    {children}
-                  </main>
+                  <ModalProvider>
+                    <main className="flex flex-col min-h-screen">
+                      {children}
+                    </main>
+                    <ModalManager />
+                  </ModalProvider>
                 </SynapseProvider>
               </WagmiProvider>
             </ReactQueryProvider>

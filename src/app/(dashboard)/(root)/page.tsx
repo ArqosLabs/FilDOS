@@ -6,13 +6,13 @@ import { Folder, CheckCircle2, X, Loader2 } from "lucide-react";
 import { useOwnedFolders, useMintFolder } from "@/hooks/useContract";
 import { useFolderList } from "@/hooks/useFolderList";
 import Header from "@/components/header";
-import CreateFolderDialog from "@/components/create-folder-dialog";
 import { Button } from "@/components/ui/button";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
 import { FileItem } from "@/types";
 import { ConnectWalletPrompt } from "@/components/not-connected";
 import { useConnection } from "wagmi";
+import { useModal } from "@/providers/ModalProvider";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -29,6 +29,7 @@ export default function MyDrive() {
   const [lastCreatedFolder, setLastCreatedFolder] = useState<{ name: string; tokenId: string } | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
+  const { openModal } = useModal();
 
   const { address, isConnected } = useConnection();
   const { data: ownedFolders, isLoading: foldersLoading, error: foldersError } = useOwnedFolders();
@@ -130,14 +131,13 @@ export default function MyDrive() {
           <div className="p-4 border-b bg-background">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-medium">My Drive</h2>
-              <CreateFolderDialog onCreateFolder={handleCreateFolder}>
-                <Button
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                  disabled={mintFolder.isPending}
-                >
-                  {mintFolder.isPending ? "Creating..." : "Create Folder"}
-                </Button>
-              </CreateFolderDialog>
+              <Button
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                disabled={mintFolder.isPending}
+                onClick={() => openModal("CREATE_FOLDER", { onCreateFolder: handleCreateFolder })}
+              >
+                {mintFolder.isPending ? "Creating..." : "Create Folder"}
+              </Button>
             </div>
           </div>
 

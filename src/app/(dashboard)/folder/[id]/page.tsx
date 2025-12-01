@@ -5,18 +5,16 @@ import { useState, useEffect } from "react";
 import { Upload, ArrowLeft, Lock, BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import UploadDialog from "@/components/upload-dialog";
 import Header from "@/components/header";
 import FileGrid from "@/components/file-grid";
 import FileList from "@/components/file-list";
 import { useFiles, useFolderData, useCanRead } from "@/hooks/useContract";
-import EmbeddingDialog from "@/components/embedding-dialog";
 import SearchDialog from "@/components/search-dialog";
-// import PayAccessDialog from "@/components/pay-access-dialog";
 import { FileItem } from "@/types";
 import { ConnectWalletPrompt } from "@/components/not-connected";
 import { useConnection } from "wagmi";
 import { getFileTypeFromExtension } from "@/utils/fileClassification";
+import { useModal } from "@/providers/ModalProvider";
 
 const formatDate = (timestamp: bigint) => {
   const date = new Date(Number(timestamp) * 1000);
@@ -31,6 +29,7 @@ export default function FolderPage() {
   const params = useParams();
   const router = useRouter();
   const folderId = params.id as string;
+  const { openModal } = useModal();
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
@@ -208,25 +207,23 @@ export default function FolderPage() {
                     <span className="hidden sm:inline">Search</span>
                   </Button>
                 </SearchDialog>
-                <EmbeddingDialog folderId={folderId} files={files}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="whitespace-nowrap"
-                  >
-                    <Upload className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Embed</span>
-                  </Button>
-                </EmbeddingDialog>
-                <UploadDialog folderId={folderId}>
-                  <Button
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="whitespace-nowrap"
+                  onClick={() => openModal("EMBEDDING", { folderId, files })}
+                >
+                  <Upload className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Embed</span>
+                </Button>
+                <Button
                     className="bg-primary hover:bg-secondary text-white whitespace-nowrap"
                     size="sm"
+                    onClick={() => openModal("UPLOAD", { folderId })}
                   >
                     <Upload className="w-4 h-4 sm:mr-2" />
                     <span>Upload Files</span>
                   </Button>
-                </UploadDialog>
               </div>
             </div>
           </div>
