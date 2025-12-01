@@ -1,13 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -22,22 +15,25 @@ import {
   CheckCircle, 
   XCircle, 
   RefreshCw,
-  Lock
+  Lock,
+  Minus
 } from "lucide-react";
 import { useConnection } from "wagmi";
+import { useModal } from "@/providers/ModalProvider";
 
-interface UploadDialogProps {
-  children: React.ReactNode;
+interface UploadModalProps {
   folderId: string;
+  modalId: string;
 }
 
-export default function UploadDialog({ children, folderId }: UploadDialogProps) {
-  const [open, setOpen] = useState(false);
+export default function UploadModal({ folderId, modalId }: UploadModalProps) {
+  const [targetFolderId] = useState(folderId);
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [encryptFile, setEncryptFile] = useState(false);
   const { isConnected } = useConnection();
+  const { minimizeModal, updateModalMetadata } = useModal();
 
   const { 
     uploadFileMutation, 
@@ -47,9 +43,23 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
     progress,
     isAddingToContract,
     contractAddError,
-  } = useFileUpload(folderId);
+  } = useFileUpload(targetFolderId);
 
   const { isPending: isLoading, mutateAsync: uploadFile } = uploadFileMutation;
+
+  // Update modal metadata for minimized state
+  useEffect(() => {
+    const isWorking = isLoading || isAddingToContract;
+    
+    updateModalMetadata(modalId, {
+      title: file ? `Uploading ${file.name}` : "Upload File",
+      progress: isWorking ? progress : undefined,
+      status: isWorking 
+        ? (isAddingToContract ? "Finalizing..." : "Uploading...") 
+        : (uploadedInfo ? "Complete" : undefined),
+      preventClose: isWorking,
+    });
+  }, [modalId, file, isLoading, isAddingToContract, progress, uploadedInfo, updateModalMetadata]);
 
   // Get preview tags for the current file
   const previewTags = file ? classifyFile(file) : [];
@@ -86,40 +96,30 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
     }
   }, []);
 
-  const handleOpenChange = (newOpen: boolean) => {
-    // Prevent closing while uploading or adding to contract
-    if (!newOpen && (isLoading || isAddingToContract)) {
-      return;
-    }
-    
-    setOpen(newOpen);
-    
-    // Clear all state when closing the dialog
-    if (!newOpen) {
-      handleReset();
-      setFile(null);
-      setEncryptFile(false);
-    }
-  };
-
   if (!mounted || !isConnected) {
     return null;
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl overflow-y-auto overflow-x-hidden">
-        <DialogHeader className="space-y-2 sm:space-y-3">
-          <DialogTitle className="text-lg sm:text-xl flex items-center gap-2">
+    <div className="w-full">
+      <div className="flex items-start justify-between mb-4 pr-8">
+        <div className="space-y-1">
+          <h2 className="text-lg sm:text-xl flex items-center gap-2 leading-none font-medium">
             <Upload className="h-5 w-5 sm:h-6 sm:w-6" />
             Upload File
-          </DialogTitle>
-        </DialogHeader>
+          </h2>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => minimizeModal(modalId)} 
+          className="h-8 w-8 shrink-0"
+        >
+          <Minus className="h-4 w-4" />
+        </Button>
+      </div>
 
-        <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6">
           <Card className={`border border-dashed cursor-pointer transition-all duration-200 ${
             isDragging
               ? "border-primary bg-primary/5 shadow-lg"
@@ -186,15 +186,14 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                           <p className="text-xs text-muted-foreground">Auto-tags:</p>
                           <div className="flex flex-wrap gap-1 justify-center">
                             {previewTags.map((tag: string, index: number) => {
-                              // Color-code tags by category
                               const getTagVariant = (tag: string) => {
-                                if (['images', 'design'].includes(tag)) return 'default'; // Blue
-                                if (['videos', 'audio'].includes(tag)) return 'secondary'; // Gray
-                                if (['documents', 'spreadsheets', 'presentations', 'markup'].includes(tag)) return 'outline'; // White
-                                if (['code', 'web', 'notebooks', 'databases'].includes(tag)) return 'destructive'; // Red
-                                if (['archives', 'binary', 'applications'].includes(tag)) return 'default'; // Blue
-                                if (['embeds'].includes(tag)) return 'secondary'; // Gray
-                                return 'outline'; // Default
+                                if (['images', 'design'].includes(tag)) return 'default';
+                                if (['videos', 'audio'].includes(tag)) return 'secondary';
+                                if (['documents', 'spreadsheets', 'presentations', 'markup'].includes(tag)) return 'outline';
+                                if (['code', 'web', 'notebooks', 'databases'].includes(tag)) return 'destructive';
+                                if (['archives', 'binary', 'applications'].includes(tag)) return 'default';
+                                if (['embeds'].includes(tag)) return 'secondary';
+                                return 'outline';
                               };
                               
                               return (
@@ -313,8 +312,13 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
                   ) : (
                     <CheckCircle className="h-4 w-4 text-secondary shrink-0" />
                   )}
-                  <span className={`${contractAddError || status?.includes("failed") || status?.includes("error") ? "text-destructive" : "text-foreground"} wrap-break-word`}>
-                    {contractAddError || status}
+                  <span 
+                    className={`${contractAddError || status?.includes("failed") || status?.includes("error") ? "text-destructive" : "text-foreground"} line-clamp-2`}
+                    title={contractAddError || status}
+                  >
+                    {(contractAddError || status)?.length > 150 
+                      ? `${(contractAddError || status)?.slice(0, 150)}...` 
+                      : (contractAddError || status)}
                   </span>
                 </div>
               )}
@@ -360,9 +364,6 @@ export default function UploadDialog({ children, folderId }: UploadDialogProps) 
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+    </div>
   );
 }
-
-
