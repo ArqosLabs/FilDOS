@@ -240,22 +240,18 @@ export default function TaggedFilesPage() {
           )}
 
           {/* Error state */}
-          {searchError && (
-            <div className="flex items-center justify-center p-6 sm:p-8">
-              <div className="text-center">
-                <div className="text-destructive mb-2 text-sm sm:text-base">⚠️ Error</div>
-                <p className="text-muted-foreground text-sm">
-                  Failed to search files: {searchError.message}
-                </p>
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.location.reload()} 
-                  className="mt-4"
-                  size="sm"
-                >
-                  Try Again
-                </Button>
-              </div>
+          {searchError && !searchResults && (
+            <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center">
+              <Tag className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">
+                No files found with tag &ldquo;{tag}&rdquo;
+              </h3>
+              <p className="text-sm sm:text-base text-muted-foreground mb-4 px-4">
+                You don&apos;t have any files tagged with &ldquo;{tag}&rdquo; yet.
+              </p>
+              <Button onClick={handleBackClick} variant="outline" size="sm">
+                Go Back
+              </Button>
             </div>
           )}
 

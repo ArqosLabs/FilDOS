@@ -147,6 +147,50 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         return _ownerOf(tokenId) != address(0);
     }
 
+    /// @notice Safe version of canRead that returns false for non-existent tokens instead of reverting
+    function _canReadSafe(uint256 tokenId, address user) internal view returns (bool) {
+        if (!_tokenExists(tokenId)) return false;
+        
+        // Owner always has access
+        if (ownerOf(tokenId) == user) return true;
+        
+        // Check active shares (for private/selectively shared folders)
+        uint256[] storage shares_ = _sharesByGrantee[user];
+        for (uint i = 0; i < shares_.length; ++i) {
+            Share storage s = _shares[shares_[i]];
+            if (s.folderId == tokenId && s.canRead) {
+                return true;
+            }
+        }
+        
+        // For public folders
+        if (_folderInfo[tokenId].isPublic) {
+            // If no price set (price = 0), it's freely accessible
+            if (_folderInfo[tokenId].viewingPrice == 0) {
+                return true;
+            }
+            // If price is set, user must have paid
+            return _paidViewers[tokenId][user];
+        }
+        
+        return false;
+    }
+
+    /// @notice Safe version of canWrite that returns false for non-existent tokens instead of reverting
+    function _canWriteSafe(uint256 tokenId, address user) internal view returns (bool) {
+        if (!_tokenExists(tokenId)) return false;
+        if (ownerOf(tokenId) == user) return true;
+
+        uint256[] storage shares_ = _sharesByGrantee[user];
+        for (uint i = 0; i < shares_.length; ++i) {
+            Share storage s = _shares[shares_[i]];
+            if (s.folderId == tokenId && s.canWrite) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// @notice Check if a file contains a specific tag
     function _fileHasTag(FileEntry memory file, string memory targetTag) internal pure returns (bool) {
         bytes32 targetTagHash = keccak256(bytes(targetTag));
@@ -409,6 +453,7 @@ contract FolderNFT is ERC721Enumerable, Ownable {
 
     /// @notice Retrieve all files if caller can read
     function getFiles(uint256 tokenId) external view returns (FileEntry[] memory) {
+        if (!_tokenExists(tokenId)) revert FolderDoesNotExist(tokenId);
         require(canRead(tokenId, msg.sender) || _folderInfo[tokenId].isPublic, "Unauthorized");
         
         // Get the number of files in the folder
@@ -504,7 +549,7 @@ contract FolderNFT is ERC721Enumerable, Ownable {
         uint256 maxResults = 0;
         for (uint256 f = 0; f < folderIds.length; f++) {
             uint256 tokenId = folderIds[f];
-            if (_tokenExists(tokenId) && (canRead(tokenId, msg.sender) || _folderInfo[tokenId].isPublic)) {
+            if (_tokenExists(tokenId) && (_canReadSafe(tokenId, msg.sender) || _folderInfo[tokenId].isPublic)) {
                 maxResults += _folderFileCIDs[tokenId].length();
             }
         }
@@ -517,7 +562,7 @@ contract FolderNFT is ERC721Enumerable, Ownable {
             uint256 tokenId = folderIds[f];
             
             // Skip if folder doesn't exist or user can't read
-            if (!_tokenExists(tokenId) || (!canRead(tokenId, msg.sender) && !_folderInfo[tokenId].isPublic)) {
+            if (!_tokenExists(tokenId) || (!_canReadSafe(tokenId, msg.sender) && !_folderInfo[tokenId].isPublic)) {
                 continue;
             }
             
