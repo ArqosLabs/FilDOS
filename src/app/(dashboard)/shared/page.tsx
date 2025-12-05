@@ -66,8 +66,9 @@ export default function SharedFolders() {
   };
 
   // Get current folder data for breadcrumb
-  const isLoading = foldersLoading || folderDataLoading;
-  const hasError = foldersError || folderDataError;
+  // Only show loading if folders are loading AND there's no error (error means 0 shared folders, show empty state instead)
+  const isLoading = (foldersLoading && !foldersError) || folderDataLoading;
+  const hasError = folderDataError;
 
   if (!isConnected) {
     return <ConnectWalletPrompt 
@@ -99,7 +100,7 @@ export default function SharedFolders() {
               <div className="text-center">
                 <div className="text-destructive mb-2 text-sm sm:text-base">⚠️ Error</div>
                 <p className="text-muted-foreground text-sm">
-                  {foldersError?.message || "Something went wrong loading shared folders"}
+                  Something went wrong loading shared folders
                 </p>
               </div>
             </div>

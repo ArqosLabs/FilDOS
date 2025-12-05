@@ -37,8 +37,8 @@ export default function Marketplace() {
     router.push(`/folder/${folderId}`);
   };
 
-  const isLoading = foldersLoading || folderDataLoading;
-  const hasError = foldersError || folderDataError;
+  const isLoading = (foldersLoading && !foldersError) || folderDataLoading;
+  const hasError = folderDataError;
 
   if (!isConnected) {
     return <ConnectWalletPrompt 
@@ -70,7 +70,7 @@ export default function Marketplace() {
               <div className="text-center">
                 <div className="text-destructive mb-2">⚠️ Error</div>
                 <p className="text-muted-foreground">
-                  {foldersError?.message || "Something went wrong loading the marketplace"}
+                  Something went wrong loading the marketplace
                 </p>
               </div>
             </div>

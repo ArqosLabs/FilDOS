@@ -101,8 +101,8 @@ export default function MyDrive() {
   };
 
   // Get current folder data for breadcrumb
-  const isLoading = foldersLoading || folderDataLoading;
-  const hasError = foldersError || mintFolder.error || folderDataError;
+  const isLoading = (foldersLoading && !foldersError) || folderDataLoading;
+  const hasError = mintFolder.error || folderDataError;
 
   // Show loading state during hydration to prevent mismatch
   if (!isMounted) {
@@ -165,11 +165,6 @@ export default function MyDrive() {
               <div className="text-center">
                 <div className="text-destructive mb-2">⚠️ Error</div>
                 <div className="space-y-2">
-                  {foldersError && (
-                    <p className="text-muted-foreground">
-                      <strong>Failed to load folders:</strong> {foldersError.message}
-                    </p>
-                  )}
                   {folderDataError && (
                     <p className="text-muted-foreground">
                       <strong>Failed to load folder details:</strong> Some folder information may be incomplete.
@@ -185,7 +180,7 @@ export default function MyDrive() {
                       <strong>Failed to create folder:</strong> {mintFolder.error.message}
                     </p>
                   )}
-                  {!foldersError && !folderDataError && !mintFolder.error && (
+                  {!folderDataError && !mintFolder.error && (
                     <p className="text-muted-foreground">Something went wrong. Please try again.</p>
                   )}
                 </div>
