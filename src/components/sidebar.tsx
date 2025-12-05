@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Bell,
   Settings,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +29,7 @@ const sidebarItems = [
   { icon: HardDrive, label: "My Drive", route: null },
   { icon: Users, label: "Shared with me", route: "shared" },
   { icon: Store, label: "Data Marketplace", route: "public" },
+  { icon: Upload, label: "Import Data", route: "import" },
   // { icon: Trash2, label: "Trash", route: "trash" },
 ];
 
@@ -104,7 +106,7 @@ export default function Sidebar() {
                     }`}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <item.icon className={`w-4 h-4 ${isCollapsed ? "" : "mr-3"} flex-shrink-0`} />
+                  <item.icon className={`w-4 h-4 ${isCollapsed ? "" : "mr-3"} shrink-0`} />
                   <span
                     className={`flex-1 text-left transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
                       }`}
@@ -128,7 +130,7 @@ export default function Sidebar() {
                 }`}
               title={isCollapsed ? "Storage" : undefined}
             >
-              <Cloud className={`w-4 h-4 ${isCollapsed ? "" : "mr-3"} flex-shrink-0`} />
+              <Cloud className={`w-4 h-4 ${isCollapsed ? "" : "mr-3"} shrink-0`} />
               <span
                 className={`flex-1 text-left transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
                   }`}
@@ -191,7 +193,7 @@ export default function Sidebar() {
                     }`}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <item.icon className={`w-4 h-4 ${isCollapsed ? "" : "mr-3"} flex-shrink-0`} />
+                  <item.icon className={`w-4 h-4 ${isCollapsed ? "" : "mr-3"} shrink-0`} />
                   <span
                     className={`flex-1 text-left transition-all duration-300 ${isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
                       }`}
