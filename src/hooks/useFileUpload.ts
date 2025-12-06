@@ -118,7 +118,7 @@ export const useFileUpload = (folderId: string) => {
       let storageService;
       try {
         storageService = await synapse.storage.createContext({
-          providerId: 6,
+          providerId: 4,
           withCDN: true,
           callbacks: {
             onDataSetResolved: (info) => {

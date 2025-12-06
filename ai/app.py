@@ -395,30 +395,25 @@ def embed_endpoint():
         # Handle both JSON and form data
         if request.is_json:
             data = request.get_json()
+            file_urls = data.get('file_urls', [])
+            file_names = data.get('file_names', [])
+            collection_name = data.get('collection_name', 'FileEmbeddings')
         else:
-            data = request.form.to_dict()
-            # Handle multiple URLs in form data
-            if 'file_urls' in request.form:
-                data['file_urls'] = request.form.getlist('file_urls')
+            # For form data, use getlist to get all values for repeated keys
+            file_urls = request.form.getlist('file_urls')
+            file_names = request.form.getlist('file_names')
+            collection_name = request.form.get('collection_name', 'FileEmbeddings')
 
-        print(f"Received data: {data}")
+        print(f"Received file_urls: {file_urls}")
+        print(f"Received file_names: {file_names}")
+        print(f"Received collection_name: {collection_name}")
         
-        if not data:
+        if not file_urls:
             return jsonify({'error': 'JSON data or form data required'}), 400
         
-        file_urls = data.get('file_urls', [])
-        file_names = data.get('file_names', [])
-        collection_name = data.get('collection_name', 'FileEmbeddings')
-        
-        # Handle multiple URLs/names in form data
-        if 'file_urls' in request.form:
-            file_urls = request.form.getlist('file_urls')
-        if 'file_names' in request.form:
-            file_names = request.form.getlist('file_names')
-        
         # Handle single file_url for backward compatibility
-        if not file_urls and data.get('file_url'):
-            file_urls = [data.get('file_url')]
+        if not file_urls and request.form.get('file_url'):
+            file_urls = [request.form.get('file_url')]
         
         if not file_urls:
             return jsonify({'error': 'file_urls array is required'}), 400

@@ -80,7 +80,7 @@ export const useCreateEmbeddings = () => {
       }
 
       setProgress(0);
-      setStatus("🔄 Creating embeddings...");
+      setStatus("Creating embeddings...");
 
       const formData = new FormData();
       fileUrls.forEach((url) => {
