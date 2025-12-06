@@ -147,7 +147,7 @@ export default function MyDrive() {
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-secondary shrink-0" />
                 <p className="text-xs text-foreground flex-1 font-light">
-                  Folder created successfully! &ldquo;{lastCreatedFolder.name}&rdquo; (Token ID: {lastCreatedFolder.tokenId})
+                  Folder created successfully!
                 </p>
                 <button
                   onClick={() => setLastCreatedFolder(null)}

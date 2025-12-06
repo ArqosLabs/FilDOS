@@ -5,6 +5,7 @@ import { config } from "@/config";
 // Types for AI endpoints
 export type EmbedRequest = {
   file_urls: string[];
+  file_names?: string[];
   collection_name?: string;
 };
 
@@ -68,8 +69,8 @@ export const useCreateEmbeddings = () => {
 
   const mutation = useMutation({
     mutationKey: ["create-embeddings"],
-    mutationFn: async (params: { fileUrls: string[]; collection_name: string }): Promise<EmbedResponse> => {
-      const { fileUrls, collection_name } = params;
+    mutationFn: async (params: { fileUrls: string[]; fileNames?: string[]; collection_name: string }): Promise<EmbedResponse> => {
+      const { fileUrls, fileNames, collection_name } = params;
 
       if (!fileUrls || fileUrls.length === 0) {
         throw new Error("File URLs are required");
@@ -85,6 +86,11 @@ export const useCreateEmbeddings = () => {
       fileUrls.forEach((url) => {
         formData.append('file_urls', url);
       });
+      if (fileNames) {
+        fileNames.forEach((name) => {
+          formData.append('file_names', name);
+        });
+      }
       formData.append('collection_name', collection_name);
 
       const response = await fetch(`${config.aiServerUrl}/embed`, {
