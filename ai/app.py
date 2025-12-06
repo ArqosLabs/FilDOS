@@ -245,10 +245,11 @@ def extract_text(file_path):
         print(f"Error extracting text from {file_path}: {e}")
         return None
 
-def embed_and_store_file(file_path, file_url, collection_name):
+def embed_and_store_file(file_path, file_url, collection_name, original_filename=None):
     """Create embeddings for a file and store in Weaviate"""
     ext = file_path.lower().split(".")[-1]
-    filename = os.path.basename(file_path)
+    # Use provided original filename if available, otherwise fall back to file path basename
+    filename = original_filename if original_filename else os.path.basename(file_path)
     timestamp = datetime.now().isoformat()
 
     try:
@@ -394,23 +395,25 @@ def embed_endpoint():
         # Handle both JSON and form data
         if request.is_json:
             data = request.get_json()
+            file_urls = data.get('file_urls', [])
+            file_names = data.get('file_names', [])
+            collection_name = data.get('collection_name', 'FileEmbeddings')
         else:
-            data = request.form.to_dict()
-            # Handle multiple URLs in form data
-            if 'file_urls' in request.form:
-                data['file_urls'] = request.form.getlist('file_urls')
+            # For form data, use getlist to get all values for repeated keys
+            file_urls = request.form.getlist('file_urls')
+            file_names = request.form.getlist('file_names')
+            collection_name = request.form.get('collection_name', 'FileEmbeddings')
 
-        print(f"Received data: {data}")
+        print(f"Received file_urls: {file_urls}")
+        print(f"Received file_names: {file_names}")
+        print(f"Received collection_name: {collection_name}")
         
-        if not data:
+        if not file_urls:
             return jsonify({'error': 'JSON data or form data required'}), 400
         
-        file_urls = data.get('file_urls', [])
-        collection_name = data.get('collection_name', 'FileEmbeddings')
-        
         # Handle single file_url for backward compatibility
-        if not file_urls and data.get('file_url'):
-            file_urls = [data.get('file_url')]
+        if not file_urls and request.form.get('file_url'):
+            file_urls = [request.form.get('file_url')]
         
         if not file_urls:
             return jsonify({'error': 'file_urls array is required'}), 400
@@ -428,7 +431,9 @@ def embed_endpoint():
             
             # Process each file URL
             for i, file_url in enumerate(file_urls):
-                print(f"Processing file {i+1}/{len(file_urls)}: {file_url}")
+                # Get the original filename if provided
+                original_filename = file_names[i] if i < len(file_names) else None
+                print(f"Processing file {i+1}/{len(file_urls)}: {file_url} (name: {original_filename})")
                 try:
                     # Download the file to embed
                     file_path, filename = download_file_from_url(file_url, temp_dir)
@@ -440,7 +445,10 @@ def embed_endpoint():
                         })
                         continue
                     
-                    # Check if file type is allowed
+                    # Use original filename if provided, otherwise use downloaded filename
+                    display_filename = original_filename if original_filename else filename
+                    
+                    # Check if file type is allowed (use the downloaded filename for extension check)
                     if not is_allowed_file_type(filename):
                         print(f"File type not supported for {filename}")
                         failed_files.append({
@@ -449,23 +457,23 @@ def embed_endpoint():
                         })
                         continue
                     
-                    # Embed and store the file
-                    print(f"Embedding file: {filename}")
-                    result = embed_and_store_file(file_path, file_url, collection_name)
+                    # Embed and store the file with original filename
+                    print(f"Embedding file: {display_filename}")
+                    result = embed_and_store_file(file_path, file_url, collection_name, original_filename)
                     if result == "skipped":
                         skipped_files.append({
                             'url': file_url,
-                            'filename': filename,
+                            'filename': display_filename,
                             'reason': 'File already exists in collection'
                         })
-                        print(f"Skipped existing file {filename}")
+                        print(f"Skipped existing file {display_filename}")
                     elif result:
                         processed_files.append({
                             'url': file_url,
-                            'filename': filename,
+                            'filename': display_filename,
                             'status': 'success'
                         })
-                        print(f"Successfully processed {filename}")
+                        print(f"Successfully processed {display_filename}")
                     else:
                         failed_files.append({
                             'url': file_url,

@@ -37,10 +37,11 @@ export default function EmbeddingModal({ folderId, files, modalId }: EmbeddingMo
     (file.type === 'image' || file.type === 'document' || file.type === 'pdf') && !file.encrypted
   );
 
-  // Convert CIDs to URLs
+  // Convert CIDs to URLs and collect file names
   const fileUrls = embeddableFiles.map(file =>
     `https://${file.owner}.calibration.filcdn.io/${file.cid}`
   );
+  const fileNames = embeddableFiles.map(file => file.name);
 
   useEffect(() => {
     const isWorking = step === 'preparing' || step === 'embedding';
@@ -75,6 +76,7 @@ export default function EmbeddingModal({ folderId, files, modalId }: EmbeddingMo
       setStep('embedding');
       createEmbeddings({
         fileUrls,
+        fileNames,
         collection_name: `Folder${targetFolderId}`,
       });
     }, 1000);
