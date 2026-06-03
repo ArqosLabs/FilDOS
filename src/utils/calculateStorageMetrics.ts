@@ -3,11 +3,18 @@ import {
   TIME_CONSTANTS,
   SIZE_CONSTANTS,
   TOKENS,
-  WarmStorageService,
 } from "@filoz/synapse-sdk";
+import Decimal from "decimal.js";
 
-import { MAX_UINT256, CDN_DATA_SET_CREATION_COST } from "@/utils/constants";
+import { MAX_UINT256 } from "@/utils/constants";
 import { StorageCosts } from "@/types";
+
+const bigintRatioToNumber = (numerator: bigint, denominator: bigint): number => {
+  if (denominator === BigInt(0)) return Infinity;
+  return new Decimal(numerator.toString())
+    .div(new Decimal(denominator.toString()))
+    .toNumber();
+};
 
 /**
  * Fetches the current storage costs from the WarmStorage service.
@@ -17,14 +24,10 @@ import { StorageCosts } from "@/types";
 export const fetchWarmStorageCosts = async (
   synapse: Synapse
 ): Promise<StorageCosts> => {
-  const warmStorageService = await WarmStorageService.create(
-    synapse.getProvider(),
-    synapse.getWarmStorageAddress()
-  );
-  const servicePrice = await warmStorageService.getServicePrice();
+  const info = await synapse.storage.getStorageInfo();
   return {
-    pricePerTiBPerMonthNoCDN: servicePrice.pricePerTiBPerMonthNoCDN,
-    pricePerTiBPerMonthWithCDN: servicePrice.pricePerTiBPerMonthNoCDN + CDN_DATA_SET_CREATION_COST,
+    pricePerTiBPerMonthNoCDN: info.pricing.noCDN.perTiBPerMonth,
+    pricePerTiBPerMonthWithCDN: info.pricing.withCDN.perTiBPerMonth,
   };
 };
 export const calculateStorageMetrics = async (
@@ -37,63 +40,69 @@ export const calculateStorageMetrics = async (
   fileSize?: number
 ) => {
 
-  const bytesToStore = fileSize
-    ? fileSize
-    : Number((BigInt(config.storageCapacity)
-      * SIZE_CONSTANTS.GiB))
+  const bytesToStore: bigint = fileSize !== undefined
+    ? BigInt(fileSize)
+    : BigInt(config.storageCapacity) * SIZE_CONSTANTS.GiB;
 
-  const warmStorageService = await WarmStorageService.create(synapse.getProvider(), synapse.getWarmStorageAddress());
+  const warmStorageAddress = synapse.chain.contracts.fwss.address;
 
-  // Fetch approval info, storage costs, and balance in parallel
-  const [allowance, accountInfo, prices] = await Promise.all([
-    synapse.payments.serviceApproval(synapse.getWarmStorageAddress()),
-    synapse.payments.accountInfo(TOKENS.USDFC),
-    warmStorageService.calculateStorageCost(bytesToStore)
+  // Fetch approval info, account info, and upload costs in parallel.
+  // `getUploadCosts` computes the *exact* additional deposit required given
+  // current balance, rate-based lockup, CDN fixed lockup (when withCDN+isNewDataSet),
+  // debt, runway and buffer epochs. Defaults to isNewDataSet=true — conservative,
+  // matching the SDK's actual lockup check at upload time.
+  //
+  // `extraRunwayEpochs` forces a real time buffer: the SDK's default buffer is
+  // skipped for first-time users (currentLockupRate === 0 && isNewDataSet),
+  // which yields a deposit sized to the exact minimum — and by the time the
+  // deposit tx settles, rate-based lockup has accrued past it and the upload
+  // reverts with InsufficientLockupFunds. 240 epochs ≈ 2 hours at 30s/epoch.
+  const [allowance, accountInfo, uploadCosts] = await Promise.all([
+    synapse.payments.serviceApproval({ service: warmStorageAddress }),
+    synapse.payments.accountInfo({ token: TOKENS.USDFC }),
+    synapse.storage.getUploadCosts({
+      dataSize: bytesToStore,
+      withCDN: true,
+      extraRunwayEpochs: BigInt(240),
+    }),
   ]);
 
   const availableFunds = accountInfo.availableFunds;
 
-  const currentMonthlyRate = allowance.rateUsed * TIME_CONSTANTS.EPOCHS_PER_MONTH;
+  const currentMonthlyRate = allowance.rateUsage * TIME_CONSTANTS.EPOCHS_PER_MONTH;
+  const currentDailyRate = allowance.rateUsage * TIME_CONSTANTS.EPOCHS_PER_DAY;
 
-  const currentDailyRate = allowance.rateUsed * TIME_CONSTANTS.EPOCHS_PER_DAY;
+  const maxMonthlyRate = uploadCosts.rate.perMonth;
+  const perDay = uploadCosts.rate.perEpoch * TIME_CONSTANTS.EPOCHS_PER_DAY;
 
-  const maxMonthlyRate = prices.perMonth
+  const daysLeft = bigintRatioToNumber(availableFunds, perDay);
+  const daysLeftAtCurrentRate = bigintRatioToNumber(availableFunds, currentDailyRate);
 
-  const daysLeft = Number(availableFunds) / Number(prices.perDay);
+  const depositNeeded = uploadCosts.depositNeeded;
 
-  const daysLeftAtCurrentRate = currentDailyRate === BigInt(0) ? Infinity : Number(availableFunds) / Number(currentDailyRate);
-
-  const amountNeeded = prices.perDay * BigInt(config.persistencePeriod);
-
-  // Add CDN dataset creation cost to the deposit if needed
-  const totalAmountNeeded = amountNeeded + CDN_DATA_SET_CREATION_COST;
-
-  const totalDepositNeeded =
-    daysLeft >= config.minDaysThreshold
-      ? BigInt(0)
-      : totalAmountNeeded - accountInfo.availableFunds;
-
+  const targetCoverage = perDay * BigInt(config.persistencePeriod);
   const availableToFreeUp =
-    accountInfo.availableFunds > totalAmountNeeded
-      ? accountInfo.availableFunds - totalAmountNeeded
-      : BigInt(0);
+    availableFunds > targetCoverage ? availableFunds - targetCoverage : BigInt(0);
 
-  const isRateSufficient = allowance.rateAllowance >= MAX_UINT256 / BigInt(2)
-
+  const isRateSufficient = allowance.rateAllowance >= MAX_UINT256 / BigInt(2);
   const isLockupSufficient = allowance.lockupAllowance >= MAX_UINT256 / BigInt(2);
 
-  const isSufficient = isRateSufficient && isLockupSufficient && daysLeft >= config.minDaysThreshold;
+  const isSufficient =
+    isRateSufficient &&
+    isLockupSufficient &&
+    depositNeeded === BigInt(0) &&
+    daysLeft >= config.minDaysThreshold;
 
   return {
     rateNeeded: MAX_UINT256,
-    depositNeeded: totalDepositNeeded,
-    availableToFreeUp: availableToFreeUp,
+    depositNeeded,
+    availableToFreeUp,
     lockupNeeded: MAX_UINT256,
     daysLeft,
     daysLeftAtCurrentRate,
     isRateSufficient,
     isLockupSufficient,
-    isSufficient: isSufficient,
+    isSufficient,
     totalConfiguredCapacity: config.storageCapacity,
     currentMonthlyRate,
     maxMonthlyRate,

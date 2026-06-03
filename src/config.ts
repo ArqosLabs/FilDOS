@@ -12,6 +12,8 @@ export const config = {
   minDaysThreshold: 10,
   // Whether to use CDN for the storage for faster retrieval
   withCDN: true,
+  // Synapse dataset namespace identifier (scopes datasets created by this app)
+  synapseSource: "fildos",
   // AI server URL for embeddings and search
   aiServerUrl: process.env.NEXT_PUBLIC_AI_SERVER_URL || "http://localhost:5001",
 } satisfies {
@@ -19,5 +21,6 @@ export const config = {
   persistencePeriod: number;
   minDaysThreshold: number;
   withCDN: boolean;
+  synapseSource: string;
   aiServerUrl: string;
 };

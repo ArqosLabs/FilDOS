@@ -58,22 +58,22 @@ export const useFileUpload = (folderId: string) => {
       if (encrypt) {
         setStatus("Initializing Lit Protocol...");
         setProgress(5);
-        
+
         try {
           await initLitClient();
           setStatus("Encrypting file with Lit Protocol...");
           setProgress(10);
-          
-          const encrypted = await encryptFileWithLit(file, address, folderId);
-          
+
+          const encrypted = await encryptFileWithLit(file, folderId);
+
           // Convert ciphertext to a Blob/File for upload
-          const encryptedBlob = new Blob([encrypted.ciphertext], { 
-            type: "application/octet-stream" 
+          const encryptedBlob = new Blob([encrypted.ciphertext], {
+            type: "application/octet-stream"
           });
           fileToUpload = new File([encryptedBlob], `${file.name}.encrypted`, {
             type: "application/octet-stream"
           });
-          
+
           encryptedMetadata = {
             dataToEncryptHash: encrypted.dataToEncryptHash,
             originalFileName: encrypted.originalFileName,
@@ -81,7 +81,7 @@ export const useFileUpload = (folderId: string) => {
             originalFileType: encrypted.originalFileType,
             encryptedAt: encrypted.encryptedAt,
           };
-          
+
           setStatus("File encrypted successfully...");
           setProgress(15);
         } catch (error) {
@@ -90,9 +90,8 @@ export const useFileUpload = (folderId: string) => {
         }
       }
 
-      // 1) Convert File → ArrayBuffer
+      // Convert File → Uint8Array bytes for the SDK upload path
       const arrayBuffer = await fileToUpload.arrayBuffer();
-      // 2) Convert ArrayBuffer → Uint8Array
       const uint8ArrayBytes = new Uint8Array(arrayBuffer);
 
       // Ensure synapse instance is available
@@ -118,7 +117,6 @@ export const useFileUpload = (folderId: string) => {
       let storageService;
       try {
         storageService = await synapse.storage.createContext({
-          providerId: 4,
           withCDN: true,
           callbacks: {
             onDataSetResolved: (info) => {
@@ -128,7 +126,7 @@ export const useFileUpload = (folderId: string) => {
             },
             onProviderSelected: (provider) => {
               console.log("Storage provider selected:", provider);
-              setStatus(`Storage provider selected (${provider.name})`);
+              setStatus(`Storage provider selected (id ${provider.id})`);
               setProgress(encrypt ? 40 : 35);
             },
           },
@@ -145,13 +143,11 @@ export const useFileUpload = (folderId: string) => {
 
       setStatus("Uploading file to storage provider...");
       setProgress(encrypt ? 60 : 55);
-      
-      // 7) Upload file to storage provider
-      const {pieceCid} = await storageService.upload(uint8ArrayBytes, {
-        onUploadComplete: (piece) => {
-          setStatus(
-            `Piece CID generated`
-          );
+
+      // Upload file to storage provider
+      const uploadResult = await storageService.upload(uint8ArrayBytes, {
+        onStored: (_providerId, piece) => {
+          setStatus(`Piece CID generated`);
           setUploadedInfo((prev) => ({
             ...prev,
             fileName: encrypt ? file.name : fileToUpload.name,
@@ -164,42 +160,42 @@ export const useFileUpload = (folderId: string) => {
           }));
           setProgress(80);
         },
-        onPieceAdded: (hash) => {
+        onPiecesAdded: (transaction) => {
           setStatus("Transaction submitted to chain...");
           setUploadedInfo((prev) => ({
             ...prev,
-            txHash: hash,
+            txHash: transaction,
           }));
           setProgress(85);
         },
-        onPieceConfirmed: () => {
+        onPiecesConfirmed: () => {
           setStatus("Data pieces confirmed on chain...");
           setProgress(90);
         },
       });
-      
+
       setProgress(encrypt ? 88 : 85);
       const finalUploadInfo: UploadedInfo = {
         fileName: encrypt ? file.name : fileToUpload.name,
         fileSize: file.size,
-        pieceCid: pieceCid.toV1().toString(),
+        pieceCid: uploadResult.pieceCid.toV1().toString(),
         encrypted: encrypt,
         fileType: file.type || "application/octet-stream",
         dataToEncryptHash: encryptedMetadata?.dataToEncryptHash || "",
         encryptedMetadata: encryptedMetadata,
       };
-      
+
       setUploadedInfo(finalUploadInfo);
       setStatus("File stored on Filecoin...");
-      
+
       // Add file to contract - do this INSIDE mutationFn
       setProgress(90);
         setIsAddingToContract(true);
         setContractAddError(null);
-        
+
         // Add a small delay to ensure state updates
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         try {
           setStatus("Organizing file in your folder...");
           setProgress(92);
@@ -220,13 +216,13 @@ export const useFileUpload = (folderId: string) => {
               ? finalUploadInfo.encryptedMetadata.originalFileType
               : (finalUploadInfo.fileType || file.type || "application/octet-stream"),
           });
-          
+
           setStatus("File uploaded successfully!");
           setProgress(100);
         } catch (error) {
           console.error("❌ Error adding file to contract:", error);
           const errorMessage = error instanceof Error ? error.message : "Failed to add file to folder";
-          
+
           // Check if user rejected the transaction
           if (errorMessage.includes("user rejected") || errorMessage.includes("User denied")) {
             setContractAddError("Transaction cancelled. File uploaded but not added to folder. Please reset and try again.");
@@ -237,7 +233,7 @@ export const useFileUpload = (folderId: string) => {
         } finally {
           setIsAddingToContract(false);
         }
-      
+
       // Return the upload info
       return finalUploadInfo;
     },

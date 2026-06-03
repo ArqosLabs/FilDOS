@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { TOKENS, TIME_CONSTANTS } from "@filoz/synapse-sdk";
-import { useEthersSigner } from "./useEthers";
+import type { Address } from "viem";
 import { MAX_UINT256 } from "@/utils/constants";
 import { config } from "@/config";
 import { useConnection } from "wagmi";
@@ -14,7 +14,6 @@ import { useSynapse } from "@/providers/SynapseProvider";
 export const usePayment = () => {
   const [status, setStatus] = useState<string>("");
   const { address, chainId } = useConnection();
-  const signer = useEthersSigner();
   const queryClient = useQueryClient();
   const { getSynapse } = useSynapse();
   const mutation = useMutation({
@@ -27,7 +26,6 @@ export const usePayment = () => {
       // === VALIDATION PHASE ===
       // Ensure all required dependencies are available before proceeding
       if (!address) throw new Error("Address not found");
-      if (!signer) throw new Error("Signer not found");
       if (!chainId) throw new Error("Chain id not found");
 
       // === SYNAPSE INITIALIZATION ===
@@ -35,14 +33,14 @@ export const usePayment = () => {
       const synapse = await getSynapse();
 
       // Get contract addresses from Synapse for the current network
-      const warmStorageAddress = synapse.getWarmStorageAddress();
+      const warmStorageAddress = synapse.chain.contracts.fwss.address;
 
       // === BALANCE VALIDATION ===
       // Check if user has sufficient USDFC tokens for the deposit
       const amount = depositAmount;
 
       console.log("amount", amount);
-      const balance = await synapse.payments.walletBalance(TOKENS.USDFC);
+      const balance = await synapse.payments.walletBalance({ token: TOKENS.USDFC });
 
       if (balance < amount) {
         throw new Error("Insufficient tUSDFC balance");
@@ -50,24 +48,22 @@ export const usePayment = () => {
 
       setStatus("💰 Setting up your storage configuration...");
 
-      if (amount > BigInt(0)) {
-        const tx = await synapse.payments.depositWithPermitAndApproveOperator(
-          amount,
-          warmStorageAddress,
-          MAX_UINT256,
-          MAX_UINT256,
-          TIME_CONSTANTS.EPOCHS_PER_MONTH
-        );
-        await tx.wait(1);
-      } else {
-        const tx = await synapse.payments.approveService(
-          warmStorageAddress,
-          MAX_UINT256,
-          MAX_UINT256,
-          TIME_CONSTANTS.EPOCHS_PER_MONTH
-        );
-        await tx.wait(1);
-      }
+      const hash = amount > BigInt(0)
+        ? await synapse.payments.depositWithPermitAndApproveOperator({
+            amount,
+            operator: warmStorageAddress,
+            rateAllowance: MAX_UINT256,
+            lockupAllowance: MAX_UINT256,
+            maxLockupPeriod: TIME_CONSTANTS.EPOCHS_PER_MONTH,
+          })
+        : await synapse.payments.approveService({
+            service: warmStorageAddress,
+            rateAllowance: MAX_UINT256,
+            lockupAllowance: MAX_UINT256,
+            maxLockupPeriod: TIME_CONSTANTS.EPOCHS_PER_MONTH,
+          });
+
+      await synapse.client.waitForTransactionReceipt({ hash });
       setStatus("You successfully configured your storage");
       return;
     },
@@ -92,14 +88,14 @@ export const useRevokeService = () => {
   const [status, setStatus] = useState<string>("");
   const { getSynapse } = useSynapse();
   const mutation = useMutation({
-    mutationFn: async ({ service }: { service: string }) => {
+    mutationFn: async ({ service }: { service: Address }) => {
       setStatus("Preparing transaction...");
       const synapse = await getSynapse();
-      const transaction = await synapse.payments.revokeService(
+      const hash = await synapse.payments.revokeService({
         service,
-        TOKENS.USDFC
-      );
-      await transaction.wait();
+        token: TOKENS.USDFC,
+      });
+      await synapse.client.waitForTransactionReceipt({ hash });
       setStatus("Successfully revoked service");
     },
   });

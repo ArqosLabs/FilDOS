@@ -6,7 +6,6 @@ import { defaultBalances, UseBalancesResponse } from "@/types";
 import { config } from "@/config";
 import { useMemo } from "react";
 import { useConnection } from "wagmi";
-import { useEthersSigner } from "./useEthers";
 import { useSynapse } from "@/providers/SynapseProvider";
 
 const STORAGE_CONFIG_KEY = "fildos_user_storage_config";
@@ -23,7 +22,6 @@ export const useBalances = (
   minDaysThreshold?: number
 ) => {
 
-  const signer = useEthersSigner();
   const { address, chainId } = useConnection();
   const { getSynapse } = useSynapse();
 
@@ -64,17 +62,17 @@ export const useBalances = (
 
   const query = useQuery({
     queryKey: ["balances", address, chainId, userConfig.storageCapacity, userConfig.persistencePeriod, userConfig.minDaysThreshold],
-    enabled: !!address && !!signer,
+    enabled: !!address,
     queryFn: async (): Promise<UseBalancesResponse> => {
       const synapse = await getSynapse();
 
       const [filRaw, usdfcRaw, paymentsRaw] = await Promise.all([
         synapse.payments.walletBalance(),
-        synapse.payments.walletBalance(TOKENS.USDFC),
-        synapse.payments.balance(TOKENS.USDFC),
+        synapse.payments.walletBalance({ token: TOKENS.USDFC }),
+        synapse.payments.balance({ token: TOKENS.USDFC }),
       ]);
 
-      const usdfcDecimals = synapse.payments.decimals(TOKENS.USDFC);
+      const usdfcDecimals = synapse.payments.decimals();
 
       // Calculate storage metrics with user config
       const storageMetrics = await calculateStorageMetrics(

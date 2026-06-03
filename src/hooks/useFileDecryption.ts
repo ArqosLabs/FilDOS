@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { decryptFileWithLit, initLitClient } from "@/lib/litClient";
-import { useConnection } from "wagmi";
-import { useEthersProvider } from "./useEthers";
+import { useConnection, useWalletClient } from "wagmi";
 
 export const useFileDecryption = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
   const { address } = useConnection();
-  const provider = useEthersProvider();
+  const { data: walletClient } = useWalletClient();
 
   const mutation = useMutation({
     mutationKey: ["file-decryption", address],
@@ -28,7 +27,8 @@ export const useFileDecryption = () => {
       tokenId: string;
     }) => {
       if (!address) throw new Error("Address not found");
-      
+      if (!walletClient) throw new Error("Wallet client not available");
+
       // Reset state at the start of each new decryption
       setProgress(0);
       setStatus("Initializing Lit Protocol...");
@@ -36,7 +36,7 @@ export const useFileDecryption = () => {
       try {
         setProgress(10);
         await initLitClient();
-        
+
         setStatus("Getting session signatures...");
         setProgress(25);
 
@@ -47,9 +47,8 @@ export const useFileDecryption = () => {
           ciphertext,
           dataToEncryptHash,
           metadata,
-          address,
           tokenId,
-          provider ?? undefined
+          walletClient
         );
 
         setStatus("Decryption complete!");
