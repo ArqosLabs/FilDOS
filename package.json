@@ -14,9 +14,6 @@
   },
   "dependencies": {
     "@filoz/synapse-sdk": "^0.41.0",
-    "@lit-protocol/contracts-sdk": "^7.3.1",
-    "@lit-protocol/encryption": "^7.3.1",
-    "@lit-protocol/lit-node-client": "^7.3.1",
     "@opentelemetry/context-async-hooks": "^2.2.0",
     "@opentelemetry/core": "^2.2.0",
     "@opentelemetry/instrumentation": "^0.208.0",

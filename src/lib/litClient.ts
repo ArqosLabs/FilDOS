@@ -1,172 +1,76 @@
-import { disconnectWeb3, LitNodeClient } from "@lit-protocol/lit-node-client";
-import { encryptFile, decryptToFile } from "@lit-protocol/encryption";
-import type { Account, Chain, Transport, WalletClient } from "viem";
-import { CONTRACT_ADDRESS } from "@/utils/contracts";
+/* eslint-disable @typescript-eslint/no-unused-vars -- intentional: stub
+ * functions retain their original signatures so callers don't need updates
+ * when this module is re-implemented for Lit Chipotle. */
+/**
+ * Lit Protocol integration — STUBBED.
+ *
+ * Background: this module previously implemented client-side file encryption
+ * against Lit's Datil (v7) network, gated on the FolderNFT contract's
+ * `canRead(tokenId, user)` via `evmContractConditions`. That approach also
+ * worked under Lit's Naga (v8) SDK with minor changes.
+ *
+ * As of 2026-03-25, Lit has fully sunset BOTH Datil and Naga generations.
+ * The only live Lit network is "Chipotle", which uses a fundamentally
+ * different model:
+ *
+ *   - Encryption/decryption runs inside a Lit Action in a TEE, not client-side
+ *   - Symmetric keys are derived from PKPs (Programmable Key Pairs), not from
+ *     access control conditions baked into ciphertext
+ *   - Access control is enforced via on-chain group membership configured
+ *     through Lit's Dashboard / `AccountConfig` smart contract, not via
+ *     runtime evmContractConditions
+ *   - Per Lit's own docs, Chipotle's Encrypt/Decrypt is NOT a drop-in for
+ *     wallet-authenticated decryption gated on dynamic on-chain conditions
+ *
+ * Re-enabling encryption for FilDOS therefore requires a redesign that maps
+ * the FolderNFT permission model onto Lit Actions + PKPs + on-chain group
+ * membership. This is product-level work, not an SDK swap. Until that lands,
+ * config.encryptionEnabled gates the encryption UI off and these functions
+ * throw if anything calls them.
+ *
+ * References:
+ *   https://developer.litprotocol.com/llms.txt
+ *   https://developer.litprotocol.com  (Dashboard for AccountConfig setup)
+ */
 
-type SignerClient = WalletClient<Transport, Chain, Account>;
+const ENCRYPTION_DISABLED_MESSAGE =
+  "Lit Protocol encryption is currently disabled — Datil/Naga networks are " +
+  "sunset and a Chipotle-based redesign is pending. See src/lib/litClient.ts.";
 
-let litNodeClient: LitNodeClient | null = null;
-
-function getAccessControlConditions(tokenId: string) {
-  return [
-    {
-      contractAddress: CONTRACT_ADDRESS,
-      functionName: "canRead",
-      functionParams: [tokenId, ":userAddress"],
-      functionAbi: {
-        type: "function",
-        stateMutability: "view",
-        outputs: [
-          { type: "bool", name: "", internalType: "bool" }
-        ],
-        name: "canRead",
-        inputs: [
-          { type: "uint256", name: "tokenId", internalType: "uint256" },
-          { type: "address", name: "user", internalType: "address" }
-        ]
-      },
-      chain: "filecoinCalibrationTestnet",
-      returnValueTest: {
-        key: "",
-        comparator: "=",
-        value: "true"
-      }
-    }
-  ];
-}
-
-
-// Initialize Lit client
-export async function initLitClient(): Promise<LitNodeClient> {
-  disconnectWeb3();
-  if (litNodeClient && litNodeClient.ready) {
-    return litNodeClient;
-  }
-
-  litNodeClient = new LitNodeClient({
-    litNetwork: "datil-dev",
-  });
-
-  await litNodeClient.connect();
-  return litNodeClient;
-}
-
-// Get Lit client instance
-export function getLitClient(): LitNodeClient | null {
-  return litNodeClient;
-}
-
-// Encrypt file function
-export async function encryptFileWithLit(
-  file: File,
-  tokenId: string
-): Promise<{
+export type EncryptedFileResult = {
   ciphertext: string;
   dataToEncryptHash: string;
   originalFileName: string;
   originalFileSize: number;
   originalFileType: string;
   encryptedAt: number;
-}> {
-  await initLitClient();
+};
 
-  // Get access control conditions
-  const accessControlConditionsList = getAccessControlConditions(tokenId);
-
-  // Encrypt the file
-  const result = await encryptFile(
-    {
-      file,
-      chain: "filecoinCalibrationTestnet",
-      evmContractConditions: accessControlConditionsList,
-    },
-    litNodeClient!
-  );
-
-  return {
-    ciphertext: result.ciphertext,
-    dataToEncryptHash: result.dataToEncryptHash,
-    originalFileName: file.name,
-    originalFileSize: file.size,
-    originalFileType: file.type,
-    encryptedAt: Date.now(),
-  };
+export async function initLitClient(): Promise<never> {
+  throw new Error(ENCRYPTION_DISABLED_MESSAGE);
 }
 
-// Get auth signature with proper SIWE format using a viem wallet client
-export async function getAuthSig(walletClient: SignerClient) {
-  const address = walletClient.account.address;
-
-  // Create a proper SIWE (Sign-In with Ethereum) message
-  const domain = window.location.host;
-  const origin = window.location.origin;
-  const statement = "Sign in with Ethereum to the app.";
-
-  const issuedAt = new Date().toISOString();
-  const expirationTime = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
-
-  // SIWE message format
-  const chainId = walletClient.chain.id;
-  const siweMessage = `${domain} wants you to sign in with your Ethereum account:
-${address}
-
-${statement}
-
-URI: ${origin}
-Version: 1
-Chain ID: ${chainId}
-Nonce: ${Math.random().toString(36).substring(2, 15)}
-Issued At: ${issuedAt}
-Expiration Time: ${expirationTime}`;
-
-  const signature = await walletClient.signMessage({
-    account: walletClient.account,
-    message: siweMessage,
-  });
-
-  return {
-    sig: signature,
-    derivedVia: "web3.eth.personal.sign",
-    signedMessage: siweMessage,
-    address: address,
-  };
+export function getLitClient(): null {
+  return null;
 }
 
-// Decrypt file function
+export async function encryptFileWithLit(
+  _file: File,
+  _tokenId: string
+): Promise<EncryptedFileResult> {
+  throw new Error(ENCRYPTION_DISABLED_MESSAGE);
+}
+
 export async function decryptFileWithLit(
-  ciphertext: string,
-  dataToEncryptHash: string,
-  metadata: {
+  _ciphertext: string,
+  _dataToEncryptHash: string,
+  _metadata: {
     originalFileName: string;
     originalFileSize: number;
     originalFileType: string;
   },
-  tokenId: string,
-  walletClient: SignerClient
+  _tokenId: string,
+  _walletClient: unknown
 ): Promise<File> {
-  await initLitClient();
-
-  // Get auth signature with the provided wallet client
-  const authSig = await getAuthSig(walletClient);
-
-  // Simple access control
-  const accessControlConditions = getAccessControlConditions(tokenId);
-
-  // Decrypt the file
-  const decryptedFile = await decryptToFile(
-    {
-      ciphertext,
-      dataToEncryptHash,
-      evmContractConditions: accessControlConditions,
-      authSig,
-      chain: "filecoinCalibrationTestnet",
-    },
-    litNodeClient!
-  );
-
-  // Return as File object with original name
-  const blob = new Blob([new Uint8Array(decryptedFile)]);
-  return new File([blob], metadata.originalFileName, {
-    type: metadata.originalFileType,
-  });
+  throw new Error(ENCRYPTION_DISABLED_MESSAGE);
 }
