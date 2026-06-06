@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useConnection } from "wagmi";
 import { useModal } from "@/providers/ModalProvider";
+import { config } from "@/config";
 
 interface UploadModalProps {
   folderId: string;
@@ -216,17 +217,18 @@ export default function UploadModal({ folderId, modalId }: UploadModalProps) {
             </CardContent>
           </Card>
 
-          {/* Encryption Option */}
-          {file && !uploadedInfo && (
+          {/* Encryption Option — hidden while Lit Protocol migration to
+              Chipotle is pending. Re-enabled via config.encryptionEnabled. */}
+          {config.encryptionEnabled && file && !uploadedInfo && (
             <div className="flex flex-col sm:flex-row sm:items-center justify-start py-2 gap-2 sm:gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
-                <Label 
-                  htmlFor="encrypt" 
+                <Label
+                  htmlFor="encrypt"
                   className="text-sm font-base cursor-pointer"
                 >
                   Encrypt
                 </Label>
-                <Switch 
+                <Switch
                   id="encrypt"
                   checked={encryptFile}
                   onCheckedChange={setEncryptFile}

@@ -30,6 +30,7 @@ import { useConnection } from "wagmi";
 import { useSynapse } from "@/providers/SynapseProvider";
 import { useDatasets } from "@/hooks/useDataset";
 import { CDN_DATA_SET_CREATION_COST } from "@/utils/constants";
+import { FILECOIN_MAINNET_ID } from "@/utils/chains";
 
 const STORAGE_CONFIG_KEY = "fildos_user_storage_config";
 
@@ -146,7 +147,7 @@ export const StorageManager = () => {
       setRevokeStatus(status);
       const synapse = await getSynapse();
       await mutation.mutateAsync({
-        service: synapse.getWarmStorageAddress()
+        service: synapse.chain.contracts.fwss.address
       });
       setRevokeStatus(status);
       await refetchBalances();
@@ -544,7 +545,7 @@ const StorageBalanceHeader = ({
   pricePerTiBPerMonth: string | null;
 }) => {
   const { chainId } = useConnection();
-  const isMainnet = chainId === 314;
+  const isMainnet = chainId === FILECOIN_MAINNET_ID;
 
   return (
     <Card>

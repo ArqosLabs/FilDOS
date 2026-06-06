@@ -1,18 +1,17 @@
-import {
-  DataSetData,
-  EnhancedDataSetInfo,
-} from "@filoz/synapse-sdk";
+import { EnhancedDataSetInfo } from "@filoz/synapse-sdk";
+import type { DataSet as SpDataSet } from "@filoz/synapse-core/sp";
 
 export interface DatasetsSizeInfo {
   sizeInBytes: number;
   sizeInKiB: number;
   sizeInMiB: number;
   sizeInGB: number;
+  message: string;
 }
 
 export interface DataSet extends EnhancedDataSetInfo, DatasetsSizeInfo {
   serviceURL: string;
-  data: DataSetData | null;
+  data: SpDataSet | null;
   pieceSizes: Record<string, UnifiedSizeInfo>;
 }
 
@@ -33,17 +32,6 @@ export interface UnifiedSizeInfo {
   pieceCount?: number;
   /** User-friendly size message */
   message?: string;
-}
-
-export interface DatasetsSizeInfo {
-  leafCount: number;
-  pieceCount: number;
-  withCDN: boolean;
-  sizeInBytes: number;
-  sizeInKiB: number;
-  sizeInMiB: number;
-  sizeInGB: number;
-  message: string;
 }
 
 export interface DatasetsResponse {

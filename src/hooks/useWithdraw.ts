@@ -13,7 +13,7 @@ export const useWithdraw = () => {
   const { address, chainId } = useConnection();
   const { getSynapse } = useSynapse();
   const queryClient = useQueryClient();
-  
+
   const mutation = useMutation({
     mutationKey: ["withdraw", address, chainId],
     mutationFn: async ({ amount }: { amount: bigint }) => {
@@ -24,8 +24,8 @@ export const useWithdraw = () => {
 
       setStatus("Withdrawing your funds...");
       const synapse = await getSynapse();
-      const tx = await synapse.payments.withdraw(amount);
-      await tx.wait(1);
+      const hash = await synapse.payments.withdraw({ amount });
+      await synapse.client.waitForTransactionReceipt({ hash });
       setStatus("You successfully withdrew your funds");
       return;
     },
@@ -42,6 +42,6 @@ export const useWithdraw = () => {
       );
     },
   });
-  
+
   return { mutation, status };
 };

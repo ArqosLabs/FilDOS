@@ -4,13 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import {
   DataSetPieceData,
   EnhancedDataSetInfo,
-  PDPServer,
 } from "@filoz/synapse-sdk";
+import { getDataSet as getSpDataSet } from "@filoz/synapse-core/sp";
 import { useConnection } from "wagmi";
 import { DataSet } from "@/types";
 import { getDatasetSizeMessage } from "@/utils/storageCalculations";
 import { UnifiedSizeInfo as PieceSizeInfo } from "@/types";
-import { useEthersSigner } from "@/hooks/useEthers";
 import { getPieceInfoFromCidBytes } from "@/utils/storageCalculations";
 import { useSynapse } from "@/providers/SynapseProvider";
 
@@ -27,42 +26,38 @@ import { useSynapse } from "@/providers/SynapseProvider";
  */
 export const useDatasets = () => {
   const { address, chainId } = useConnection();
-  const signer = useEthersSigner();
   const { getSynapse } = useSynapse();
   return useQuery({
     enabled: !!address,
     queryKey: ["datasets", address, chainId],
     queryFn: async () => {
-      // STEP 1: Validate prerequisites
-      if (!signer) throw new Error("Signer not found");
       const synapse = await getSynapse();
 
-      // STEP 2: Fetch providers and datasets in parallel for efficiency
+      // Fetch datasets for the connected client
       const datasets = await synapse.storage.findDataSets();
 
-      // STEP 3: Fetch provider information with error handling
+      // Fetch provider information for each dataset
       const providers = await Promise.all(
         datasets.map((dataset) => synapse.getProviderInfo(dataset.providerId))
       );
 
-      // STEP 5: Fetch detailed dataset information with PDP data
+      // Fetch detailed dataset information (pieces) for each dataset via SP
       const datasetDataResults = await Promise.all(
         datasets.map(async (dataset: EnhancedDataSetInfo) => {
-          const provider = providers.find((p) => p.id === dataset.providerId)!
-          const serviceURL = provider.products.PDP?.data.serviceURL || "";
+          const provider = providers.find((p) => p.id === dataset.providerId)!;
+          const serviceURL = provider.pdp?.serviceURL || "";
 
           try {
-            // STEP 6: Connect to PDP server to get piece information
-            const pdpServer = new PDPServer(null, serviceURL);
-            const data = await pdpServer
-              .getDataSet(dataset.pdpVerifierDataSetId)
-              .then((data) => {
-                // Reverse to show most recent uploads first in UI
-                data.pieces.reverse();
-                return data;
-              });
+            const data = await getSpDataSet({
+              serviceURL,
+              dataSetId: dataset.pdpVerifierDataSetId,
+            }).then((data) => {
+              // Reverse to show most recent uploads first in UI
+              data.pieces.reverse();
+              return data;
+            });
 
-            // STEP 7: Create pieces map
+            // Build pieces size map
             const pieces = data.pieces.reduce(
               (acc, piece: DataSetPieceData) => {
                 acc[piece.pieceCid.toV1().toString()] =
@@ -82,11 +77,12 @@ export const useDatasets = () => {
 
             return {
               ...dataset,
-              ...{ ...datasetSizeInfo, message: getDatasetSizeMessage(datasetSizeInfo) },
-              serviceURL: serviceURL,
+              ...datasetSizeInfo,
+              message: getDatasetSizeMessage(datasetSizeInfo),
+              serviceURL,
               data, // Contains pieces array with CIDs
               pieceSizes: pieces,
-            } as DataSet;
+            } satisfies DataSet;
           } catch (error) {
             console.warn(
               `Failed to fetch dataset details for ${dataset.pdpVerifierDataSetId}:`,
@@ -102,7 +98,7 @@ export const useDatasets = () => {
         })
       );
 
-      // STEP 9: Map results back to original dataset order
+      // Map results back to original dataset order
       const datasetsWithDetails = datasets.map((dataset) => {
         const dataResult = datasetDataResults.find(
           (result) =>
